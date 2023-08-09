@@ -30,6 +30,7 @@ assemble: prelim
 
 prelim:
 	$(PYTHON) scripts$(S)makelib.py >build$(S)libassembler.asm
+	$(CCOPY)  build$(S)libassembler.asm $(BINDIR)
 	
 run: assemble
 	$(EMULATOR)

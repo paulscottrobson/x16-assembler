@@ -50,9 +50,13 @@ AXTerm:	lda 	AXBuffer,x 					; remove any leading spaces.
 		ldy 	#2 							; binary check
 		cmp 	#"%"
 		bne 	_AXNotConstant
-		;
-		;		Constant at buffer,X. Base is in Y.
-		;
+
+; ================================================================================================
+;
+;								Constant at buffer,X. Base is in Y.
+;
+; ================================================================================================
+
 _AXIsConstant:		
 		stz 	AXDigitCount 				; clear count of digits
 		sty 	AXBase 					; save base.
@@ -92,9 +96,13 @@ _AXConstantDone:
 		lda 	#AXERRSyntax 
 _AXCExit:
 		rts		
-		;
-		;		Not $x %x or decimal. First character in A, already consumed.
-		;		
+
+; ================================================================================================
+;
+;		Handle non constants. Not $x %x or decimal. First character in A, already consumed.
+;		
+; ================================================================================================
+
 _AXNotConstant:
 		cmp 	#"-"						; check for negation.
 		beq 	_AXNegate
@@ -114,9 +122,13 @@ _AXNotConstant:
 		dex 								; back to first character.
 		jsr 	AXEvaluateLabel 			; consume and evaluate a label.
 		rts 								
-		;
-		;		Character code.
-		;
+
+; ================================================================================================
+;
+;										Character code.
+;
+; ================================================================================================
+
 _AXCharacter:
 		lda 	AXBuffer,x 					; get the character code.
 		beq 	_AXCFail 					; can't be EOS.
@@ -131,9 +143,13 @@ _AXCFail: 									; fail with syntax error.
 		sec
 		lda 	#AXERRSyntax
 		rts	
-		;
-		;		Label page @label
-		;	
+
+; ================================================================================================
+;
+;										Label page @label
+;	
+; ================================================================================================
+
 _AXLabelPage:		
 		jsr 	AXEvaluateLabel 			; consume and evaluate a label.
 		bcs 	_AXLPExit 					; something failed, probably no label.
@@ -143,9 +159,13 @@ _AXLabelPage:
 		clc
 _AXLPExit:
 		rts		
-		;
-		;		PC at instruction start
-		;
+
+; ================================================================================================
+;
+;									  PC at instruction start
+;
+; ================================================================================================
+
 _AXProgramCounter:
 		lda 	AXProgramCounterStart
 		sta 	AXLeft		
@@ -153,9 +173,13 @@ _AXProgramCounter:
 		sta 	AXLeft+1
 		clc
 		rts
-		;
-		;		High low byte (processing does not affect carry)
-		;
+
+; ================================================================================================
+;
+;						High low byte (processing does not affect carry)
+;
+; ================================================================================================
+
 _AXHighByte:
 		jsr 	AXTerm
 		bcs 	_AXNExit
@@ -169,9 +193,13 @@ _AXLowByte:
 		bcs 	_AXNExit
 		stz 	AXLeft+1
 		rts
-		;
-		;		Negate
-		;
+
+; ================================================================================================
+;
+;										Negate
+;
+; ================================================================================================
+
 _AXNegate:
 		jsr 	AXTerm						; get term
 		bcs 	_AXNExit

@@ -1,8 +1,8 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		ctypes.asm
-;		Purpose:	Simple character functions
+;		Name:		simple.asm
+;		Purpose:	Simple arithmetic
 ;		Created:	9th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -12,101 +12,99 @@
 
 		.section as16code
 
-; ************************************************************************************************
-;
-;									Convert lower to upper case
-;
-; ************************************************************************************************
-
-AXConvertUpper:
-		cmp 	#"a"
-		bcc 	_AXCNotUpper
-		cmp 	#"z"+1
-		bcs 	_AXCNotUpper
-		eor 	#$20
-_AXCNotUpper:
-		rts		
+binop	.macro
+		lda		AXLeft
+		\1 		AXRight
+		sta 	AXLeft
+		lda		AXLeft+1
+		\1 		AXRight+1
+		sta 	AXLeft+1
+		clc 								; no error.
+		.endm		
 
 ; ************************************************************************************************
 ;
-;						Check U/C alphabetic (return CC = True, CS = False)
+;							Calculate Left :=  Left + Right
 ;
 ; ************************************************************************************************
 
-AXIsAlpha:
-		cmp 	#"A"
-		bcc 	_AXNotAlpha
-		cmp 	#"Z"+1
-		bcs 	_AXNotAlpha
+AXBinaryAdd: ;; [+]
+		clc
+		.binop 	adc				
 		rts
-_AXNotAlpha:
+
+; ************************************************************************************************
+;
+;							Calculate Left :=  Left - Right
+;
+; ************************************************************************************************
+
+AXBinarySub: ;; [-]
 		sec
-		rts		
-
-; ************************************************************************************************
-;
-;						Check Decimal Digit (return CC = True, CS = False)
-;
-; ************************************************************************************************
-
-AXIsNumeric:
-		cmp 	#"0"
-		bcc 	_AXNotDigit
-		cmp 	#"9"+1
-		bcs 	_AXNotDigit
-		rts
-_AXNotDigit:
-		sec
-		rts		
-
-; ************************************************************************************************
-;
-;					   Check U/C alphanumeric (return CC = True, CS = False)
-;
-; ************************************************************************************************
-
-AXIsAlphaNumeric:
-		jsr 	AXIsAlpha 					; if alpha then exit with yes
-		bcs 	AXIsNumeric 				; no, depends on is numeric
+		.binop 	sbc				
 		rts
 
 ; ************************************************************************************************
 ;
-;					   			Is an identifier HEAD character A-Z _ .
+;							Calculate Left :=  Left AND Right
 ;
 ; ************************************************************************************************
 
-AXIsIdentifierHead:
-		jsr 	AXIsAlpha
-		bcs 	AXCheckIdentifierMisc
+AXBinaryAnd: ;; [&]
+		.binop 	and
+		rts
+
+
+; ************************************************************************************************
+;
+;							Calculate Left :=  Left OR Right
+;
+; ************************************************************************************************
+
+AXBinaryOra: ;; [|]
+		.binop 	ora
 		rts
 
 ; ************************************************************************************************
 ;
-;		  Check for non alphanumeric character allowed in identifier, currently _ and .
+;							Calculate Left :=  Left AND Right
 ;
 ; ************************************************************************************************
 
-AXCheckIdentifierMisc:		 
-		cmp 	#"_"
-		beq 	_AXIsIdentB
-		cmp 	#"."
-		beq 	_AXIsIdentB
-		sec
+AXBinaryEor: ;; [^]
+		.binop 	eor
 		rts
-_AXIsIdentB:
+
+; ************************************************************************************************
+;
+;							Calculate Left :=  Left <> Right
+;
+; ************************************************************************************************
+
+AXBinaryNotEqual: ;; [#]
+		jsr 	AXBinaryEor
+		lda 	AXLeft
+		eor 	AXLeft+1
+		beq 	_AXBEExit
+		dec 	AXLeft 
+		dec 	AXLeft+1
+_AXBEExit:
 		clc
 		rts
 
 ; ************************************************************************************************
 ;
-;					   			Is an identifier body character A-Z 0-9 _ .
+;							Calculate Left :=  Left = Right
 ;
 ; ************************************************************************************************
-		
-AXIsIdentifierBody:
-		jsr 	AXIsAlphaNumeric
-		bcs 	AXCheckIdentifierMisc
+
+AXBinaryEqual: ;; [=]
+		jsr 	AXBinaryNotEqual
+		lda 	AXLeft
+		eor 	#$FF
+		sta 	AXLeft
+		sta 	AXLeft+1
+		clc
 		rts
 
 		.send as16code
