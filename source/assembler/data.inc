@@ -1,73 +1,63 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name : 		main.asm
-;		Purpose :	Main Program
-;		Date :		9th August 2023
-; 		Reviewed :	No
-;		Author : 	Paul Robson (paul@robsons.org.uk)
+;		Name:		data.inc
+;		Purpose:	Assembler main data
+;		Created:	9th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
 ; ************************************************************************************************
 
-; ************************************************************************************************
-;
-;								Set up the three required sections
-;
-; ************************************************************************************************
-
-		* = $1000
-		.dsection as16code
-
-		* = STORAGE
-		.dsection as16storage
-
-		* = ZEROPAGE
-		.dsection as16zeropage
+		.section as16storage
 
 ; ************************************************************************************************
 ;
-;										Test code boot
+;										Constants
 ;
 ; ************************************************************************************************
 
-		.section as16code
-		jmp 	Start
+AXMaxLineSize = 80
+AXMaxIdentSize = 16
 
-		.include "build/libassembler.asm"
+; ************************************************************************************************
+;
+;										Global Data
+;
+; ************************************************************************************************
 
-Start:	ldx 	#$FF
-		txs
+AXLeft:										; left and right evaluation
+		.fill 	3 							; the bytes are LSB, MSB, undefined flag (bit 7)
+AXRight:
+		.fill 	3
 
-		ldx 	#0
-_Copy1:		
-		lda 	test,x
-		jsr 	AXConvertUpper
-		sta 	AXBuffer,x
-		inx
-		cmp 	#0
-		bne 	_Copy1
+AXProgramCounter:							; program counter		
+		.fill 	3 	
 
-		stz 	AXProgramCounter
-		stz 	AXProgramCounterStart
-		lda 	#$80
-		sta 	AXProgramCounter+1
-		sta 	AXProgramCounterStart+1
-		stz 	AXProgramCounter+2
-		stz 	AXProgramCounterStart+2
+AXEvaluatePage: 							; page # of evaluated label.
+		.fill 	1
 
-		ldx 	#0
-		jsr 	AXTerm
-		bcs 	_Bad
-		lda 	AXLeft+2
-		ldx 	AXLeft 
-		ldy 	AXLeft+1
-_Bad:
-		.byte 	$DB
+AXLabelBuffer: 								; buffer for label to be evaluated (ASCIIZ, U/C)
+		.fill 	AXMaxIdentSize+1
 
-test:	.text 	".COUNT+4",0
+; ************************************************************************************************
+;
+;					Frame data - this is saved when macro recursion occurs
+;
+; ************************************************************************************************
 
-		.send as16code
+AXStartFrame:
+
+AXProgramCounterStart: 						; PCTR at instruction start.
+		.fill 	3
+
+AXBuffer:	 								; current line, ASCIIZ.
+		.fill 	AXMaxLineSize+1 						
+
+AXEndFrame:
+
+		.send as16storage
 
 ; ************************************************************************************************
 ;

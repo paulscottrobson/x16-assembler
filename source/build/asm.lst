@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
 ; 64tass -q -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg main.asm
-; Wed Aug  9 08:22:15 2023
+; Wed Aug  9 17:49:24 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -12,10 +12,309 @@
 
 ;******  Processing input file: main.asm
 
-.1000	4c 03 10	jmp $1003			jmp 	Start
-.1003	a2 ff		ldx #$ff	Start:	ldx 	#$FF
-.1005	9a		txs				txs
->1006	db						.byte 	$DB
-.1007	80 fa		bra $1003			bra 	Start
+.1000	4c b1 11	jmp $11b1			jmp 	Start
+
+;******  Processing file: build/libassembler.asm
+
+=80					AXMaxLineSize = 80
+=16					AXMaxIdentSize = 16
+.0400					AXLeft:
+>0400							.fill 	3 							; the bytes are LSB, MSB, undefined flag (bit 7)
+.0403					AXRight:
+>0403							.fill 	3
+.0406					AXProgramCounter:
+>0406							.fill 	3
+.0409					AXEvaluatePage:
+>0409							.fill 	1
+.040a					AXLabelBuffer:
+>040a							.fill 	AXMaxIdentSize+1
+.041b					AXStartFrame:
+.041b					AXProgramCounterStart:
+>041b							.fill 	3
+.041e					AXBuffer:
+>041e							.fill 	AXMaxLineSize+1
+.046f					AXEndFrame:
+=$01					AXERRSyntax = $01 							; general syntax error.
+=$02					AXERRLabel = $02 							; label error - missing or too long.
+.1003	bd 1e 04	lda $041e,x	AXTerm:	lda 	AXBuffer,x 					; remove any leading spaces.
+.1006	e8		inx				inx
+.1007	c9 20		cmp #$20			cmp 	#' '
+.1009	f0 f8		beq $1003			beq 	AXTerm
+.100b	ca		dex				dex
+.100c	9c 02 04	stz $0402			stz 	AXLeft+2 					; clear the undefined flag & value
+.100f	9c 00 04	stz $0400			stz 	AXLeft
+.1012	9c 01 04	stz $0401			stz 	AXLeft+1
+.1015	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get first character
+.1018	a0 0a		ldy #$0a			ldy 	#10 						; default decimal if digit
+.101a	20 7a 11	jsr $117a			jsr 	AXIsNumeric 				; if digit numeric , then constant.
+.101d	90 0d		bcc $102c			bcc 	_AXIsConstant
+.101f	e8		inx				inx 								; temporarily consume base modifier
+.1020	a0 10		ldy #$10			ldy 	#16 						; hex check.
+.1022	c9 24		cmp #$24			cmp 	#"$"
+.1024	f0 06		beq $102c			beq 	_AXIsConstant
+.1026	a0 02		ldy #$02			ldy 	#2 							; binary check
+.1028	c9 25		cmp #$25			cmp 	#"%"
+.102a	d0 3d		bne $1069			bne 	_AXNotConstant
+.102c					_AXIsConstant:
+.102c	9c 6f 04	stz $046f			stz 	AXDigitCount 				; clear count of digits
+.102f	8c 70 04	sty $0470			sty 	AXBase 					; save base.
+.1032					_AXConstantLoop:
+.1032	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get the next character of the constant.
+.1035	20 86 11	jsr $1186			jsr 	AXIsAlphaNumeric 			; must be 0-9A-Z
+.1038	b0 25		bcs $105f			bcs 	_AXConstantDone 			; no, then end of constant.
+.103a	c9 3a		cmp #$3a			cmp 	#"9"+1 						; shift A-Z so they follow 0-9.
+.103c	90 02		bcc $1040			bcc 	_AXNotAlpha
+.103e	e9 07		sbc #$07			sbc 	#7
+.1040					_AXNotAlpha:
+.1040	38		sec				sec 								; make it a digit 0..15
+.1041	e9 30		sbc #$30			sbc 	#"0"
+.1043	cd 70 04	cmp $0470			cmp 	AXBase 						; if higher than the base, then end of constant
+.1046	b0 17		bcs $105f			bcs 	_AXConstantDone
+.1048	e8		inx				inx 								; consume as legal.
+.1049	ee 6f 04	inc $046f			inc 	AXDigitCount 				; bump consumed count.
+.104c	48		pha				pha 								; save the new digit.
+.104d	20 ef 10	jsr $10ef			jsr 	_AXMultiplyBase 			; multiply left by base.
+.1050	68		pla				pla 								; add new digit
+.1051	18		clc				clc
+.1052	6d 00 04	adc $0400			adc 	AXLeft
+.1055	8d 00 04	sta $0400			sta 	AXLeft
+.1058	90 d8		bcc $1032			bcc 	_AXConstantLoop
+.105a	ee 01 04	inc $0401			inc 	AXLeft+1
+.105d	80 d3		bra $1032			bra 	_AXConstantLoop
+.105f					_AXConstantDone:
+.105f	18		clc				clc
+.1060	ad 6f 04	lda $046f			lda		AXDigitCount 				; exit okay if a digit received
+.1063	d0 03		bne $1068			bne 	_AXCExit
+.1065	38		sec				sec 								; return error-syntax
+.1066	a9 01		lda #$01			lda 	#AXERRSyntax
+.1068					_AXCExit:
+.1068	60		rts				rts
+.1069					_AXNotConstant:
+.1069	c9 2d		cmp #$2d			cmp 	#"-"						; check for negation.
+.106b	f0 6a		beq $10d7			beq 	_AXNegate
+.106d	c9 3c		cmp #$3c			cmp 	#"<"						; low byte
+.106f	f0 5d		beq $10ce			beq 	_AXLowByte
+.1071	c9 3e		cmp #$3e			cmp 	#">"						; high byte
+.1073	f0 4a		beq $10bf			beq 	_AXHighByte
+.1075	c9 2a		cmp #$2a			cmp 	#"*" 						; start of instruction
+.1077	f0 38		beq $10b1			beq 	_AXProgramCounter
+.1079	c9 27		cmp #$27			cmp 	#"'" 						; character code
+.107b	f0 0e		beq $108b			beq 	_AXCharacter
+.107d	c9 40		cmp #$40			cmp 	#"@"						; label page
+.107f	f0 20		beq $10a1			beq 	_AXLabelPage
+.1081	20 8f 11	jsr $118f			jsr 	AXIsIdentifierHead 			; identifier start character
+.1084	b0 17		bcs $109d			bcs 	_AXCFail
+.1086	ca		dex				dex 								; back to first character.
+.1087	20 24 11	jsr $1124			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
+.108a	60		rts				rts
+.108b					_AXCharacter:
+.108b	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get the character code.
+.108e	f0 0d		beq $109d			beq 	_AXCFail 					; can't be EOS.
+.1090	8d 00 04	sta $0400			sta 	AXLeft
+.1093	bd 1f 04	lda $041f,x			lda 	AXBuffer+1,x 				; get the character after and consume both
+.1096	e8		inx				inx
+.1097	e8		inx				inx
+.1098	c9 27		cmp #$27			cmp 	#"'"						; okay if '
+.109a	18		clc				clc
+.109b	f0 51		beq $10ee			beq 	_AXNExit
+.109d					_AXCFail:
+.109d	38		sec				sec
+.109e	a9 01		lda #$01			lda 	#AXERRSyntax
+.10a0	60		rts				rts
+.10a1					_AXLabelPage:
+.10a1	20 24 11	jsr $1124			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
+.10a4	b0 0a		bcs $10b0			bcs 	_AXLPExit 					; something failed, probably no label.
+.10a6	ad 09 04	lda $0409			lda 	AXEvaluatePage 				; copy page #
+.10a9	8d 00 04	sta $0400			sta 	AXLeft
+.10ac	9c 01 04	stz $0401			stz 	AXLeft+1
+.10af	18		clc				clc
+.10b0					_AXLPExit:
+.10b0	60		rts				rts
+.10b1					_AXProgramCounter:
+.10b1	ad 1b 04	lda $041b			lda 	AXProgramCounterStart
+.10b4	8d 00 04	sta $0400			sta 	AXLeft
+.10b7	ad 1c 04	lda $041c			lda 	AXProgramCounterStart+1
+.10ba	8d 01 04	sta $0401			sta 	AXLeft+1
+.10bd	18		clc				clc
+.10be	60		rts				rts
+.10bf					_AXHighByte:
+.10bf	20 03 10	jsr $1003			jsr 	AXTerm
+.10c2	b0 2a		bcs $10ee			bcs 	_AXNExit
+.10c4	ad 01 04	lda $0401			lda 	AXLeft+1
+.10c7	8d 00 04	sta $0400			sta 	AXLeft
+.10ca	9c 01 04	stz $0401			stz 	AXLeft+1
+.10cd	60		rts				rts
+.10ce					_AXLowByte:
+.10ce	20 03 10	jsr $1003			jsr 	AXTerm
+.10d1	b0 1b		bcs $10ee			bcs 	_AXNExit
+.10d3	9c 01 04	stz $0401			stz 	AXLeft+1
+.10d6	60		rts				rts
+.10d7					_AXNegate:
+.10d7	20 03 10	jsr $1003			jsr 	AXTerm						; get term
+.10da	b0 12		bcs $10ee			bcs 	_AXNExit
+.10dc	38		sec				sec
+.10dd	a9 00		lda #$00			lda 	#0
+.10df	ed 00 04	sbc $0400			sbc 	AXLeft
+.10e2	8d 00 04	sta $0400			sta 	AXLeft
+.10e5	a9 00		lda #$00			lda 	#0
+.10e7	ed 01 04	sbc $0401			sbc 	AXLeft+1
+.10ea	8d 01 04	sta $0401			sta 	AXLeft+1
+.10ed	18		clc				clc 								; success.
+.10ee					_AXNExit:
+.10ee	60		rts				rts
+.10ef					_AXMultiplyBase:
+.10ef	c0 02		cpy #$02			cpy 	#2 							; if binary then exit.
+.10f1	f0 2a		beq $111d			beq 	_AXMDouble
+.10f3	c0 10		cpy #$10			cpy 	#16 						; if hexadecimal
+.10f5	f0 1d		beq $1114			beq 	_AXMMultiply16
+.10f7	ad 01 04	lda $0401			lda 	AXLeft+1 					; keep original value.
+.10fa	48		pha				pha
+.10fb	ad 00 04	lda $0400			lda 	AXLeft
+.10fe	20 1d 11	jsr $111d			jsr 	_AXMDouble 					; x 2
+.1101	20 1d 11	jsr $111d			jsr 	_AXMDouble 					; x 4
+.1104	18		clc				clc
+.1105	6d 00 04	adc $0400			adc 	AXLeft 						; add original value, e.g. x 5
+.1108	8d 00 04	sta $0400			sta 	AXLeft
+.110b	68		pla				pla
+.110c	6d 01 04	adc $0401			adc 	AXLeft+1
+.110f	8d 01 04	sta $0401			sta 	AXLeft+1
+.1112	80 09		bra $111d			bra 	_AXMDouble 					; double to x10
+.1114					_AXMMultiply16:
+.1114	20 1d 11	jsr $111d			jsr 	_AXMDouble 					; x 2
+.1117	20 1d 11	jsr $111d			jsr 	_AXMDouble 					; x 4
+.111a	20 1d 11	jsr $111d			jsr 	_AXMDouble 					; x 8, fall through to x 16
+.111d					_AXMDouble:
+.111d	0e 00 04	asl $0400			asl 	AXLeft 						; everyone does left.
+.1120	2e 01 04	rol $0401			rol 	AXLeft+1
+.1123					_AXMExit:
+.1123	60		rts				rts
+.1124					AXEvaluateLabel:
+.1124	20 3d 11	jsr $113d			jsr 	AXExtractLabel 				; get a label.
+.1127	b0 13		bcs $113c			bcs 	_AXEExit 					; we couldn't.
+.1129	a9 a9		lda #$a9			lda 	#$A9
+.112b	8d 00 04	sta $0400			sta 	AXLeft
+.112e	a9 44		lda #$44			lda 	#$44
+.1130	8d 01 04	sta $0401			sta 	AXLeft+1
+.1133	9c 02 04	stz $0402			stz 	AXLeft+2
+.1136	a9 04		lda #$04			lda 	#4 							; page of evaluated label
+.1138	8d 09 04	sta $0409			sta 	AXEvaluatePage
+.113b	18		clc				clc
+.113c					_AXEExit:
+.113c	60		rts				rts
+.113d					AXExtractLabel:
+.113d	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; check the first character.
+.1140	20 8f 11	jsr $118f			jsr 	AXIsIdentifierHead
+.1143	b0 1a		bcs $115f			bcs 	_AXELFail
+.1145	a0 00		ldy #$00			ldy 	#0 							; save position.
+.1147					_AXELLoop:
+.1147	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y 			; save in buffer, bump position
+.114a	c8		iny				iny
+.114b	c0 11		cpy #$11			cpy 	#AXMaxIdentSize+1 			; too long
+.114d	f0 10		beq $115f			beq 	_AXELFail
+.114f	e8		inx				inx 								; consume character
+.1150	a9 00		lda #$00			lda 	#0 							; make ASCIIZ.
+.1152	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
+.1155	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get the next caracter.
+.1158	20 a0 11	jsr $11a0			jsr 	AXIsIdentifierBody 			; is it a body character
+.115b	90 ea		bcc $1147			bcc 	_AXELLoop 					; if so add it to the label.
+.115d	18		clc				clc 								; successfully acquired a label.
+.115e	60		rts				rts
+.115f					_AXELFail:
+.115f	a9 02		lda #$02			lda 	#AXERRLabel 				; bad label.
+.1161	38		sec				sec
+.1162	60		rts				rts
+.046f					AXDigitCount:
+>046f							.fill 	1
+.0470					AXBase:
+>0470							.fill 	1
+.1163					AXConvertUpper:
+.1163	c9 61		cmp #$61			cmp 	#"a"
+.1165	90 06		bcc $116d			bcc 	_AXCNotUpper
+.1167	c9 7b		cmp #$7b			cmp 	#"z"+1
+.1169	b0 02		bcs $116d			bcs 	_AXCNotUpper
+.116b	49 20		eor #$20			eor 	#$20
+.116d					_AXCNotUpper:
+.116d	60		rts				rts
+.116e					AXIsAlpha:
+.116e	c9 41		cmp #$41			cmp 	#"A"
+.1170	90 06		bcc $1178			bcc 	_AXNotAlpha
+.1172	c9 5b		cmp #$5b			cmp 	#"Z"+1
+.1174	b0 02		bcs $1178			bcs 	_AXNotAlpha
+.1176	18		clc				clc
+.1177	60		rts				rts
+.1178					_AXNotAlpha:
+.1178	38		sec				sec
+.1179	60		rts				rts
+.117a					AXIsNumeric:
+.117a	c9 30		cmp #$30			cmp 	#"0"
+.117c	90 06		bcc $1184			bcc 	_AXNotDigit
+.117e	c9 3a		cmp #$3a			cmp 	#"9"+1
+.1180	b0 02		bcs $1184			bcs 	_AXNotDigit
+.1182	18		clc				clc
+.1183	60		rts				rts
+.1184					_AXNotDigit:
+.1184	38		sec				sec
+.1185	60		rts				rts
+.1186					AXIsAlphaNumeric:
+.1186	20 6e 11	jsr $116e			jsr 	AXIsAlpha 					; if alpha then exit with yes
+.1189	90 02		bcc $118d			bcc 	_AXIsAlnum
+.118b	80 ed		bra $117a			bra 	AXIsNumeric 				; else depends on is numeric
+.118d					_AXIsAlnum:
+.118d	18		clc				clc
+.118e	60		rts				rts
+.118f					AXIsIdentifierHead:
+.118f	20 6e 11	jsr $116e			jsr 	AXIsAlpha
+.1192	90 0a		bcc $119e			bcc 	_AXIsIdentB
+.1194	c9 5f		cmp #$5f			cmp 	#"_"
+.1196	f0 06		beq $119e			beq 	_AXIsIdentB
+.1198	c9 2e		cmp #$2e			cmp 	#"."
+.119a	f0 02		beq $119e			beq 	_AXIsIdentB
+.119c	38		sec				sec
+.119d	60		rts				rts
+.119e					_AXIsIdentB:
+.119e	18		clc				clc
+.119f	60		rts				rts
+.11a0					AXIsIdentifierBody:
+.11a0	20 86 11	jsr $1186			jsr 	AXIsAlphaNumeric
+.11a3	90 0a		bcc $11af			bcc 	_AXIsIdent
+.11a5	c9 5f		cmp #$5f			cmp 	#"_"
+.11a7	f0 06		beq $11af			beq 	_AXIsIdent
+.11a9	c9 2e		cmp #$2e			cmp 	#"."
+.11ab	f0 02		beq $11af			beq 	_AXIsIdent
+.11ad	38		sec				sec
+.11ae	60		rts				rts
+.11af					_AXIsIdent:
+.11af	18		clc				clc
+.11b0	60		rts				rts
+
+;******  Return to file: main.asm
+
+.11b1	a2 ff		ldx #$ff	Start:	ldx 	#$FF
+.11b3	9a		txs				txs
+.11b4	a2 00		ldx #$00			ldx 	#0
+.11b6					_Copy1:
+.11b6	bd e9 11	lda $11e9,x			lda 	test,x
+.11b9	20 63 11	jsr $1163			jsr 	AXConvertUpper
+.11bc	9d 1e 04	sta $041e,x			sta 	AXBuffer,x
+.11bf	e8		inx				inx
+.11c0	c9 00		cmp #$00			cmp 	#0
+.11c2	d0 f2		bne $11b6			bne 	_Copy1
+.11c4	9c 06 04	stz $0406			stz 	AXProgramCounter
+.11c7	9c 1b 04	stz $041b			stz 	AXProgramCounterStart
+.11ca	a9 80		lda #$80			lda 	#$80
+.11cc	8d 07 04	sta $0407			sta 	AXProgramCounter+1
+.11cf	8d 1c 04	sta $041c			sta 	AXProgramCounterStart+1
+.11d2	9c 08 04	stz $0408			stz 	AXProgramCounter+2
+.11d5	9c 1d 04	stz $041d			stz 	AXProgramCounterStart+2
+.11d8	a2 00		ldx #$00			ldx 	#0
+.11da	20 03 10	jsr $1003			jsr 	AXTerm
+.11dd	b0 09		bcs $11e8			bcs 	_Bad
+.11df	ad 02 04	lda $0402			lda 	AXLeft+2
+.11e2	ae 00 04	ldx $0400			ldx 	AXLeft
+.11e5	ac 01 04	ldy $0401			ldy 	AXLeft+1
+.11e8					_Bad:
+>11e8	db						.byte 	$DB
+>11e9	2e 43 4f 55 4e 54 2b 34		test:	.text 	".COUNT+4",0
+>11f1	00
 
 ;******  End of listing

@@ -29,7 +29,8 @@ assemble: prelim
 	$(ASSEMBLER)
 
 prelim:
-
+	$(PYTHON) scripts$(S)makelib.py >build$(S)libassembler.asm
+	
 run: assemble
 	$(EMULATOR)
 
