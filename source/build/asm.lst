@@ -1,0 +1,21 @@
+
+; 64tass Turbo Assembler Macro V1.58.2974? listing file
+; 64tass -q -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg main.asm
+; Wed Aug  9 08:22:15 2023
+
+;Offset	;Hex		;Monitor	;Source
+
+;******  Command line definitions
+
+=$30					ZEROPAGE=$30
+=$400					STORAGE=$400
+
+;******  Processing input file: main.asm
+
+.1000	4c 03 10	jmp $1003			jmp 	Start
+.1003	a2 ff		ldx #$ff	Start:	ldx 	#$FF
+.1005	9a		txs				txs
+>1006	db						.byte 	$DB
+.1007	80 fa		bra $1003			bra 	Start
+
+;******  End of listing

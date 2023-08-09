@@ -39,17 +39,10 @@ mkfile_dir := $(dir $(mkfile_path))
 #
 ROOTDIR = $(mkfile_dir)..$(S)
 #
-#		Script to run emulator, expecting parameter to follow
-#
-AEMULATOR = $(ROOTDIR)aquarius$(S)emulator$(S)aqnext
-EEMULATOR = CEmu -u  --launch BASIC -m
-#
-#		Current assembler
-# 
-ASSEMBLER = spasm -L -T -N
-#
-# 		Silent if not VERBOSE
+#		Python
+#	
+PYTHON = python3
 #
 ifndef VERBOSE
-.SILENT:
+#.SILENT:
 endif
