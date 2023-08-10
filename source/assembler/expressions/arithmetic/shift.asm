@@ -67,10 +67,17 @@ AXSwap:
 		ldx 	AXLeft
 		sta 	AXLeft
 		stx 	AXRight
-		lda 	AXRight 					
-		ldx 	AXLeft
-		sta 	AXLeft
-		stx 	AXRight
+
+		lda 	AXRight+1
+		ldx 	AXLeft+1
+		sta 	AXLeft+1
+		stx 	AXRight+1
+
+		lda 	AXRight+2
+		ldx 	AXLeft+2
+		sta 	AXLeft+2
+		stx 	AXRight+2
+
 		plx
 		pla
 		rts

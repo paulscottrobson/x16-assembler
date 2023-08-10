@@ -6,3 +6,7 @@ TODO:
 		Test base for expressions.
 
 	Identifier design and add to label evaluate stuff.
+
+Check:
+	Operator fails
+	RHS fails.

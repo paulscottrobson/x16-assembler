@@ -28,7 +28,10 @@ AXBinaryDivide: ;; [/]
 ; ************************************************************************************************
 
 AXBinaryModulus: ;; [%]
-
+		sec
+		lda 	#$7A
+		rts
+		
 		.send as16code
 
 		.section as16storage

@@ -74,6 +74,7 @@ class BinaryOperatorCollection(object):
 		for k in self.keys:
 			c2 = ord(k[1]) if len(k) == 2 else 0
 			h.write("\t.byte\t${0:02x},${1:02x} ; {2}\n".format(ord(k[0]),c2,k))
+		h.write("\t.byte\t$00\n")
 	#
 	def makePrecedenceTable(self,h):
 		h.write(self.header())

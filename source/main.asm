@@ -57,15 +57,16 @@ _Copy1:
 		stz 	AXProgramCounterStart+2
 
 		ldx 	#0
-		jsr 	AXTerm
+		jsr 	AXExpression
 		bcs 	_Bad
 		lda 	AXLeft+2
 		ldx 	AXLeft 
 		ldy 	AXLeft+1
 _Bad:
 		.byte 	$DB
+		jmp 	_Bad
 
-test:	.text 	".COUNT+4",0
+test:	.text 	"4+7",0
 
 		.send as16code
 
