@@ -2,7 +2,7 @@
 ; ************************************************************************************************
 ;
 ;		Name:		divide.asm
-;		Purpose:	16 bit divide
+;		Purpose:	16 bit divide (unsigned)
 ;		Created:	10th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)

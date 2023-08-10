@@ -1,6 +1,6 @@
 import random
 #
-# 		Calculate Q/M unsigned 15 bits.
+# 		Calculate Q/M unsigned 16 bits.
 #
 #		Q = R 		(Left)
 #		M = L 		(Right)
@@ -27,8 +27,8 @@ def divide(q,m):
 
 random.seed()
 for i in range(0,10000):
-	n1 = random.randint(0,0x7FFF)
-	n2 = random.randint(1,0x7FFF)
+	n1 = random.randint(0,0xFFFF)
+	n2 = random.randint(1,0xFFFF)
 	rc = int(n1/n2)
 	ra = divide(n1,n2)
 	if rc != ra:

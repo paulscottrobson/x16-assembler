@@ -2,7 +2,7 @@
 ; ************************************************************************************************
 ;
 ;		Name:		simple.asm
-;		Purpose:	Simple arithmetic
+;		Purpose:	Simple arithmetic (all unsigned)
 ;		Created:	9th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -119,13 +119,10 @@ AXGreater: ;; [>]
 
 AXLess: ;; [<]
 		jsr 	AXBinarySub
-		bvc 	_AXNoOverflow
-		eor 	#$80
-_AXNoOverflow:
-		and 	#$80
-		beq 	_AXIsZero
-		lda 	#$FF
-_AXIsZero:
+		lda 	#$00
+		bcs 	_AXIsGtr
+		dec 	a
+_AXIsGtr:
 		sta 	AXLeft
 		sta 	AXLeft+1
 		clc
