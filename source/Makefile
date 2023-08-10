@@ -29,6 +29,7 @@ assemble: prelim
 	$(ASSEMBLER)
 
 prelim:
+	$(PYTHON) scripts$(S)expr.py
 	$(PYTHON) scripts$(S)makelib.py >build$(S)libassembler.asm
 	$(CCOPY)  build$(S)libassembler.asm $(BINDIR)
 	

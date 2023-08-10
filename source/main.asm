@@ -66,7 +66,7 @@ _Bad:
 		.byte 	$DB
 		jmp 	_Bad
 
-test:	.text 	"4+7",0
+test:	.text 	"2*4+3*4*10",0
 
 		.send as16code
 

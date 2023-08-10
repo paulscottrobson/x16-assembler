@@ -18,3 +18,4 @@ AXBinaryOperatorList:
 	.byte	$2a,$00 ; *
 	.byte	$2f,$00 ; /
 	.byte	$25,$00 ; %
+	.byte	$00

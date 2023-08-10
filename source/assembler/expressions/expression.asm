@@ -49,6 +49,7 @@ _AXEExpressionLoop:
 		; ========================================================================================
 
 		ldy 	#(0-2) & $FF 						
+		stx 	AXOperatorPos				; save operator position in case rejected.
 _AXFindBinOp:		
 		iny 								; pre-increment.
 		iny
@@ -76,7 +77,7 @@ _AXConsume1:
 
 		pla 								; required precedence
 		cmp 	AXPrecedence,y 				; if >= then exit
-		bcs 	_AXExitOkay
+		bcs 	_AXPrecFail
 		pha 								; save the levels precedence.
 		phy 								; save the operator ID
 
@@ -94,7 +95,6 @@ _AXConsume1:
 		pha
 
 		lda 	AXPrecedence,y 				; evaluate the RHS at the precedence of the operator or higher.
-		.byte 	$DB
 		jsr 	AXExpressionAtA
 		bcs 	_AXFailedRHS
 
@@ -118,12 +118,16 @@ _AXConsume1:
 		tax
 		jsr 	_AXDoOperator 				; call the operator code.
 		plx 								; restore buffer position.
-
 		bcc 	_AXEExpressionLoop 			; and go round again if no error
 		ply 								; throw the precedence on the stack.
 		sec
 		rts
 
+_AXDoOperator:
+		jmp 	(AXBinaryVectors,x)
+		;
+		;			Come here if RHS calc failed.
+		;
 _AXFailedRHS:	 							; rhs failed. throw the saved left, operator ID,and the precedence level.
 		ply
 		ply
@@ -132,17 +136,27 @@ _AXFailedRHS:	 							; rhs failed. throw the saved left, operator ID,and the pr
 		ply
 		sec
 		rts
-
-_AXDoOperator:
-		jmp 	(AXBinaryVectors,x)
-
+		;
+		;			Here if failed precedence test (not an error)
+		;
+_AXPrecFail:
+		ldx 	AXOperatorPos 				; precedence fail, undo operator consume
+		clc
+		rts
+		;
+		;			Here if unknown operator
+		;
 _AXExitPop:
 		pla
-_AXExitOkay:
 		clc
 		rts
 
 		.send as16code
+
+		.section as16storage
+AXOperatorPos:								; operator offset in buffer.
+		.fill 	1		
+		.send as16storage
 
 ; ************************************************************************************************
 ;
