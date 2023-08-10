@@ -94,6 +94,7 @@ _AXConsume1:
 		pha
 
 		lda 	AXPrecedence,y 				; evaluate the RHS at the precedence of the operator or higher.
+		.byte 	$DB
 		jsr 	AXExpressionAtA
 		bcs 	_AXFailedRHS
 
