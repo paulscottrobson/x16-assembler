@@ -20,6 +20,7 @@
 
 AXERRSyntax = $01 							; general syntax error.
 AXERRLabel = $02 							; label error - missing or too long.
+AXERRDivZero = $03 							; divide by zero.
 
 		.send as16code
 

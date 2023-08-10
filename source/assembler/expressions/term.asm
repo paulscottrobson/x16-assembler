@@ -99,6 +99,28 @@ _AXCExit:
 
 ; ================================================================================================
 ;
+;									Parenthesis expression
+;
+; ================================================================================================
+
+_AXParenthesis:
+		jsr 	AXExpression 				; body of parenthesis expression.
+		bcs 	_AXPExit 					; error ?
+_AXFindParent:
+		lda 	AXBuffer,x 					; skip spaces looking for )
+		inx
+		cmp 	#' '
+		beq 	_AXFindParent
+		cmp 	#')'
+		clc
+		beq 	_AXPExit
+		lda 	#AXERRSyntax 				; failed
+		sec
+_AXPExit:
+		rts
+
+; ================================================================================================
+;
 ;		Handle non constants. Not $x %x or decimal. First character in A, already consumed.
 ;		
 ; ================================================================================================
@@ -116,7 +138,8 @@ _AXNotConstant:
 		beq 	_AXCharacter		
 		cmp 	#"@"						; label page
 		beq 	_AXLabelPage
-
+		cmp 	#"("						; parenthesis
+		beq 	_AXParenthesis
 		jsr 	AXIsIdentifierHead 			; identifier start character
 		bcs 	_AXCFail
 		dex 								; back to first character.

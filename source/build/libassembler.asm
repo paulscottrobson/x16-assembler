@@ -95,6 +95,7 @@ AXEndFrame:
 
 AXERRSyntax = $01 							; general syntax error.
 AXERRLabel = $02 							; label error - missing or too long.
+AXERRDivZero = $03 							; divide by zero.
 
 		.send as16code
 
@@ -113,7 +114,7 @@ AXERRLabel = $02 							; label error - missing or too long.
 ; ************************************************************************************************
 ;
 ;		Name:		divide.asm
-;		Purpose:	16 bit divide
+;		Purpose:	16 bit divide (unsigned)
 ;		Created:	10th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -131,6 +132,44 @@ AXERRLabel = $02 							; label error - missing or too long.
 ; ************************************************************************************************
 
 AXBinaryDivide: ;; [/]
+		lda 	AXRight 					; check divide by zero
+		ora 	AXRight+1
+		beq 	_AXDivZero
+		;
+		stz 	AXDTemp 					; A = 0
+		stz 	AXDTemp+1
+		;
+		ldy 	#16 						; iteration count.
+_AXDivLoop:
+		phy
+		;
+		asl 	AXLeft 						; shift AQ left.
+		rol 	AXLeft+1
+		rol 	AXDTemp
+		rol 	AXDTemp+1
+		;
+		sec 								; A-M => A:Y
+		lda 	AXDTemp
+		sbc 	AXRight
+		tay
+		lda 	AXDTemp+1
+		sbc 	AXRight+1
+		bcc 	_AXDivNext 					; if A < M exit
+		;
+		sta 	AXDTemp+1 					; A = A - M
+		sty 	AXDTemp
+		inc 	AXLeft 						; set bit 0 of the result.
+_AXDivNext:
+		ply
+		dey
+		bne 	_AXDivLoop
+		clc
+		rts
+
+_AXDivZero:
+		lda 	#AXERRDivZero
+		sec
+		rts
 
 ; ************************************************************************************************
 ;
@@ -139,13 +178,21 @@ AXBinaryDivide: ;; [/]
 ; ************************************************************************************************
 
 AXBinaryModulus: ;; [%]
-		sec
-		lda 	#$7A
+		jsr 	AXBinaryDivide
+		bcs 	_AXBMExit
+		lda 	AXDTemp
+		sta 	AXLeft
+		lda 	AXDTemp+1
+		sta 	AXLeft+1
+		clc
+_AXBMExit:
 		rts
 
 		.send as16code
 
 		.section as16storage
+AXDTemp:
+		.fill 	2
 		.send as16storage
 
 ; ************************************************************************************************
@@ -324,7 +371,7 @@ AXSwap:
 ; ************************************************************************************************
 ;
 ;		Name:		simple.asm
-;		Purpose:	Simple arithmetic
+;		Purpose:	Simple arithmetic (all unsigned)
 ;		Created:	9th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -441,13 +488,10 @@ AXGreater: ;; [>]
 
 AXLess: ;; [<]
 		jsr 	AXBinarySub
-		bvc 	_AXNoOverflow
-		eor 	#$80
-_AXNoOverflow:
-		and 	#$80
-		beq 	_AXIsZero
-		lda 	#$FF
-_AXIsZero:
+		lda 	#$00
+		bcs 	_AXIsGtr
+		dec 	a
+_AXIsGtr:
 		sta 	AXLeft
 		sta 	AXLeft+1
 		clc
@@ -766,6 +810,29 @@ _AXCExit:
 
 ; ================================================================================================
 ;
+;									Parenthesis expression
+;
+; ================================================================================================
+
+_AXParenthesis:
+		.byte 	$DB
+		jsr 	AXExpression 				; body of parenthesis expression.
+		bcs 	_AXPExit 					; error ?
+_AXFindParent:
+		lda 	AXBuffer,x 					; skip spaces looking for )
+		inx
+		cmp 	#' '
+		beq 	_AXFindParent
+		cmp 	#')'
+		clc
+		beq 	_AXPExit
+		lda 	#AXERRSyntax 				; failed
+		sec
+_AXPExit:
+		rts
+
+; ================================================================================================
+;
 ;		Handle non constants. Not $x %x or decimal. First character in A, already consumed.
 ;
 ; ================================================================================================
@@ -783,7 +850,8 @@ _AXNotConstant:
 		beq 	_AXCharacter
 		cmp 	#"@"						; label page
 		beq 	_AXLabelPage
-
+		cmp 	#"("						; parenthesis
+		beq 	_AXParenthesis
 		jsr 	AXIsIdentifierHead 			; identifier start character
 		bcs 	_AXCFail
 		dex 								; back to first character.

@@ -1,7 +1,6 @@
 TODO:
 	Expression evaluation:
-		Code Division/Modulus function
-		Parenthesis
 		Test base for expressions and build it up.
-
+		Test parenthesis.
+		
 	Identifier design and add to label evaluate stuff.
