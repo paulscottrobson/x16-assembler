@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
 ; 64tass -q -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -D "ASMDATA=\$9800" -D "ASMDATAEND=\$9C00" -D ASMDATACTL=0 -Wall -L build/asm.lst -o build/asm.prg -D TESTING=0 main.asm
-; Fri Aug 11 19:21:09 2023
+; Fri Aug 11 20:46:44 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -16,7 +16,7 @@
 
 ;******  Processing input file: main.asm
 
-.1000	4c e8 14	jmp $14e8			jmp 	Start
+.1000	4c 33 15	jmp $1533			jmp 	Start
 
 ;******  Processing file: build/libassembler.asm
 
@@ -48,6 +48,10 @@
 =$02					AXERRIdentifier = $02 						; bad identifier, missing/too long.
 =$03					AXERRDivZero = $03 							; divide by zero.
 =$04					AXERRDuplicate = $04 						; identifier defined twice.
+=0					AXIT_Unused = 		0
+=1					AXIT_Label = 		1
+=2					AXIT_PsuedoOp = 	2
+=3					AXIT_Macro =  		3
 =1					AXID_Hash = 		1
 =2					AXID_Type = 		2
 =3					AXID_Flags = 		3
@@ -356,7 +360,7 @@
 .1226	9c 01 04	stz $0401			stz 	AXLeft+1
 .1229	bd 20 04	lda $0420,x			lda 	AXBuffer,x 					; get first character
 .122c	a0 0a		ldy #$0a			ldy 	#10 						; default decimal if digit
-.122e	20 91 14	jsr $1491			jsr 	AXIsNumeric 				; if digit numeric , then constant.
+.122e	20 dc 14	jsr $14dc			jsr 	AXIsNumeric 				; if digit numeric , then constant.
 .1231	90 0d		bcc $1240			bcc 	_AXIsConstant
 .1233	e8		inx				inx 								; temporarily consume base modifier
 .1234	a0 10		ldy #$10			ldy 	#16 						; hex check.
@@ -370,7 +374,7 @@
 .1243	8c 77 04	sty $0477			sty 	AXBase 					; save base.
 .1246					_AXConstantLoop:
 .1246	bd 20 04	lda $0420,x			lda 	AXBuffer,x 					; get the next character of the constant.
-.1249	20 9c 14	jsr $149c			jsr 	AXIsAlphaNumeric 			; must be 0-9A-Z
+.1249	20 e7 14	jsr $14e7			jsr 	AXIsAlphaNumeric 			; must be 0-9A-Z
 .124c	b0 25		bcs $1273			bcs 	_AXConstantDone 			; no, then end of constant.
 .124e	c9 3a		cmp #$3a			cmp 	#"9"+1 						; shift A-Z so they follow 0-9.
 .1250	90 02		bcc $1254			bcc 	_AXNotAlpha
@@ -429,7 +433,7 @@
 .12a9	f0 24		beq $12cf			beq 	_AXLabelPage
 .12ab	c9 28		cmp #$28			cmp 	#"("						; parenthesis
 .12ad	f0 ce		beq $127d			beq 	_AXParenthesis
-.12af	20 a2 14	jsr $14a2			jsr 	AXIsIdentifierHead 			; identifier start character
+.12af	20 ed 14	jsr $14ed			jsr 	AXIsIdentifierHead 			; identifier start character
 .12b2	b0 17		bcs $12cb			bcs 	_AXCFail
 .12b4	ca		dex				dex 								; back to first character.
 .12b5	20 52 13	jsr $1352			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
@@ -516,7 +520,7 @@
 .1351					_AXMExit:
 .1351	60		rts				rts
 .1352					AXEvaluateLabel:
-.1352	20 ba 14	jsr $14ba			jsr 	AXExtractIdentifier 		; get a label.
+.1352	20 05 15	jsr $1505			jsr 	AXExtractIdentifier 		; get a label.
 .1355	b0 15		bcs $136c			bcs 	_AXEExit 					; we couldn't.
 .1357	a9 a9		lda #$a9			lda 	#$A9
 .1359	8d 00 04	sta $0400			sta 	AXLeft
@@ -592,7 +596,7 @@
 .13c0					AXICreate:
 .13c0	86 32		stx $32				stx 	AXTemp1 					; save address at zTemp1
 .13c2	84 33		sty $33				sty 	AXTemp1+1
-.13c4	20 64 14	jsr $1464			jsr 	AXICalculateHash 			; calculate hash
+.13c4	20 af 14	jsr $14af			jsr 	AXICalculateHash 			; calculate hash
 .13c7	ad 78 04	lda $0478			lda 	AXIBase 					; start scanning.
 .13ca	85 31		sta $31				sta 	AXTemp0+1
 .13cc	64 30		stz $30				stz 	AXTemp0
@@ -600,7 +604,7 @@
 .13d1					_AXIFindEnd:
 .13d1	b2 30		lda ($30)			lda 	(AXTemp0)
 .13d3	f0 12		beq $13e7			beq 	_AXIFoundEnd
-.13d5	20 3e 14	jsr $143e			jsr 	AXICompareCurrent 			; compare AXTemp1 ident vs AXTemp0 record
+.13d5	20 89 14	jsr $1489			jsr 	AXICompareCurrent 			; compare AXTemp1 ident vs AXTemp0 record
 .13d8	90 43		bcc $141d			bcc 	_AXICError 					; duplication error.
 .13da	18		clc				clc 								; go to next
 .13db	b2 30		lda ($30)			lda 	(AXTemp0)
@@ -648,155 +652,206 @@
 .1420	a9 04		lda #$04			lda 	#AXERRDuplicate
 .1422	38		sec				sec
 .1423	60		rts				rts
-.1424					AXIReset:
-.1424	20 be 13	jsr $13be			jsr 	AXIOpen 					; access id store
-.1427	a9 98		lda #$98			lda 	#ASMDATA >> 8 				; save actual pages of storage
-.1429	8d 78 04	sta $0478			sta 	AXIBase
-.142c	a9 9c		lda #$9c			lda 	#ASMDATAEND >> 8
-.142e	8d 79 04	sta $0479			sta 	AXIEnd
-.1431	8d 7b 04	sta $047b			sta 	AXIStack+1 					; reset stack
-.1434	9c 7a 04	stz $047a			stz 	AXIStack
-.1437	9c 00 98	stz $9800			stz 	ASMDATA 					; make the first link zero, erase identifiers.
-.143a	20 bf 13	jsr $13bf			jsr 	AXIClose 					; release ID store.
-.143d	60		rts				rts
+.1424					AXIGet:
+.1424	20 be 13	jsr $13be			jsr 	AXIOpen 					; start.
+.1427	ad 1b 04	lda $041b			lda 	AXCurrent 					; copy address for access
+.142a	85 30		sta $30				sta 	AXTemp0
+.142c	ad 1c 04	lda $041c			lda 	AXCurrent+1
+.142f	85 31		sta $31				sta 	AXTemp0+1
+.1431	b1 30		lda ($30),y			lda 	(AXTemp0),y 				; read
+.1433	20 bf 13	jsr $13bf			jsr 	AXIClose 					; close access
+.1436	60		rts				rts
+.1437					AXIPut:
+.1437	20 be 13	jsr $13be			jsr 	AXIOpen 					; start.
+.143a	48		pha				pha
+.143b	ad 1b 04	lda $041b			lda 	AXCurrent 					; copy address for access
+.143e	85 30		sta $30				sta 	AXTemp0
+.1440	ad 1c 04	lda $041c			lda 	AXCurrent+1
+.1443	85 31		sta $31				sta 	AXTemp0+1
+.1445	68		pla				pla
+.1446	91 30		sta ($30),y			sta 	(AXTemp0),y 				; write
+.1448	20 bf 13	jsr $13bf			jsr 	AXIClose 					; close access
+.144b	60		rts				rts
+.144c					AXIPutData:
+.144c	20 be 13	jsr $13be			jsr 	AXIOpen 					; start.
+.144f	ad 1b 04	lda $041b			lda 	AXCurrent 					; copy address for access
+.1452	85 30		sta $30				sta 	AXTemp0
+.1454	ad 1c 04	lda $041c			lda 	AXCurrent+1
+.1457	85 31		sta $31				sta 	AXTemp0+1
+.1459	98		tya				tya
+.145a	a0 05		ldy #$05			ldy 	#AXID_DataHigh 				; write high byte
+.145c	91 30		sta ($30),y			sta 	(AXTemp0),y
+.145e	8a		txa				txa
+.145f	a0 04		ldy #$04			ldy 	#AXID_DataLow 				; write low byte
+.1461	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1463	a0 03		ldy #$03			ldy 	#AXID_Flags 				; set the 'defined' flag.
+.1465	b1 30		lda ($30),y			lda 	(AXTemp0),y
+.1467	09 80		ora #$80			ora 	#$80
+.1469	91 30		sta ($30),y			sta 	(AXTemp0),y
+.146b	20 bf 13	jsr $13bf			jsr 	AXIClose 					; close access
+.146e	60		rts				rts
+.146f					AXIReset:
+.146f	20 be 13	jsr $13be			jsr 	AXIOpen 					; access id store
+.1472	a9 98		lda #$98			lda 	#ASMDATA >> 8 				; save actual pages of storage
+.1474	8d 78 04	sta $0478			sta 	AXIBase
+.1477	a9 9c		lda #$9c			lda 	#ASMDATAEND >> 8
+.1479	8d 79 04	sta $0479			sta 	AXIEnd
+.147c	8d 7b 04	sta $047b			sta 	AXIStack+1 					; reset stack
+.147f	9c 7a 04	stz $047a			stz 	AXIStack
+.1482	9c 00 98	stz $9800			stz 	ASMDATA 					; make the first link zero, erase identifiers.
+.1485	20 bf 13	jsr $13bf			jsr 	AXIClose 					; release ID store.
+.1488	60		rts				rts
 .0478					AXIBase:
 >0478							.fill 	1
 .0479					AXIEnd:
 >0479							.fill 	1
 .047a					AXIStack:
 >047a							.fill 	2
-.143e					AXICompareCurrent:
-.143e	a0 01		ldy #$01			ldy 	#1 							; check the hashes match.
-.1440	b1 30		lda ($30),y			lda 	(AXTemp0),y
-.1442	cd 7c 04	cmp $047c			cmp 	AXIHash
-.1445	d0 1b		bne $1462			bne 	_AXICCFail 					; they don't, fail.
-.1447	a0 00		ldy #$00			ldy 	#0 							; compare offset 6.
-.1449					_AXICCLoop:
-.1449	5a		phy				phy
-.144a	b1 32		lda ($32),y			lda 	(AXTemp1),y 				; character from buffer
-.144c	48		pha				pha 								; save it.
-.144d	98		tya				tya 								; point into equivalent place in record +6
-.144e	18		clc				clc
-.144f	69 06		adc #$06			adc 	#AXID_Identifier
-.1451	a8		tay				tay
-.1452	68		pla				pla 								; get character back
-.1453	51 30		eor ($30),y			eor 	(AXTemp0),y 				; compare against record entry.
-.1455	7a		ply				ply 								; restore Y
-.1456	c9 00		cmp #$00			cmp 	#0 							; if the compare failed then exit
-.1458	d0 08		bne $1462			bne 	_AXICCFail
-.145a	b1 32		lda ($32),y			lda 	(AXTemp1),y  				; get the buffer character
-.145c	c8		iny				iny 								; consume it
-.145d	0a		asl a				asl 	a 							; if it's bit 7 was clear, go back.
-.145e	90 e9		bcc $1449			bcc 	_AXICCLoop
-.1460	18		clc				clc 								; matched !
-.1461	60		rts				rts
-.1462					_AXICCFail:
-.1462	38		sec				sec
-.1463	60		rts				rts
-.1464					AXICalculateHash:
-.1464	9c 7c 04	stz $047c			stz 	AXIHash 					; clear hash
-.1467	a0 00		ldy #$00			ldy 	#0
-.1469					_AXICHLoop:
-.1469	18		clc				clc 								; add character, saving it
-.146a	b1 32		lda ($32),y			lda 	(AXTemp1),y
-.146c	c8		iny				iny
-.146d	48		pha				pha
-.146e	6d 7c 04	adc $047c			adc 	AXIHash
-.1471	8d 7c 04	sta $047c			sta 	AXIHash
-.1474	68		pla				pla 								; loop back if +ve
-.1475	10 f2		bpl $1469			bpl 	_AXICHLoop
-.1477	ad 7c 04	lda $047c			lda 	AXIHash 					; return value.
-.147a	60		rts				rts
+.1489					AXICompareCurrent:
+.1489	a0 01		ldy #$01			ldy 	#1 							; check the hashes match.
+.148b	b1 30		lda ($30),y			lda 	(AXTemp0),y
+.148d	cd 7c 04	cmp $047c			cmp 	AXIHash
+.1490	d0 1b		bne $14ad			bne 	_AXICCFail 					; they don't, fail.
+.1492	a0 00		ldy #$00			ldy 	#0 							; compare offset 6.
+.1494					_AXICCLoop:
+.1494	5a		phy				phy
+.1495	b1 32		lda ($32),y			lda 	(AXTemp1),y 				; character from buffer
+.1497	48		pha				pha 								; save it.
+.1498	98		tya				tya 								; point into equivalent place in record +6
+.1499	18		clc				clc
+.149a	69 06		adc #$06			adc 	#AXID_Identifier
+.149c	a8		tay				tay
+.149d	68		pla				pla 								; get character back
+.149e	51 30		eor ($30),y			eor 	(AXTemp0),y 				; compare against record entry.
+.14a0	7a		ply				ply 								; restore Y
+.14a1	c9 00		cmp #$00			cmp 	#0 							; if the compare failed then exit
+.14a3	d0 08		bne $14ad			bne 	_AXICCFail
+.14a5	b1 32		lda ($32),y			lda 	(AXTemp1),y  				; get the buffer character
+.14a7	c8		iny				iny 								; consume it
+.14a8	0a		asl a				asl 	a 							; if it's bit 7 was clear, go back.
+.14a9	90 e9		bcc $1494			bcc 	_AXICCLoop
+.14ab	18		clc				clc 								; matched !
+.14ac	60		rts				rts
+.14ad					_AXICCFail:
+.14ad	38		sec				sec
+.14ae	60		rts				rts
+.14af					AXICalculateHash:
+.14af	9c 7c 04	stz $047c			stz 	AXIHash 					; clear hash
+.14b2	a0 00		ldy #$00			ldy 	#0
+.14b4					_AXICHLoop:
+.14b4	18		clc				clc 								; add character, saving it
+.14b5	b1 32		lda ($32),y			lda 	(AXTemp1),y
+.14b7	c8		iny				iny
+.14b8	48		pha				pha
+.14b9	6d 7c 04	adc $047c			adc 	AXIHash
+.14bc	8d 7c 04	sta $047c			sta 	AXIHash
+.14bf	68		pla				pla 								; loop back if +ve
+.14c0	10 f2		bpl $14b4			bpl 	_AXICHLoop
+.14c2	ad 7c 04	lda $047c			lda 	AXIHash 					; return value.
+.14c5	60		rts				rts
 .047c					AXIHash:
 >047c							.fill 	1
-.147b					AXConvertUpper:
-.147b	c9 61		cmp #$61			cmp 	#"a"
-.147d	90 06		bcc $1485			bcc 	_AXCNotUpper
-.147f	c9 7b		cmp #$7b			cmp 	#"z"+1
-.1481	b0 02		bcs $1485			bcs 	_AXCNotUpper
-.1483	49 20		eor #$20			eor 	#$20
-.1485					_AXCNotUpper:
-.1485	60		rts				rts
-.1486					AXIsAlpha:
-.1486	c9 41		cmp #$41			cmp 	#"A"
-.1488	90 05		bcc $148f			bcc 	_AXNotAlpha
-.148a	c9 5b		cmp #$5b			cmp 	#"Z"+1
-.148c	b0 01		bcs $148f			bcs 	_AXNotAlpha
-.148e	60		rts				rts
-.148f					_AXNotAlpha:
-.148f	38		sec				sec
-.1490	60		rts				rts
-.1491					AXIsNumeric:
-.1491	c9 30		cmp #$30			cmp 	#"0"
-.1493	90 05		bcc $149a			bcc 	_AXNotDigit
-.1495	c9 3a		cmp #$3a			cmp 	#"9"+1
-.1497	b0 01		bcs $149a			bcs 	_AXNotDigit
-.1499	60		rts				rts
-.149a					_AXNotDigit:
-.149a	38		sec				sec
-.149b	60		rts				rts
-.149c					AXIsAlphaNumeric:
-.149c	20 86 14	jsr $1486			jsr 	AXIsAlpha 					; if alpha then exit with yes
-.149f	b0 f0		bcs $1491			bcs 	AXIsNumeric 				; no, depends on is numeric
-.14a1	60		rts				rts
-.14a2					AXIsIdentifierHead:
-.14a2	20 86 14	jsr $1486			jsr 	AXIsAlpha
-.14a5	b0 01		bcs $14a8			bcs 	AXCheckIdentifierMisc
-.14a7	60		rts				rts
-.14a8					AXCheckIdentifierMisc:
-.14a8	c9 5f		cmp #$5f			cmp 	#"_"
-.14aa	f0 06		beq $14b2			beq 	_AXIsIdentB
-.14ac	c9 2e		cmp #$2e			cmp 	#"."
-.14ae	f0 02		beq $14b2			beq 	_AXIsIdentB
-.14b0	38		sec				sec
-.14b1	60		rts				rts
-.14b2					_AXIsIdentB:
-.14b2	18		clc				clc
-.14b3	60		rts				rts
-.14b4					AXIsIdentifierBody:
-.14b4	20 9c 14	jsr $149c			jsr 	AXIsAlphaNumeric
-.14b7	b0 ef		bcs $14a8			bcs 	AXCheckIdentifierMisc
-.14b9	60		rts				rts
-.14ba					AXExtractIdentifier:
-.14ba	bd 20 04	lda $0420,x			lda 	AXBuffer,x 					; check the first character.
-.14bd	20 a2 14	jsr $14a2			jsr 	AXIsIdentifierHead
-.14c0	b0 22		bcs $14e4			bcs 	_AXELFail
-.14c2	a0 00		ldy #$00			ldy 	#0 							; save position.
-.14c4					_AXELLoop:
-.14c4	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y 			; save in buffer, bump position
-.14c7	c8		iny				iny
-.14c8	c0 11		cpy #$11			cpy 	#AXMaxIdentSize+1 			; too long
-.14ca	f0 18		beq $14e4			beq 	_AXELFail
-.14cc	e8		inx				inx 								; consume character
-.14cd	a9 00		lda #$00			lda 	#0 							; make ASCIIZ.
-.14cf	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
-.14d2	bd 20 04	lda $0420,x			lda 	AXBuffer,x 					; get the next caracter.
-.14d5	20 b4 14	jsr $14b4			jsr 	AXIsIdentifierBody 			; is it a body character
-.14d8	90 ea		bcc $14c4			bcc 	_AXELLoop 					; if so add it to the label.
-.14da	b9 09 04	lda $0409,y			lda 	AXLabelBuffer-1,y 			; set bit 7 of last character.
-.14dd	09 80		ora #$80			ora 	#$80
-.14df	99 09 04	sta $0409,y			sta 	AXLabelBuffer-1,y
-.14e2	18		clc				clc 								; successfully acquired a label.
-.14e3	60		rts				rts
-.14e4					_AXELFail:
-.14e4	a9 02		lda #$02			lda 	#AXERRIdentifier			; bad label.
-.14e6	38		sec				sec
-.14e7	60		rts				rts
+.14c6					AXConvertUpper:
+.14c6	c9 61		cmp #$61			cmp 	#"a"
+.14c8	90 06		bcc $14d0			bcc 	_AXCNotUpper
+.14ca	c9 7b		cmp #$7b			cmp 	#"z"+1
+.14cc	b0 02		bcs $14d0			bcs 	_AXCNotUpper
+.14ce	49 20		eor #$20			eor 	#$20
+.14d0					_AXCNotUpper:
+.14d0	60		rts				rts
+.14d1					AXIsAlpha:
+.14d1	c9 41		cmp #$41			cmp 	#"A"
+.14d3	90 05		bcc $14da			bcc 	_AXNotAlpha
+.14d5	c9 5b		cmp #$5b			cmp 	#"Z"+1
+.14d7	b0 01		bcs $14da			bcs 	_AXNotAlpha
+.14d9	60		rts				rts
+.14da					_AXNotAlpha:
+.14da	38		sec				sec
+.14db	60		rts				rts
+.14dc					AXIsNumeric:
+.14dc	c9 30		cmp #$30			cmp 	#"0"
+.14de	90 05		bcc $14e5			bcc 	_AXNotDigit
+.14e0	c9 3a		cmp #$3a			cmp 	#"9"+1
+.14e2	b0 01		bcs $14e5			bcs 	_AXNotDigit
+.14e4	60		rts				rts
+.14e5					_AXNotDigit:
+.14e5	38		sec				sec
+.14e6	60		rts				rts
+.14e7					AXIsAlphaNumeric:
+.14e7	20 d1 14	jsr $14d1			jsr 	AXIsAlpha 					; if alpha then exit with yes
+.14ea	b0 f0		bcs $14dc			bcs 	AXIsNumeric 				; no, depends on is numeric
+.14ec	60		rts				rts
+.14ed					AXIsIdentifierHead:
+.14ed	20 d1 14	jsr $14d1			jsr 	AXIsAlpha
+.14f0	b0 01		bcs $14f3			bcs 	AXCheckIdentifierMisc
+.14f2	60		rts				rts
+.14f3					AXCheckIdentifierMisc:
+.14f3	c9 5f		cmp #$5f			cmp 	#"_"
+.14f5	f0 06		beq $14fd			beq 	_AXIsIdentB
+.14f7	c9 2e		cmp #$2e			cmp 	#"."
+.14f9	f0 02		beq $14fd			beq 	_AXIsIdentB
+.14fb	38		sec				sec
+.14fc	60		rts				rts
+.14fd					_AXIsIdentB:
+.14fd	18		clc				clc
+.14fe	60		rts				rts
+.14ff					AXIsIdentifierBody:
+.14ff	20 e7 14	jsr $14e7			jsr 	AXIsAlphaNumeric
+.1502	b0 ef		bcs $14f3			bcs 	AXCheckIdentifierMisc
+.1504	60		rts				rts
+.1505					AXExtractIdentifier:
+.1505	bd 20 04	lda $0420,x			lda 	AXBuffer,x 					; check the first character.
+.1508	20 ed 14	jsr $14ed			jsr 	AXIsIdentifierHead
+.150b	b0 22		bcs $152f			bcs 	_AXELFail
+.150d	a0 00		ldy #$00			ldy 	#0 							; save position.
+.150f					_AXELLoop:
+.150f	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y 			; save in buffer, bump position
+.1512	c8		iny				iny
+.1513	c0 11		cpy #$11			cpy 	#AXMaxIdentSize+1 			; too long
+.1515	f0 18		beq $152f			beq 	_AXELFail
+.1517	e8		inx				inx 								; consume character
+.1518	a9 00		lda #$00			lda 	#0 							; make ASCIIZ.
+.151a	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
+.151d	bd 20 04	lda $0420,x			lda 	AXBuffer,x 					; get the next caracter.
+.1520	20 ff 14	jsr $14ff			jsr 	AXIsIdentifierBody 			; is it a body character
+.1523	90 ea		bcc $150f			bcc 	_AXELLoop 					; if so add it to the label.
+.1525	b9 09 04	lda $0409,y			lda 	AXLabelBuffer-1,y 			; set bit 7 of last character.
+.1528	09 80		ora #$80			ora 	#$80
+.152a	99 09 04	sta $0409,y			sta 	AXLabelBuffer-1,y
+.152d	18		clc				clc 								; successfully acquired a label.
+.152e	60		rts				rts
+.152f					_AXELFail:
+.152f	a9 02		lda #$02			lda 	#AXERRIdentifier			; bad label.
+.1531	38		sec				sec
+.1532	60		rts				rts
 
 ;******  Return to file: main.asm
 
-.14e8	a2 ff		ldx #$ff	Start:	ldx 	#$FF
-.14ea	9a		txs				txs
-.14eb	20 24 14	jsr $1424			jsr 	AXIReset
-.14ee	a2 ff		ldx #$ff			ldx 	#lbl1 & $FF
-.14f0	a0 14		ldy #$14			ldy 	#lbl1 >> 8
-.14f2	20 c0 13	jsr $13c0			jsr 	AXICreate
-.14f5	a2 ff		ldx #$ff			ldx 	#lbl1 & $FF
-.14f7	a0 14		ldy #$14			ldy 	#lbl1 >> 8
-.14f9	20 c0 13	jsr $13c0			jsr 	AXICreate
->14fc	db						.byte 	$DB
-.14fd	80 fe		bra $14fd	h1:		bra 	h1
->14ff	4f 52 41 c3			lbl1:	.text 	'ORA','C'+$80
->1503	46 34 b2			lbl2:	.text 	'F4','2'+$80
+.1533	a2 ff		ldx #$ff	Start:	ldx 	#$FF
+.1535	9a		txs				txs
+.1536	20 6f 14	jsr $146f			jsr 	AXIReset
+.1539	a2 69		ldx #$69			ldx 	#lbl1 & $FF
+.153b	a0 15		ldy #$15			ldy 	#lbl1 >> 8
+.153d	20 c0 13	jsr $13c0			jsr 	AXICreate
+.1540	a9 01		lda #$01			lda 	#AXIT_Label
+.1542	a0 02		ldy #$02			ldy 	#AXID_Type
+.1544	20 37 14	jsr $1437			jsr 	AXIPut
+.1547	a0 7f		ldy #$7f			ldy 	#$7F
+.1549	a2 fe		ldx #$fe			ldx 	#$FE
+.154b	20 4c 14	jsr $144c			jsr 	AXIPutData
+.154e	a2 6d		ldx #$6d			ldx 	#lbl2 & $FF
+.1550	a0 15		ldy #$15			ldy 	#lbl2 >> 8
+.1552	20 c0 13	jsr $13c0			jsr 	AXICreate
+.1555	a9 01		lda #$01			lda 	#AXIT_Label
+.1557	a0 02		ldy #$02			ldy 	#AXID_Type
+.1559	20 37 14	jsr $1437			jsr 	AXIPut
+.155c	a0 01		ldy #$01			ldy 	#$01
+.155e	a2 2a		ldx #$2a			ldx 	#$2A
+.1560	20 4c 14	jsr $144c			jsr 	AXIPutData
+.1563	4c ff ff	jmp $ffff			jmp 	$FFFF
+>1566	db						.byte 	$DB
+.1567	80 fe		bra $1567	h1:		bra 	h1
+>1569	4f 52 41 c3			lbl1:	.text 	'ORA','C'+$80
+>156d	46 2e b2			lbl2:	.text 	'F.','2'+$80
 
 ;******  End of listing

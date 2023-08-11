@@ -47,12 +47,12 @@ assemble: prelim
 	$(ASSEMBLER) -D TESTING=0
 
 prelim:
-	$(CDEL) *.bin
 	$(PYTHON) scripts$(S)exprtable.py
 	$(PYTHON) scripts$(S)makelib.py >build$(S)libassembler.asm
 	$(CCOPY)  build$(S)libassembler.asm $(BINDIR)
 	
 run: assemble
+	$(CDEL) *.bin
 	$(EMULATOR)
 
 tools:
@@ -62,4 +62,8 @@ tools:
 test: prelim
 	$(PYTHON) testing$(S)expr.py >build$(S)testdata.inc
 	$(ASSEMBLER) -D TESTING=1
+	$(CDEL) *.bin
 	$(EMULATOR)
+
+ident:
+	$(PYTHON) scripts$(S)showident.py $(ASMDATA)

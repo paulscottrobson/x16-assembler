@@ -12,6 +12,12 @@
 
 		.section as16code
 
+
+AXIT_Unused = 		0
+AXIT_Label = 		1
+AXIT_PsuedoOp = 	2
+AXIT_Macro =  		3
+
 AXID_Hash = 		1
 AXID_Type = 		2
 AXID_Flags = 		3

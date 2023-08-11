@@ -47,15 +47,30 @@ Start:	ldx 	#$FF
 		ldx 	#lbl1 & $FF
 		ldy 	#lbl1 >> 8
 		jsr 	AXICreate
-		ldx 	#lbl1 & $FF
-		ldy 	#lbl1 >> 8
-		jsr 	AXICreate
 
+		lda 	#AXIT_Label
+		ldy 	#AXID_Type
+		jsr 	AXIPut
+		ldy 	#$7F
+		ldx 	#$FE
+		jsr 	AXIPutData
+
+		ldx 	#lbl2 & $FF
+		ldy 	#lbl2 >> 8
+		jsr 	AXICreate
+		lda 	#AXIT_Label
+		ldy 	#AXID_Type
+		jsr 	AXIPut
+		ldy 	#$01
+		ldx 	#$2A
+		jsr 	AXIPutData
+
+		jmp 	$FFFF
 		.byte 	$DB
 h1:		bra 	h1		
 
 lbl1:	.text 	'ORA','C'+$80
-lbl2:	.text 	'F4','2'+$80
+lbl2:	.text 	'F.','2'+$80
 		.send as16code
 
 		.if 	TESTING==1
