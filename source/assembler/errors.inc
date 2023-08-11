@@ -19,8 +19,9 @@
 ; ************************************************************************************************
 
 AXERRSyntax = $01 							; general syntax error.
-AXERRLabel = $02 							; label error - missing or too long.
+AXERRIdentifier = $02 						; bad identifier, missing/too long.
 AXERRDivZero = $03 							; divide by zero.
+AXERRDuplicate = $04 						; identifier defined twice.
 
 		.send as16code
 

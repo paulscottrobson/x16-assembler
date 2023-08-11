@@ -279,14 +279,15 @@ _AXMExit:
 ; ************************************************************************************************
 
 AXEvaluateLabel:
-		jsr 	AXExtractLabel 				; get a label. 
+		jsr 	AXExtractIdentifier 		; get a label. 
 		bcs 	_AXEExit 					; we couldn't.
 
 		lda 	#$A9
 		sta 	AXLeft
 		lda 	#$44
 		sta 	AXLeft+1
-		stz 	AXLeft+2
+		lda 	#$80
+		sta 	AXLeft+2
 
 		lda 	#4 							; page of evaluated label
 		sta 	AXEvaluatePage 
@@ -294,38 +295,6 @@ AXEvaluateLabel:
 
 _AXEExit:
 		rts		
-
-; ************************************************************************************************
-;
-;							Extract Label at X to LabelBuffer
-;
-; ************************************************************************************************
-
-AXExtractLabel:	
-		lda 	AXBuffer,x 					; check the first character.
-		jsr 	AXIsIdentifierHead
-		bcs 	_AXELFail
-		ldy 	#0 							; save position.
-		;
-_AXELLoop:		
-		sta 	AXLabelBuffer,y 			; save in buffer, bump position
-		iny
-		cpy 	#AXMaxIdentSize+1 			; too long
-		beq 	_AXELFail
-		inx 								; consume character
-		lda 	#0 							; make ASCIIZ.
-		sta 	AXLabelBuffer,y
-		;
-		lda 	AXBuffer,x 					; get the next caracter.
-		jsr 	AXIsIdentifierBody 			; is it a body character
-		bcc 	_AXELLoop 					; if so add it to the label.
-		clc 								; successfully acquired a label.
-		rts
-
-_AXELFail:
-		lda 	#AXERRLabel 				; bad label.
-		sec
-		rts
 
 		.send as16code
 

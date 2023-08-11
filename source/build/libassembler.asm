@@ -13,13 +13,29 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 
-		.section as16storage
+; ************************************************************************************************
+;
+;										Zero Page
+;
+; ************************************************************************************************
+
+		.section as16zeropage
+
+AXTemp0:
+		.fill 	2
+AXTemp1:
+		.fill 	2
+
+		.send 	as16zeropage
+
 
 ; ************************************************************************************************
 ;
 ;										Constants
 ;
 ; ************************************************************************************************
+
+		.section as16storage
 
 AXMaxLineSize = 80
 AXMaxIdentSize = 16
@@ -43,6 +59,9 @@ AXEvaluatePage: 							; page # of evaluated label.
 
 AXLabelBuffer: 								; buffer for label to be evaluated (ASCIIZ, U/C)
 		.fill 	AXMaxIdentSize+1
+
+AXCurrent:									; address of currently selected identifier.
+		.fill 	2
 
 ; ************************************************************************************************
 ;
@@ -94,8 +113,9 @@ AXEndFrame:
 ; ************************************************************************************************
 
 AXERRSyntax = $01 							; general syntax error.
-AXERRLabel = $02 							; label error - missing or too long.
+AXERRIdentifier = $02 						; bad identifier, missing/too long.
 AXERRDivZero = $03 							; divide by zero.
+AXERRDuplicate = $04 						; identifier defined twice.
 
 		.send as16code
 
@@ -994,52 +1014,21 @@ _AXMExit:
 ; ************************************************************************************************
 
 AXEvaluateLabel:
-		jsr 	AXExtractLabel 				; get a label.
+		jsr 	AXExtractIdentifier 		; get a label.
 		bcs 	_AXEExit 					; we couldn't.
 
 		lda 	#$A9
 		sta 	AXLeft
 		lda 	#$44
 		sta 	AXLeft+1
-		stz 	AXLeft+2
+		lda 	#$80
+		sta 	AXLeft+2
 
 		lda 	#4 							; page of evaluated label
 		sta 	AXEvaluatePage
 		clc
 
 _AXEExit:
-		rts
-
-; ************************************************************************************************
-;
-;							Extract Label at X to LabelBuffer
-;
-; ************************************************************************************************
-
-AXExtractLabel:
-		lda 	AXBuffer,x 					; check the first character.
-		jsr 	AXIsIdentifierHead
-		bcs 	_AXELFail
-		ldy 	#0 							; save position.
-		;
-_AXELLoop:
-		sta 	AXLabelBuffer,y 			; save in buffer, bump position
-		iny
-		cpy 	#AXMaxIdentSize+1 			; too long
-		beq 	_AXELFail
-		inx 								; consume character
-		lda 	#0 							; make ASCIIZ.
-		sta 	AXLabelBuffer,y
-		;
-		lda 	AXBuffer,x 					; get the next caracter.
-		jsr 	AXIsIdentifierBody 			; is it a body character
-		bcc 	_AXELLoop 					; if so add it to the label.
-		clc 								; successfully acquired a label.
-		rts
-
-_AXELFail:
-		lda 	#AXERRLabel 				; bad label.
-		sec
 		rts
 
 		.send as16code
@@ -1123,6 +1112,300 @@ AXBinaryVectors:
 	.word	AXBinaryMult                     ; *
 	.word	AXBinaryDivide                   ; /
 	.word	AXBinaryModulus                  ; %
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		access.asm
+;		Purpose:	Access the identifier store (if, say, it's in paged memory.)
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Access identifier memory
+;
+; ************************************************************************************************
+
+AXIOpen:
+		rts
+
+AXIClose:
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		create.asm
+;		Purpose:	Create an identifier
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Create an identifier YX
+;
+; ************************************************************************************************
+
+AXICreate:
+		stx 	AXTemp1 					; save address at zTemp1
+		sty 	AXTemp1+1
+		jsr 	AXICalculateHash 			; calculate hash
+		;
+		lda 	AXIBase 					; start scanning.
+		sta 	AXTemp0+1
+		stz 	AXTemp0
+		jsr 	AXIOpen 					; start.
+		;
+		;		Find the end, checking for duplicates as we go.
+		;
+_AXIFindEnd:								; go to the end checking for duplicates.
+		lda 	(AXTemp0)
+		beq 	_AXIFoundEnd
+		jsr 	AXICompareCurrent 			; compare AXTemp1 ident vs AXTemp0 record
+		bcc 	_AXICError 					; duplication error.
+		;
+		clc 								; go to next
+		lda 	(AXTemp0)
+		adc 	AXTemp0
+		sta 	AXTemp0
+		bcc 	_AXIFindEnd
+		inc 	AXTemp0+1
+		bra 	_AXIFindEnd
+		;
+		;		AXTemp0 now points at the end (the zero link)
+		;
+_AXIFoundEnd:
+		ldy 	#1 							; fill the data in. +1 is the hash
+		lda 	AXIHash
+		sta 	(AXTemp0),y
+		iny
+		;
+_AXIFill:									; fill +2,3,4,5 with zeros.
+		lda 	#0
+		sta 	(AXTemp0),y
+		iny
+		cpy 	#6
+		bne 	_AXIFill
+_AXICopy:
+		phy
+		tya 								; access equivalent character in name.
+		sec
+		sbc 	#6
+		tay
+		lda 	(AXTemp1),y 				; get character and write it out.
+		ply
+		sta 	(AXTemp0),y
+		iny 								; next character
+		asl 	a 							; keep going till bit 7 set.
+		bcc 	_AXICopy
+
+		lda 	#0 							; write zero at end (end of list)
+		sta 	(AXTemp0),y
+		;
+		tya 								; set the offset link.
+		sta 	(AXTemp0)
+
+		lda 	AXTemp0 					; save as current record
+		sta 	AXCurrent
+		lda 	AXTemp0+1
+		sta 	AXCurrent+1
+		jsr 	AXIClose 					; close access
+		clc
+		rts
+
+_AXICError:
+		.byte 	$DB
+		jsr 	AXIClose 					; close access
+		lda 	#AXERRDuplicate
+		sec
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		initialise.asm
+;		Purpose:	Initialise the identifier store
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;							Initialise the identifier store and stack
+;
+; ************************************************************************************************
+
+AXIReset:
+		jsr 	AXIOpen 					; access id store
+		lda 	#ASMDATA >> 8 				; save actual pages of storage
+		sta 	AXIBase
+		lda 	#ASMDATAEND >> 8
+		sta 	AXIEnd
+		;
+		sta 	AXIStack+1 					; reset stack
+		stz 	AXIStack
+		;
+		stz 	ASMDATA 					; make the first link zero, erase identifiers.
+		jsr 	AXIClose 					; release ID store.
+		rts
+
+		.send as16code
+
+		.section as16storage
+AXIBase:									; MSB of identifier base area
+		.fill 	1
+AXIEnd: 									; MSB of identifier end area
+		.fill 	1
+AXIStack: 									; Frame stack pointe.
+		.fill 	2
+		.send as16storage
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		utility.asm
+;		Purpose:	Identifier utility functions
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;		Compare current checked (text at AXTemp1, hash in AXHash) with record AXTemp0
+;								CC if match, CS if no match.
+;
+; ************************************************************************************************
+
+AXICompareCurrent:
+		ldy 	#1 							; check the hashes match.
+		lda 	(AXTemp0),y
+		cmp 	AXIHash
+		bne 	_AXICCFail 					; they don't, fail.
+		;
+		ldy 	#0 							; compare offset 6.
+_AXICCLoop:
+		phy
+		lda 	(AXTemp1),y 				; character from buffer
+		pha 								; save it.
+		tya 								; point into equivalent place in record +6
+		clc
+		adc 	#6
+		tay
+		pla 								; get character back
+		eor 	(AXTemp0),y 				; compare against record entry.
+		ply 								; restore Y
+		cmp 	#0 							; if the compare failed then exit
+		bne 	_AXICCFail
+		;
+		lda 	(AXTemp1),y  				; get the buffer character
+		iny 								; consume it
+		asl 	a 							; if it's bit 7 was clear, go back.
+		bcc 	_AXICCLoop
+		clc 								; matched !
+		rts
+
+_AXICCFail:
+		sec
+		rts
+
+; ************************************************************************************************
+;
+;						Calculate hash at AXTemp1 return in A/AXIHash
+;
+; ************************************************************************************************
+
+AXICalculateHash:
+		stz 	AXIHash 					; clear hash
+		ldy 	#0
+_AXICHLoop:
+		clc 								; add character, saving it
+		lda 	(AXTemp1),y
+		iny
+		pha
+		adc 	AXIHash
+		sta 	AXIHash
+		pla 								; loop back if +ve
+		bpl 	_AXICHLoop
+		lda 	AXIHash 					; return value.
+		rts
+
+		.send as16code
+
+		.section as16storage
+AXIHash:
+		.fill 	1
+		.endsection
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
@@ -1232,6 +1515,70 @@ _AXIsIdentB:
 AXIsIdentifierBody:
 		jsr 	AXIsAlphaNumeric
 		bcs 	AXCheckIdentifierMisc
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		extract.asm
+;		Purpose:	Extract an identifier.
+;		Created:	9th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;							Extract Identifier at X to LabelBuffer
+;
+; ************************************************************************************************
+
+AXExtractIdentifier:
+		lda 	AXBuffer,x 					; check the first character.
+		jsr 	AXIsIdentifierHead
+		bcs 	_AXELFail
+		ldy 	#0 							; save position.
+		;
+_AXELLoop:
+		sta 	AXLabelBuffer,y 			; save in buffer, bump position
+		iny
+		cpy 	#AXMaxIdentSize+1 			; too long
+		beq 	_AXELFail
+		inx 								; consume character
+		lda 	#0 							; make ASCIIZ.
+		sta 	AXLabelBuffer,y
+		;
+		lda 	AXBuffer,x 					; get the next caracter.
+		jsr 	AXIsIdentifierBody 			; is it a body character
+		bcc 	_AXELLoop 					; if so add it to the label.
+		;
+		lda 	AXLabelBuffer-1,y 			; set bit 7 of last character.
+		ora 	#$80
+		sta 	AXLabelBuffer-1,y
+		;
+		clc 								; successfully acquired a label.
+		rts
+
+_AXELFail:
+		lda 	#AXERRIdentifier			; bad label.
+		sec
 		rts
 
 		.send as16code

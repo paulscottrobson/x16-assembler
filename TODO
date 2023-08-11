@@ -1,2 +1,7 @@
 TODO:
-	Identifier design and add to label evaluate stuff.
+	Set/Get type
+	Set/Get flag
+	Set/Get data
+	Dump
+	Search (2 !)
+	Check it works on evaluator.

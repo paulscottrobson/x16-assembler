@@ -1,66 +1,30 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name : 		main.asm
-;		Purpose :	Main Program
-;		Date :		9th August 2023
-; 		Reviewed :	No
-;		Author : 	Paul Robson (paul@robsons.org.uk)
+;		Name:		access.asm
+;		Purpose:	Access the identifier store (if, say, it's in paged memory.)
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
-; ************************************************************************************************
-
-; ************************************************************************************************
-;
-;								Set up the three required sections
-;
-; ************************************************************************************************
-
-		* = $1000
-		.dsection as16code
-
-		* = STORAGE
-		.dsection as16storage
-
-		* = ZEROPAGE
-		.dsection as16zeropage
-
-; ************************************************************************************************
-;
-;										Test code boot
-;
 ; ************************************************************************************************
 
 		.section as16code
-		jmp 	Start
 
-		.include "build/libassembler.asm"
+; ************************************************************************************************
+;
+;									Access identifier memory
+;
+; ************************************************************************************************
 
-Start:	ldx 	#$FF
-		txs
-		jsr 	AXIReset
+AXIOpen:
+		rts
 
-		.if 	TESTING==1
-		jsr 	TestExpressions
-		.endif
+AXIClose:
+		rts
 
-		ldx 	#lbl1 & $FF
-		ldy 	#lbl1 >> 8
-		jsr 	AXICreate
-		ldx 	#lbl1 & $FF
-		ldy 	#lbl1 >> 8
-		jsr 	AXICreate
-
-		.byte 	$DB
-h1:		bra 	h1		
-
-lbl1:	.text 	'ORA','C'+$80
-lbl2:	.text 	'F4','2'+$80
 		.send as16code
-
-		.if 	TESTING==1
-		.include "testing/testexpr.asm"
-		.endif
 
 ; ************************************************************************************************
 ;

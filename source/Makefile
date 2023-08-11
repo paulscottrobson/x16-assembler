@@ -15,13 +15,31 @@ else
 include ../documents/common.make
 endif
 
+# *******************************************************************************************
+#								Zero Page and Storage base (general)
+# *******************************************************************************************
+
 ZEROPAGE = \$$30
 STORAGE = \$$400
+
+MEMORYMAP = -D ZEROPAGE=$(ZEROPAGE) -D STORAGE=$(STORAGE)
+
+# *******************************************************************************************
+#							  Identifier store and stack space
+# *******************************************************************************************
+
+ASMDATA = \$$9800
+ASMDATAEND = \$$9C00
+ASMDATACTL = 0
+
+ASMDATADESC = -D ASMDATA=$(ASMDATA) -D ASMDATAEND=$(ASMDATAEND) -D ASMDATACTL=$(ASMDATACTL)
+
+# *******************************************************************************************
 
 BINDIR = $(ROOTDIR)bin$(S)
 BINFILE = build$(S)asm.prg
 EMULATOR = $(BINDIR)x16emu$(APPSTEM) -prg $(BINFILE),1000 -run -debug -scale 2 -dump R
-ASSEMBLER = 64tass -q -c -C -D ZEROPAGE=$(ZEROPAGE) -D STORAGE=$(STORAGE) -Wall main.asm -L build$(S)asm.lst -o $(BINFILE)
+ASSEMBLER = 64tass -q -c -C $(MEMORYMAP) $(ASMDATADESC) -Wall main.asm -L build$(S)asm.lst -o $(BINFILE) 
 
 all: assemble
 
@@ -41,7 +59,7 @@ tools:
 	$(CCOPY) $(ROOTDIR)..$(S)x16-emulator$(S)x16emu$(APPSTEM) $(BINDIR)
 	$(CCOPY) $(ROOTDIR)..$(S)x16-rom$(S)build$(S)x16$(S)rom.bin $(BINDIR)
 
-test1: prelim
+test: prelim
 	$(PYTHON) testing$(S)expr.py >build$(S)testdata.inc
 	$(ASSEMBLER) -D TESTING=1
 	$(EMULATOR)

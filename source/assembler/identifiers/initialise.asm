@@ -1,67 +1,48 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name : 		main.asm
-;		Purpose :	Main Program
-;		Date :		9th August 2023
-; 		Reviewed :	No
-;		Author : 	Paul Robson (paul@robsons.org.uk)
+;		Name:		initialise.asm
+;		Purpose:	Initialise the identifier store
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
-; ************************************************************************************************
-
-; ************************************************************************************************
-;
-;								Set up the three required sections
-;
-; ************************************************************************************************
-
-		* = $1000
-		.dsection as16code
-
-		* = STORAGE
-		.dsection as16storage
-
-		* = ZEROPAGE
-		.dsection as16zeropage
-
-; ************************************************************************************************
-;
-;										Test code boot
-;
 ; ************************************************************************************************
 
 		.section as16code
-		jmp 	Start
 
-		.include "build/libassembler.asm"
+; ************************************************************************************************
+;
+;							Initialise the identifier store and stack
+;
+; ************************************************************************************************
 
-Start:	ldx 	#$FF
-		txs
-		jsr 	AXIReset
+AXIReset:
+		jsr 	AXIOpen 					; access id store
+		lda 	#ASMDATA >> 8 				; save actual pages of storage
+		sta 	AXIBase
+		lda 	#ASMDATAEND >> 8
+		sta 	AXIEnd
+		;
+		sta 	AXIStack+1 					; reset stack
+		stz 	AXIStack
+		;
+		stz 	ASMDATA 					; make the first link zero, erase identifiers.
+		jsr 	AXIClose 					; release ID store.
+		rts
 
-		.if 	TESTING==1
-		jsr 	TestExpressions
-		.endif
-
-		ldx 	#lbl1 & $FF
-		ldy 	#lbl1 >> 8
-		jsr 	AXICreate
-		ldx 	#lbl1 & $FF
-		ldy 	#lbl1 >> 8
-		jsr 	AXICreate
-
-		.byte 	$DB
-h1:		bra 	h1		
-
-lbl1:	.text 	'ORA','C'+$80
-lbl2:	.text 	'F4','2'+$80
 		.send as16code
 
-		.if 	TESTING==1
-		.include "testing/testexpr.asm"
-		.endif
-
+		.section as16storage
+AXIBase:									; MSB of identifier base area
+		.fill 	1		
+AXIEnd: 									; MSB of identifier end area
+		.fill 	1		
+AXIStack: 									; Frame stack pointe.
+		.fill 	2		
+		.send as16storage
+		
 ; ************************************************************************************************
 ;
 ;									Changes and Updates

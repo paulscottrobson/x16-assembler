@@ -1,0 +1,21 @@
+Identifier Structure
+====================
+
++0 		(offset to next)
++1 		Hash: Sum of characters in identifier (upper case with bit 7 of last character set)
++2 		Type Byte
+			00 		Unused
+			01 		Identifier or Label.
+			02 		Pseudo Operation.
+			03 		Macro
+			F1..9 	Group 1 to 9 (if used)
+
++3 		Flags
+			bit 7 	Set if defined.
+			bit 0.6 Zero
+
++4,+5 	Data bytes
+
++6 		Identifier (name in upper case, bit 7 of last character set.)
+
++n 		Any supplemental data (e.g. Macro Body)

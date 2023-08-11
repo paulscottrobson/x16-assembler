@@ -1,66 +1,55 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name : 		main.asm
-;		Purpose :	Main Program
-;		Date :		9th August 2023
-; 		Reviewed :	No
-;		Author : 	Paul Robson (paul@robsons.org.uk)
+;		Name:		extract.asm
+;		Purpose:	Extract an identifier.
+;		Created:	9th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
-; ************************************************************************************************
-
-; ************************************************************************************************
-;
-;								Set up the three required sections
-;
-; ************************************************************************************************
-
-		* = $1000
-		.dsection as16code
-
-		* = STORAGE
-		.dsection as16storage
-
-		* = ZEROPAGE
-		.dsection as16zeropage
-
-; ************************************************************************************************
-;
-;										Test code boot
-;
 ; ************************************************************************************************
 
 		.section as16code
-		jmp 	Start
 
-		.include "build/libassembler.asm"
+; ************************************************************************************************
+;
+;							Extract Identifier at X to LabelBuffer
+;
+; ************************************************************************************************
 
-Start:	ldx 	#$FF
-		txs
-		jsr 	AXIReset
+AXExtractIdentifier:	
+		lda 	AXBuffer,x 					; check the first character.
+		jsr 	AXIsIdentifierHead
+		bcs 	_AXELFail
+		ldy 	#0 							; save position.
+		;
+_AXELLoop:		
+		sta 	AXLabelBuffer,y 			; save in buffer, bump position
+		iny
+		cpy 	#AXMaxIdentSize+1 			; too long
+		beq 	_AXELFail
+		inx 								; consume character
+		lda 	#0 							; make ASCIIZ.
+		sta 	AXLabelBuffer,y
+		;
+		lda 	AXBuffer,x 					; get the next caracter.
+		jsr 	AXIsIdentifierBody 			; is it a body character
+		bcc 	_AXELLoop 					; if so add it to the label.
+		;
+		lda 	AXLabelBuffer-1,y 			; set bit 7 of last character.
+		ora 	#$80
+		sta 	AXLabelBuffer-1,y
+		;
+		clc 								; successfully acquired a label.
+		rts
 
-		.if 	TESTING==1
-		jsr 	TestExpressions
-		.endif
+_AXELFail:
+		lda 	#AXERRIdentifier			; bad label.
+		sec
+		rts
 
-		ldx 	#lbl1 & $FF
-		ldy 	#lbl1 >> 8
-		jsr 	AXICreate
-		ldx 	#lbl1 & $FF
-		ldy 	#lbl1 >> 8
-		jsr 	AXICreate
-
-		.byte 	$DB
-h1:		bra 	h1		
-
-lbl1:	.text 	'ORA','C'+$80
-lbl2:	.text 	'F4','2'+$80
 		.send as16code
-
-		.if 	TESTING==1
-		.include "testing/testexpr.asm"
-		.endif
 
 ; ************************************************************************************************
 ;
