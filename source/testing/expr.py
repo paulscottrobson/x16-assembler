@@ -37,7 +37,19 @@ def sp():
 		return " "*random.randint(1,3)
 	return ""
 
+def createExpression(level):
+	if level == 0: 													# level 0 = single term.
+		return str(random.randint(1,4))
+	elements = []
+	for i in range(0,random.randint(1,3)):							# build a chain at this level.
+		elements.append(createExpression(level-1))
+		elements.append("+*"[random.randint(0,1)])
+	expr = " ".join(elements[:-1])
+	return "("+expr+")" 
+
 random.seed()
+
+size = 400
 
 # *******************************************************************************************
 #
@@ -47,7 +59,7 @@ random.seed()
 
 operator = "+ - * / % & | ^ << >> = <> <".split()
 
-for n in range(0,500):
+for n in range(0,size):
 	n1 = getNumber()
 	n2 = getNumber()
 	op = operator[random.randint(0,len(operator)-1)]
@@ -72,3 +84,28 @@ for n in range(0,500):
 		result = 0xFFFF if result else 0
 	if not reject:
 		outputTest("{5}{0}{3}{1}{4}{2}{6}".format(n1[1],op,n2[1],sp(),sp(),sp(),sp()),result)
+
+# *******************************************************************************************
+#
+#								Unary operators
+#
+# *******************************************************************************************
+
+for n in range(0,size):
+	n1 = getNumber()
+	outputTest("-{0}".format(n1[1]),-n1[0])
+	outputTest(">{0}".format(n1[1]),n1[0] >> 8)
+	outputTest("<{0}".format(n1[1]),n1[0] & 0xFF)
+
+# *******************************************************************************************
+#
+#									Parenthesis
+#
+# *******************************************************************************************
+
+random.seed(42)
+for n in range(0,size >> 3):
+	x = createExpression(random.randint(1,4))
+	e = eval(x.strip())
+	if e < 0x10000 and len(x) < 80:
+		outputTest(x,e)

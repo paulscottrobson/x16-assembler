@@ -23,7 +23,7 @@
 ;						- negation 
 ;						* program counter at start of instruction.
 ;						label.address @label.page
-;						<lower.byte <upper.byte
+;						<lower.byte >upper.byte
 ;						(expression)
 ;
 ; ************************************************************************************************
