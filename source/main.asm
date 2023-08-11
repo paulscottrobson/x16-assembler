@@ -38,37 +38,16 @@
 
 Start:	ldx 	#$FF
 		txs
-
-		ldx 	#0
-_Copy1:		
-		lda 	test,x
-		jsr 	AXConvertUpper
-		sta 	AXBuffer,x
-		inx
-		cmp 	#0
-		bne 	_Copy1
-
-		stz 	AXProgramCounter
-		stz 	AXProgramCounterStart
-		lda 	#$80
-		sta 	AXProgramCounter+1
-		sta 	AXProgramCounterStart+1
-		stz 	AXProgramCounter+2
-		stz 	AXProgramCounterStart+2
-
-		ldx 	#0
-		jsr 	AXExpression
-		bcs 	_Bad
-		lda 	AXLeft+2
-		ldx 	AXLeft 
-		ldy 	AXLeft+1
-_Bad:
-		.byte 	$DB
-		jmp 	_Bad
-
-test:	.text 	"(2+3)*4",0
+		.if 	TESTING==1
+		jsr 	TestExpressions
+		.endif
+h1:		bra 	h1		
 
 		.send as16code
+
+		.if 	TESTING==1
+		.include "testing/testexpr.asm"
+		.endif
 
 ; ************************************************************************************************
 ;

@@ -26,7 +26,7 @@ ASSEMBLER = 64tass -q -c -C -D ZEROPAGE=$(ZEROPAGE) -D STORAGE=$(STORAGE) -Wall 
 all: assemble
 
 assemble: prelim
-	$(ASSEMBLER)
+	$(ASSEMBLER) -D TESTING=0
 
 prelim:
 	$(PYTHON) scripts$(S)expr.py
@@ -39,3 +39,7 @@ run: assemble
 tools:
 	$(CCOPY) $(ROOTDIR)..$(S)x16-emulator$(S)x16emu$(APPSTEM) $(BINDIR)
 	$(CCOPY) $(ROOTDIR)..$(S)x16-rom$(S)build$(S)x16$(S)rom.bin $(BINDIR)
+
+test1: prelim
+	$(ASSEMBLER) -D TESTING=1
+	$(EMULATOR)

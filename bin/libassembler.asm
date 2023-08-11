@@ -815,7 +815,6 @@ _AXCExit:
 ; ================================================================================================
 
 _AXParenthesis:
-		.byte 	$DB
 		jsr 	AXExpression 				; body of parenthesis expression.
 		bcs 	_AXPExit 					; error ?
 _AXFindParent:
