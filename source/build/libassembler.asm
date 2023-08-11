@@ -133,6 +133,40 @@ AXERRDuplicate = $04 						; identifier defined twice.
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		ident.inc
+;		Purpose:	Identifier offsets
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+AXID_Hash = 		1
+AXID_Type = 		2
+AXID_Flags = 		3
+AXID_DataLow = 		4
+AXID_DataHigh = 	5
+AXID_Identifier = 	6
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		divide.asm
 ;		Purpose:	16 bit divide (unsigned)
 ;		Created:	10th August 2023
@@ -1200,7 +1234,7 @@ _AXIFindEnd:								; go to the end checking for duplicates.
 		;		AXTemp0 now points at the end (the zero link)
 		;
 _AXIFoundEnd:
-		ldy 	#1 							; fill the data in. +1 is the hash
+		ldy 	#AXID_Hash 					; fill the data in. +1 is the hash
 		lda 	AXIHash
 		sta 	(AXTemp0),y
 		iny
@@ -1209,13 +1243,13 @@ _AXIFill:									; fill +2,3,4,5 with zeros.
 		lda 	#0
 		sta 	(AXTemp0),y
 		iny
-		cpy 	#6
+		cpy 	#AXID_Identifier
 		bne 	_AXIFill
 _AXICopy:
 		phy
 		tya 								; access equivalent character in name.
 		sec
-		sbc 	#6
+		sbc 	#AXID_Identifier
 		tay
 		lda 	(AXTemp1),y 				; get character and write it out.
 		ply
@@ -1239,7 +1273,6 @@ _AXICopy:
 		rts
 
 _AXICError:
-		.byte 	$DB
 		jsr 	AXIClose 					; close access
 		lda 	#AXERRDuplicate
 		sec
@@ -1348,7 +1381,7 @@ _AXICCLoop:
 		pha 								; save it.
 		tya 								; point into equivalent place in record +6
 		clc
-		adc 	#6
+		adc 	#AXID_Identifier
 		tay
 		pla 								; get character back
 		eor 	(AXTemp0),y 				; compare against record entry.

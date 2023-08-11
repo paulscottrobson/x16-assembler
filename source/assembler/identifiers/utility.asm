@@ -32,7 +32,7 @@ _AXICCLoop:
 		pha 								; save it.
 		tya 								; point into equivalent place in record +6
 		clc
-		adc 	#6
+		adc 	#AXID_Identifier
 		tay		
 		pla 								; get character back
 		eor 	(AXTemp0),y 				; compare against record entry.
