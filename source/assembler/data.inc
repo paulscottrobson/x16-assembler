@@ -60,6 +60,9 @@ AXLabelBuffer: 								; buffer for label to be evaluated (ASCIIZ, U/C)
 AXCurrent:									; address of currently selected identifier.
 		.fill 	2
 		
+AXPass:										; pass (1 or 2)
+		.fill 	1		
+		
 ; ************************************************************************************************
 ;
 ;					Frame data - this is saved when macro recursion occurs

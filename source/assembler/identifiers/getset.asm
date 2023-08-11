@@ -70,9 +70,9 @@ AXIPutData:
 		ldy 	#AXID_DataLow 				; write low byte
 		sta 	(AXTemp0),y 			
 
-		ldy 	#AXID_Flags 				; set the 'defined' flag.
+		ldy 	#AXID_Flags 				; clear the 'defined' flag.
 		lda 	(AXTemp0),y
-		ora 	#$80
+		and 	#$7F
 		sta 	(AXTemp0),y
 
 		jsr 	AXIClose 					; close access

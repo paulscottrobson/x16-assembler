@@ -11,7 +11,7 @@ Identifier Structure
 			F1..9 	Group 1 to 9 (if used)
 
 +3 		Flags
-			bit 7 	Set if defined.
+			bit 7 	Set if undefined.
 			bit 0.6 Zero
 
 +4,+5 	Data bytes

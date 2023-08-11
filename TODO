@@ -1,3 +1,14 @@
 TODO:
-	Search (2 !)
-	Check it works on evaluator.
+	Make it work on evaluator.
+	Expressions with unknown values.
+	PutData can fail.
+
+	Devise input system.
+	Dummy Input system & basic testing.
+	Assemble line with predefined state, capitalised, no comments etc (Output system)
+
+	Error system
+	Listing system
+	Pseudo operations
+	Macros
+	Includes.	

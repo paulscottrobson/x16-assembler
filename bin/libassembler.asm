@@ -63,6 +63,9 @@ AXLabelBuffer: 								; buffer for label to be evaluated (ASCIIZ, U/C)
 AXCurrent:									; address of currently selected identifier.
 		.fill 	2
 
+AXPass:										; pass (1 or 2)
+		.fill 	1
+
 ; ************************************************************************************************
 ;
 ;					Frame data - this is saved when macro recursion occurs
@@ -1207,11 +1210,12 @@ AXIClose:
 
 ; ************************************************************************************************
 ;
-;									Create an identifier YX
+;									Create/Find an identifier YX
+; 									  CC = Found, CS = Created
 ;
 ; ************************************************************************************************
 
-AXICreate:
+AXICreateFind:
 		stx 	AXTemp1 					; save address at zTemp1
 		sty 	AXTemp1+1
 		jsr 	AXICalculateHash 			; calculate hash
@@ -1227,7 +1231,7 @@ _AXIFindEnd:								; go to the end checking for duplicates.
 		lda 	(AXTemp0)
 		beq 	_AXIFoundEnd
 		jsr 	AXICompareCurrent 			; compare AXTemp1 ident vs AXTemp0 record
-		bcc 	_AXICError 					; duplication error.
+		bcc 	_AXICFound 					; it's been found.
 		;
 		clc 								; go to next
 		lda 	(AXTemp0)
@@ -1240,10 +1244,7 @@ _AXIFindEnd:								; go to the end checking for duplicates.
 		;		AXTemp0 now points at the end (the zero link)
 		;
 _AXIFoundEnd:
-		ldy 	#AXID_Hash 					; fill the data in. +1 is the hash
-		lda 	AXIHash
-		sta 	(AXTemp0),y
-		iny
+		ldy 	#0
 		;
 _AXIFill:									; fill +2,3,4,5 with zeros.
 		lda 	#0
@@ -1269,19 +1270,24 @@ _AXICopy:
 		;
 		tya 								; set the offset link.
 		sta 	(AXTemp0)
-
+		;
+		ldy 	#AXID_Hash 					; fill the data in. +1 is the hash
+		lda 	AXIHash
+		sta 	(AXTemp0),y
+		;
+		ldy 	#AXID_Flags 				; set the undefined flag.
+		lda 	#$80
+		sta 	(AXTemp0),y
+		sec 								; return CS, created
+		;
+_AXICFound:
+		php 								; save carry
 		lda 	AXTemp0 					; save as current record
 		sta 	AXCurrent
 		lda 	AXTemp0+1
 		sta 	AXCurrent+1
 		jsr 	AXIClose 					; close access
-		clc
-		rts
-
-_AXICError:
-		jsr 	AXIClose 					; close access
-		lda 	#AXERRDuplicate
-		sec
+		plp 								; restore carry.
 		rts
 
 		.send as16code
@@ -1369,9 +1375,9 @@ AXIPutData:
 		ldy 	#AXID_DataLow 				; write low byte
 		sta 	(AXTemp0),y
 
-		ldy 	#AXID_Flags 				; set the 'defined' flag.
+		ldy 	#AXID_Flags 				; clear the 'defined' flag.
 		lda 	(AXTemp0),y
-		ora 	#$80
+		and 	#$7F
 		sta 	(AXTemp0),y
 
 		jsr 	AXIClose 					; close access

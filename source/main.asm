@@ -46,7 +46,7 @@ Start:	ldx 	#$FF
 
 		ldx 	#lbl1 & $FF
 		ldy 	#lbl1 >> 8
-		jsr 	AXICreate
+		jsr 	AXICreateFind
 
 		lda 	#AXIT_Label
 		ldy 	#AXID_Type
@@ -57,7 +57,7 @@ Start:	ldx 	#$FF
 
 		ldx 	#lbl2 & $FF
 		ldy 	#lbl2 >> 8
-		jsr 	AXICreate
+		jsr 	AXICreateFind
 		lda 	#AXIT_Label
 		ldy 	#AXID_Type
 		jsr 	AXIPut
@@ -65,12 +65,13 @@ Start:	ldx 	#$FF
 		ldx 	#$2A
 		jsr 	AXIPutData
 
-		jmp 	$FFFF
+		;jmp 	$FFFF
 		.byte 	$DB
 h1:		bra 	h1		
 
 lbl1:	.text 	'ORA','C'+$80
 lbl2:	.text 	'F.','2'+$80
+
 		.send as16code
 
 		.if 	TESTING==1
