@@ -1,7 +1,7 @@
 # *******************************************************************************************
 # *******************************************************************************************
 #
-#		Name : 		expr.py
+#		Name : 		exprtable.py
 #		Purpose :	Create the tables for expressions
 #		Date :		10th August 2023
 #		Author : 	Paul Robson (paul@robsons.org.uk)
