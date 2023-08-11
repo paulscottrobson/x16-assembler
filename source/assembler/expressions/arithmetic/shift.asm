@@ -27,7 +27,7 @@ AXShiftMain:
 		lda 	AXRight 					; if shift > 15 then zero
 		and 	#$F0
 		ora 	AXRight+1
-		beq 	_AXShiftZero
+		bne 	_AXShiftZero
 		;
 		lda 	AXRight 					; shift zero, exit as unchanged.
 		beq 	_AXExit

@@ -29,6 +29,7 @@ assemble: prelim
 	$(ASSEMBLER) -D TESTING=0
 
 prelim:
+	$(CDEL) *.bin
 	$(PYTHON) scripts$(S)expr.py
 	$(PYTHON) scripts$(S)makelib.py >build$(S)libassembler.asm
 	$(CCOPY)  build$(S)libassembler.asm $(BINDIR)
@@ -41,5 +42,6 @@ tools:
 	$(CCOPY) $(ROOTDIR)..$(S)x16-rom$(S)build$(S)x16$(S)rom.bin $(BINDIR)
 
 test1: prelim
+	$(PYTHON) testing$(S)expr.py >build$(S)testdata.inc
 	$(ASSEMBLER) -D TESTING=1
 	$(EMULATOR)

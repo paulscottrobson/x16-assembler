@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
 ; 64tass -q -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=1 main.asm
-; Fri Aug 11 10:23:42 2023
+; Fri Aug 11 11:20:48 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -13,7 +13,7 @@
 
 ;******  Processing input file: main.asm
 
-.1000	4c 16 14	jmp $1416			jmp 	Start
+.1000	4c 21 14	jmp $1421			jmp 	Start
 
 ;******  Processing file: build/libassembler.asm
 
@@ -116,7 +116,7 @@
 .108e	ad 03 04	lda $0403			lda 	AXRight 					; if shift > 15 then zero
 .1091	29 f0		and #$f0			and 	#$F0
 .1093	0d 04 04	ora $0404			ora 	AXRight+1
-.1096	f0 1e		beq $10b6			beq 	_AXShiftZero
+.1096	d0 1e		bne $10b6			bne 	_AXShiftZero
 .1098	ad 03 04	lda $0403			lda 	AXRight 					; shift zero, exit as unchanged.
 .109b	f0 1f		beq $10bc			beq 	_AXExit
 .109d					_AXShiftLoop:
@@ -207,498 +207,2573 @@
 .114d					AXBinaryNotEqual:
 .114d	20 39 11	jsr $1139			jsr 	AXBinaryEor
 .1150	ad 00 04	lda $0400			lda 	AXLeft
-.1153	4d 01 04	eor $0401			eor 	AXLeft+1
-.1156	f0 06		beq $115e			beq 	_AXBEExit
-.1158	ce 00 04	dec $0400			dec 	AXLeft
-.115b	ce 01 04	dec $0401			dec 	AXLeft+1
-.115e					_AXBEExit:
-.115e	18		clc				clc
-.115f	60		rts				rts
-.1160					AXBinaryEqual:
-.1160	20 4d 11	jsr $114d			jsr 	AXBinaryNotEqual
-.1163	80 1d		bra $1182			bra 	AXNot
-.1165					AXGreater:
-.1165	20 be 10	jsr $10be			jsr 	AXSwap
-.1168					AXLess:
-.1168	20 fc 10	jsr $10fc			jsr 	AXBinarySub
-.116b	a9 00		lda #$00			lda 	#$00
-.116d	b0 01		bcs $1170			bcs 	_AXIsGtr
-.116f	3a		dec a				dec 	a
-.1170					_AXIsGtr:
-.1170	8d 00 04	sta $0400			sta 	AXLeft
-.1173	8d 01 04	sta $0401			sta 	AXLeft+1
-.1176	18		clc				clc
-.1177	60		rts				rts
-.1178					AXLessEqual:
-.1178	20 65 11	jsr $1165			jsr 	AXGreater
-.117b	80 05		bra $1182			bra 	AXNot
-.117d					AXGreaterEqual:
-.117d	20 68 11	jsr $1168			jsr 	AXLess
-.1180	80 00		bra $1182			bra 	AXNot
-.1182					AXNot:
-.1182	ad 00 04	lda $0400			lda 	AXLeft
-.1185	49 ff		eor #$ff			eor 	#$FF
-.1187	8d 00 04	sta $0400			sta 	AXLeft
-.118a	8d 01 04	sta $0401			sta 	AXLeft+1
-.118d	18		clc				clc
-.118e	60		rts				rts
-.118f					AXExpression:
-.118f	a9 00		lda #$00			lda 	#0 							; start at precedence level 0.
-.1191					AXExpressionAtA:
-.1191	48		pha				pha 								; save precedence level.
-.1192	20 0c 12	jsr $120c			jsr 	AXTerm 						; get a term.
-.1195	90 02		bcc $1199			bcc 	_AXEExpressionLoop
-.1197	7a		ply				ply 								; throw precedence, return error in A.
-.1198	60		rts				rts
-.1199					_AXEExpressionLoop:
-.1199	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; skip spaces.
-.119c	e8		inx				inx
-.119d	c9 20		cmp #$20			cmp 	#' '
-.119f	f0 f8		beq $1199			beq 	_AXEExpressionLoop
-.11a1	ca		dex				dex
-.11a2	a0 fe		ldy #$fe			ldy 	#(0-2) & $FF
-.11a4	8e 73 04	stx $0473			stx 	AXOperatorPos				; save operator position in case rejected.
-.11a7					_AXFindBinOp:
-.11a7	c8		iny				iny 								; pre-increment.
-.11a8	c8		iny				iny
-.11a9	b9 86 13	lda $1386,y			lda 	AXBinaryOperatorList,y 		; first character to match
-.11ac	f0 5b		beq $1209			beq 	_AXExitPop 					; if end of table pop and exit, okay.
-.11ae	dd 1e 04	cmp $041e,x			cmp 	AXBuffer,x 					; if wrong, go to next
-.11b1	d0 f4		bne $11a7			bne 	_AXFindBinOp
-.11b3	b9 87 13	lda $1387,y			lda 	AXBinaryOperatorList+1,y 	; second character to match
-.11b6	f0 06		beq $11be			beq 	_AXConsume1 				; if zero, then matched a single one, and consume 1.
-.11b8	dd 1e 04	cmp $041e,x			cmp 	AXBuffer,x 					; if wrong, go to next.
-.11bb	d0 ea		bne $11a7			bne 	_AXFindBinOp
-.11bd	e8		inx				inx 								; consume 2 character
-.11be					_AXConsume1:
-.11be	e8		inx				inx 								; or 1 if a single character.
-.11bf	98		tya				tya 								; halve the operator code.
-.11c0	4a		lsr a				lsr 	a
-.11c1	a8		tay				tay
-.11c2	68		pla				pla 								; required precedence
-.11c3	d9 a7 13	cmp $13a7,y			cmp 	AXPrecedence,y 				; if >= then exit
-.11c6	b0 3c		bcs $1204			bcs 	_AXPrecFail
-.11c8	48		pha				pha 								; save the levels precedence.
-.11c9	5a		phy				phy 								; save the operator ID
-.11ca	ad 00 04	lda $0400			lda 	AXLeft 						; push AXLeft on the stack
-.11cd	48		pha				pha
-.11ce	ad 01 04	lda $0401			lda 	AXLeft+1
-.11d1	48		pha				pha
-.11d2	ad 02 04	lda $0402			lda 	AXLeft+2
-.11d5	48		pha				pha
-.11d6	b9 a7 13	lda $13a7,y			lda 	AXPrecedence,y 				; evaluate the RHS at the precedence of the operator or higher.
-.11d9	20 91 11	jsr $1191			jsr 	AXExpressionAtA
-.11dc	b0 1f		bcs $11fd			bcs 	_AXFailedRHS
-.11de	20 be 10	jsr $10be			jsr 	AXSwap 						; put the RHS into the right side.
-.11e1	68		pla				pla 								; and restore AXLeft
-.11e2	8d 02 04	sta $0402			sta 	AXLeft+2
-.11e5	68		pla				pla
-.11e6	8d 01 04	sta $0401			sta 	AXLeft+1
-.11e9	68		pla				pla
-.11ea	8d 00 04	sta $0400			sta 	AXLeft
-.11ed	68		pla				pla 								; operator ID
-.11ee	0a		asl a				asl 	a 							; now index into vector table
-.11ef	da		phx				phx 								; save buffer pos so we can use indexing
-.11f0	aa		tax				tax
-.11f1	20 fa 11	jsr $11fa			jsr 	_AXDoOperator 				; call the operator code.
-.11f4	fa		plx				plx 								; restore buffer position.
-.11f5	90 a2		bcc $1199			bcc 	_AXEExpressionLoop 			; and go round again if no error
-.11f7	7a		ply				ply 								; throw the precedence on the stack.
-.11f8	38		sec				sec
-.11f9	60		rts				rts
-.11fa					_AXDoOperator:
-.11fa	7c b7 13	jmp ($13b7,x)			jmp 	(AXBinaryVectors,x)
-.11fd					_AXFailedRHS:
-.11fd	7a		ply				ply
-.11fe	7a		ply				ply
-.11ff	7a		ply				ply
-.1200	7a		ply				ply
-.1201	7a		ply				ply
-.1202	38		sec				sec
-.1203	60		rts				rts
-.1204					_AXPrecFail:
-.1204	ae 73 04	ldx $0473			ldx 	AXOperatorPos 				; precedence fail, undo operator consume
-.1207	18		clc				clc
-.1208	60		rts				rts
-.1209					_AXExitPop:
-.1209	68		pla				pla
-.120a	18		clc				clc
-.120b	60		rts				rts
+.1153	0d 01 04	ora $0401			ora 	AXLeft+1
+.1156	f0 02		beq $115a			beq 	_AXBEExit
+.1158	a9 ff		lda #$ff			lda 	#$FF
+.115a					_AXBEExit:
+.115a	8d 00 04	sta $0400			sta 	AXLeft
+.115d	8d 01 04	sta $0401			sta 	AXLeft+1
+.1160	18		clc				clc
+.1161	60		rts				rts
+.1162					AXBinaryEqual:
+.1162	20 4d 11	jsr $114d			jsr 	AXBinaryNotEqual
+.1165	80 26		bra $118d			bra 	AXNot
+.1167					AXGreater:
+.1167	20 be 10	jsr $10be			jsr 	AXSwap
+.116a					AXLess:
+.116a	ad 00 04	lda $0400			lda 	AXLeft
+.116d	cd 03 04	cmp $0403			cmp 	AXRight
+.1170	ad 01 04	lda $0401			lda 	AXLeft+1
+.1173	ed 04 04	sbc $0404			sbc 	AXRight+1
+.1176	a9 00		lda #$00			lda 	#$00
+.1178	b0 01		bcs $117b			bcs 	_AXIsGtr
+.117a	3a		dec a				dec 	a
+.117b					_AXIsGtr:
+.117b	8d 00 04	sta $0400			sta 	AXLeft
+.117e	8d 01 04	sta $0401			sta 	AXLeft+1
+.1181	18		clc				clc
+.1182	60		rts				rts
+.1183					AXLessEqual:
+.1183	20 67 11	jsr $1167			jsr 	AXGreater
+.1186	80 05		bra $118d			bra 	AXNot
+.1188					AXGreaterEqual:
+.1188	20 6a 11	jsr $116a			jsr 	AXLess
+.118b	80 00		bra $118d			bra 	AXNot
+.118d					AXNot:
+.118d	ad 00 04	lda $0400			lda 	AXLeft
+.1190	49 ff		eor #$ff			eor 	#$FF
+.1192	8d 00 04	sta $0400			sta 	AXLeft
+.1195	8d 01 04	sta $0401			sta 	AXLeft+1
+.1198	18		clc				clc
+.1199	60		rts				rts
+.119a					AXExpression:
+.119a	a9 00		lda #$00			lda 	#0 							; start at precedence level 0.
+.119c					AXExpressionAtA:
+.119c	48		pha				pha 								; save precedence level.
+.119d	20 17 12	jsr $1217			jsr 	AXTerm 						; get a term.
+.11a0	90 02		bcc $11a4			bcc 	_AXEExpressionLoop
+.11a2	7a		ply				ply 								; throw precedence, return error in A.
+.11a3	60		rts				rts
+.11a4					_AXEExpressionLoop:
+.11a4	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; skip spaces.
+.11a7	e8		inx				inx
+.11a8	c9 20		cmp #$20			cmp 	#' '
+.11aa	f0 f8		beq $11a4			beq 	_AXEExpressionLoop
+.11ac	ca		dex				dex
+.11ad	a0 fe		ldy #$fe			ldy 	#(0-2) & $FF
+.11af	8e 73 04	stx $0473			stx 	AXOperatorPos				; save operator position in case rejected.
+.11b2					_AXFindBinOp:
+.11b2	c8		iny				iny 								; pre-increment.
+.11b3	c8		iny				iny
+.11b4	b9 91 13	lda $1391,y			lda 	AXBinaryOperatorList,y 		; first character to match
+.11b7	f0 5b		beq $1214			beq 	_AXExitPop 					; if end of table pop and exit, okay.
+.11b9	dd 1e 04	cmp $041e,x			cmp 	AXBuffer,x 					; if wrong, go to next
+.11bc	d0 f4		bne $11b2			bne 	_AXFindBinOp
+.11be	b9 92 13	lda $1392,y			lda 	AXBinaryOperatorList+1,y 	; second character to match
+.11c1	f0 06		beq $11c9			beq 	_AXConsume1 				; if zero, then matched a single one, and consume 1.
+.11c3	dd 1f 04	cmp $041f,x			cmp 	AXBuffer+1,x 				; if wrong, go to next.
+.11c6	d0 ea		bne $11b2			bne 	_AXFindBinOp
+.11c8	e8		inx				inx 								; consume 2 character
+.11c9					_AXConsume1:
+.11c9	e8		inx				inx 								; or 1 if a single character.
+.11ca	98		tya				tya 								; halve the operator code.
+.11cb	4a		lsr a				lsr 	a
+.11cc	a8		tay				tay
+.11cd	68		pla				pla 								; required precedence
+.11ce	d9 b2 13	cmp $13b2,y			cmp 	AXPrecedence,y 				; if >= then exit
+.11d1	b0 3c		bcs $120f			bcs 	_AXPrecFail
+.11d3	48		pha				pha 								; save the levels precedence.
+.11d4	5a		phy				phy 								; save the operator ID
+.11d5	ad 00 04	lda $0400			lda 	AXLeft 						; push AXLeft on the stack
+.11d8	48		pha				pha
+.11d9	ad 01 04	lda $0401			lda 	AXLeft+1
+.11dc	48		pha				pha
+.11dd	ad 02 04	lda $0402			lda 	AXLeft+2
+.11e0	48		pha				pha
+.11e1	b9 b2 13	lda $13b2,y			lda 	AXPrecedence,y 				; evaluate the RHS at the precedence of the operator or higher.
+.11e4	20 9c 11	jsr $119c			jsr 	AXExpressionAtA
+.11e7	b0 1f		bcs $1208			bcs 	_AXFailedRHS
+.11e9	20 be 10	jsr $10be			jsr 	AXSwap 						; put the RHS into the right side.
+.11ec	68		pla				pla 								; and restore AXLeft
+.11ed	8d 02 04	sta $0402			sta 	AXLeft+2
+.11f0	68		pla				pla
+.11f1	8d 01 04	sta $0401			sta 	AXLeft+1
+.11f4	68		pla				pla
+.11f5	8d 00 04	sta $0400			sta 	AXLeft
+.11f8	68		pla				pla 								; operator ID
+.11f9	0a		asl a				asl 	a 							; now index into vector table
+.11fa	da		phx				phx 								; save buffer pos so we can use indexing
+.11fb	aa		tax				tax
+.11fc	20 05 12	jsr $1205			jsr 	_AXDoOperator 				; call the operator code.
+.11ff	fa		plx				plx 								; restore buffer position.
+.1200	90 a2		bcc $11a4			bcc 	_AXEExpressionLoop 			; and go round again if no error
+.1202	7a		ply				ply 								; throw the precedence on the stack.
+.1203	38		sec				sec
+.1204	60		rts				rts
+.1205					_AXDoOperator:
+.1205	7c c2 13	jmp ($13c2,x)			jmp 	(AXBinaryVectors,x)
+.1208					_AXFailedRHS:
+.1208	7a		ply				ply
+.1209	7a		ply				ply
+.120a	7a		ply				ply
+.120b	7a		ply				ply
+.120c	7a		ply				ply
+.120d	38		sec				sec
+.120e	60		rts				rts
+.120f					_AXPrecFail:
+.120f	ae 73 04	ldx $0473			ldx 	AXOperatorPos 				; precedence fail, undo operator consume
+.1212	18		clc				clc
+.1213	60		rts				rts
+.1214					_AXExitPop:
+.1214	68		pla				pla
+.1215	18		clc				clc
+.1216	60		rts				rts
 .0473					AXOperatorPos:
 >0473							.fill 	1
-.120c	bd 1e 04	lda $041e,x	AXTerm:	lda 	AXBuffer,x 					; remove any leading spaces.
-.120f	e8		inx				inx
-.1210	c9 20		cmp #$20			cmp 	#' '
-.1212	f0 f8		beq $120c			beq 	AXTerm
-.1214	ca		dex				dex
-.1215	9c 02 04	stz $0402			stz 	AXLeft+2 					; clear the undefined flag & value
-.1218	9c 00 04	stz $0400			stz 	AXLeft
-.121b	9c 01 04	stz $0401			stz 	AXLeft+1
-.121e	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get first character
-.1221	a0 0a		ldy #$0a			ldy 	#10 						; default decimal if digit
-.1223	20 ed 13	jsr $13ed			jsr 	AXIsNumeric 				; if digit numeric , then constant.
-.1226	90 0d		bcc $1235			bcc 	_AXIsConstant
-.1228	e8		inx				inx 								; temporarily consume base modifier
-.1229	a0 10		ldy #$10			ldy 	#16 						; hex check.
-.122b	c9 24		cmp #$24			cmp 	#"$"
-.122d	f0 06		beq $1235			beq 	_AXIsConstant
-.122f	a0 02		ldy #$02			ldy 	#2 							; binary check
-.1231	c9 25		cmp #$25			cmp 	#"%"
-.1233	d0 53		bne $1288			bne 	_AXNotConstant
-.1235					_AXIsConstant:
-.1235	9c 74 04	stz $0474			stz 	AXDigitCount 				; clear count of digits
-.1238	8c 75 04	sty $0475			sty 	AXBase 					; save base.
-.123b					_AXConstantLoop:
-.123b	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get the next character of the constant.
-.123e	20 f8 13	jsr $13f8			jsr 	AXIsAlphaNumeric 			; must be 0-9A-Z
-.1241	b0 25		bcs $1268			bcs 	_AXConstantDone 			; no, then end of constant.
-.1243	c9 3a		cmp #$3a			cmp 	#"9"+1 						; shift A-Z so they follow 0-9.
-.1245	90 02		bcc $1249			bcc 	_AXNotAlpha
-.1247	e9 07		sbc #$07			sbc 	#7
-.1249					_AXNotAlpha:
-.1249	38		sec				sec 								; make it a digit 0..15
-.124a	e9 30		sbc #$30			sbc 	#"0"
-.124c	cd 75 04	cmp $0475			cmp 	AXBase 						; if higher than the base, then end of constant
-.124f	b0 17		bcs $1268			bcs 	_AXConstantDone
-.1251	e8		inx				inx 								; consume as legal.
-.1252	ee 74 04	inc $0474			inc 	AXDigitCount 				; bump consumed count.
-.1255	48		pha				pha 								; save the new digit.
-.1256	20 12 13	jsr $1312			jsr 	_AXMultiplyBase 			; multiply left by base.
-.1259	68		pla				pla 								; add new digit
-.125a	18		clc				clc
-.125b	6d 00 04	adc $0400			adc 	AXLeft
-.125e	8d 00 04	sta $0400			sta 	AXLeft
-.1261	90 d8		bcc $123b			bcc 	_AXConstantLoop
-.1263	ee 01 04	inc $0401			inc 	AXLeft+1
-.1266	80 d3		bra $123b			bra 	_AXConstantLoop
-.1268					_AXConstantDone:
-.1268	18		clc				clc
-.1269	ad 74 04	lda $0474			lda		AXDigitCount 				; exit okay if a digit received
-.126c	d0 03		bne $1271			bne 	_AXCExit
-.126e	38		sec				sec 								; return error-syntax
-.126f	a9 01		lda #$01			lda 	#AXERRSyntax
-.1271					_AXCExit:
-.1271	60		rts				rts
-.1272					_AXParenthesis:
-.1272	20 8f 11	jsr $118f			jsr 	AXExpression 				; body of parenthesis expression.
-.1275	b0 10		bcs $1287			bcs 	_AXPExit 					; error ?
-.1277					_AXFindParent:
-.1277	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; skip spaces looking for )
-.127a	e8		inx				inx
-.127b	c9 20		cmp #$20			cmp 	#' '
-.127d	f0 f8		beq $1277			beq 	_AXFindParent
-.127f	c9 29		cmp #$29			cmp 	#')'
-.1281	18		clc				clc
-.1282	f0 03		beq $1287			beq 	_AXPExit
-.1284	a9 01		lda #$01			lda 	#AXERRSyntax 				; failed
-.1286	38		sec				sec
-.1287					_AXPExit:
-.1287	60		rts				rts
-.1288					_AXNotConstant:
-.1288	c9 2d		cmp #$2d			cmp 	#"-"						; check for negation.
-.128a	f0 6e		beq $12fa			beq 	_AXNegate
-.128c	c9 3c		cmp #$3c			cmp 	#"<"						; low byte
-.128e	f0 61		beq $12f1			beq 	_AXLowByte
-.1290	c9 3e		cmp #$3e			cmp 	#">"						; high byte
-.1292	f0 4e		beq $12e2			beq 	_AXHighByte
-.1294	c9 2a		cmp #$2a			cmp 	#"*" 						; start of instruction
-.1296	f0 3c		beq $12d4			beq 	_AXProgramCounter
-.1298	c9 27		cmp #$27			cmp 	#"'" 						; character code
-.129a	f0 12		beq $12ae			beq 	_AXCharacter
-.129c	c9 40		cmp #$40			cmp 	#"@"						; label page
-.129e	f0 24		beq $12c4			beq 	_AXLabelPage
-.12a0	c9 28		cmp #$28			cmp 	#"("						; parenthesis
-.12a2	f0 ce		beq $1272			beq 	_AXParenthesis
-.12a4	20 fe 13	jsr $13fe			jsr 	AXIsIdentifierHead 			; identifier start character
-.12a7	b0 17		bcs $12c0			bcs 	_AXCFail
-.12a9	ca		dex				dex 								; back to first character.
-.12aa	20 47 13	jsr $1347			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
-.12ad	60		rts				rts
-.12ae					_AXCharacter:
-.12ae	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get the character code.
-.12b1	f0 0d		beq $12c0			beq 	_AXCFail 					; can't be EOS.
-.12b3	8d 00 04	sta $0400			sta 	AXLeft
-.12b6	bd 1f 04	lda $041f,x			lda 	AXBuffer+1,x 				; get the character after and consume both
-.12b9	e8		inx				inx
-.12ba	e8		inx				inx
-.12bb	c9 27		cmp #$27			cmp 	#"'"						; okay if '
-.12bd	18		clc				clc
-.12be	f0 51		beq $1311			beq 	_AXNExit
-.12c0					_AXCFail:
-.12c0	38		sec				sec
-.12c1	a9 01		lda #$01			lda 	#AXERRSyntax
-.12c3	60		rts				rts
-.12c4					_AXLabelPage:
-.12c4	20 47 13	jsr $1347			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
-.12c7	b0 0a		bcs $12d3			bcs 	_AXLPExit 					; something failed, probably no label.
-.12c9	ad 09 04	lda $0409			lda 	AXEvaluatePage 				; copy page #
-.12cc	8d 00 04	sta $0400			sta 	AXLeft
-.12cf	9c 01 04	stz $0401			stz 	AXLeft+1
-.12d2	18		clc				clc
-.12d3					_AXLPExit:
-.12d3	60		rts				rts
-.12d4					_AXProgramCounter:
-.12d4	ad 1b 04	lda $041b			lda 	AXProgramCounterStart
+.1217	bd 1e 04	lda $041e,x	AXTerm:	lda 	AXBuffer,x 					; remove any leading spaces.
+.121a	e8		inx				inx
+.121b	c9 20		cmp #$20			cmp 	#' '
+.121d	f0 f8		beq $1217			beq 	AXTerm
+.121f	ca		dex				dex
+.1220	9c 02 04	stz $0402			stz 	AXLeft+2 					; clear the undefined flag & value
+.1223	9c 00 04	stz $0400			stz 	AXLeft
+.1226	9c 01 04	stz $0401			stz 	AXLeft+1
+.1229	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get first character
+.122c	a0 0a		ldy #$0a			ldy 	#10 						; default decimal if digit
+.122e	20 f8 13	jsr $13f8			jsr 	AXIsNumeric 				; if digit numeric , then constant.
+.1231	90 0d		bcc $1240			bcc 	_AXIsConstant
+.1233	e8		inx				inx 								; temporarily consume base modifier
+.1234	a0 10		ldy #$10			ldy 	#16 						; hex check.
+.1236	c9 24		cmp #$24			cmp 	#"$"
+.1238	f0 06		beq $1240			beq 	_AXIsConstant
+.123a	a0 02		ldy #$02			ldy 	#2 							; binary check
+.123c	c9 25		cmp #$25			cmp 	#"%"
+.123e	d0 53		bne $1293			bne 	_AXNotConstant
+.1240					_AXIsConstant:
+.1240	9c 74 04	stz $0474			stz 	AXDigitCount 				; clear count of digits
+.1243	8c 75 04	sty $0475			sty 	AXBase 					; save base.
+.1246					_AXConstantLoop:
+.1246	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get the next character of the constant.
+.1249	20 03 14	jsr $1403			jsr 	AXIsAlphaNumeric 			; must be 0-9A-Z
+.124c	b0 25		bcs $1273			bcs 	_AXConstantDone 			; no, then end of constant.
+.124e	c9 3a		cmp #$3a			cmp 	#"9"+1 						; shift A-Z so they follow 0-9.
+.1250	90 02		bcc $1254			bcc 	_AXNotAlpha
+.1252	e9 07		sbc #$07			sbc 	#7
+.1254					_AXNotAlpha:
+.1254	38		sec				sec 								; make it a digit 0..15
+.1255	e9 30		sbc #$30			sbc 	#"0"
+.1257	cd 75 04	cmp $0475			cmp 	AXBase 						; if higher than the base, then end of constant
+.125a	b0 17		bcs $1273			bcs 	_AXConstantDone
+.125c	e8		inx				inx 								; consume as legal.
+.125d	ee 74 04	inc $0474			inc 	AXDigitCount 				; bump consumed count.
+.1260	48		pha				pha 								; save the new digit.
+.1261	20 1d 13	jsr $131d			jsr 	_AXMultiplyBase 			; multiply left by base.
+.1264	68		pla				pla 								; add new digit
+.1265	18		clc				clc
+.1266	6d 00 04	adc $0400			adc 	AXLeft
+.1269	8d 00 04	sta $0400			sta 	AXLeft
+.126c	90 d8		bcc $1246			bcc 	_AXConstantLoop
+.126e	ee 01 04	inc $0401			inc 	AXLeft+1
+.1271	80 d3		bra $1246			bra 	_AXConstantLoop
+.1273					_AXConstantDone:
+.1273	18		clc				clc
+.1274	ad 74 04	lda $0474			lda		AXDigitCount 				; exit okay if a digit received
+.1277	d0 03		bne $127c			bne 	_AXCExit
+.1279	38		sec				sec 								; return error-syntax
+.127a	a9 01		lda #$01			lda 	#AXERRSyntax
+.127c					_AXCExit:
+.127c	60		rts				rts
+.127d					_AXParenthesis:
+.127d	20 9a 11	jsr $119a			jsr 	AXExpression 				; body of parenthesis expression.
+.1280	b0 10		bcs $1292			bcs 	_AXPExit 					; error ?
+.1282					_AXFindParent:
+.1282	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; skip spaces looking for )
+.1285	e8		inx				inx
+.1286	c9 20		cmp #$20			cmp 	#' '
+.1288	f0 f8		beq $1282			beq 	_AXFindParent
+.128a	c9 29		cmp #$29			cmp 	#')'
+.128c	18		clc				clc
+.128d	f0 03		beq $1292			beq 	_AXPExit
+.128f	a9 01		lda #$01			lda 	#AXERRSyntax 				; failed
+.1291	38		sec				sec
+.1292					_AXPExit:
+.1292	60		rts				rts
+.1293					_AXNotConstant:
+.1293	c9 2d		cmp #$2d			cmp 	#"-"						; check for negation.
+.1295	f0 6e		beq $1305			beq 	_AXNegate
+.1297	c9 3c		cmp #$3c			cmp 	#"<"						; low byte
+.1299	f0 61		beq $12fc			beq 	_AXLowByte
+.129b	c9 3e		cmp #$3e			cmp 	#">"						; high byte
+.129d	f0 4e		beq $12ed			beq 	_AXHighByte
+.129f	c9 2a		cmp #$2a			cmp 	#"*" 						; start of instruction
+.12a1	f0 3c		beq $12df			beq 	_AXProgramCounter
+.12a3	c9 27		cmp #$27			cmp 	#"'" 						; character code
+.12a5	f0 12		beq $12b9			beq 	_AXCharacter
+.12a7	c9 40		cmp #$40			cmp 	#"@"						; label page
+.12a9	f0 24		beq $12cf			beq 	_AXLabelPage
+.12ab	c9 28		cmp #$28			cmp 	#"("						; parenthesis
+.12ad	f0 ce		beq $127d			beq 	_AXParenthesis
+.12af	20 09 14	jsr $1409			jsr 	AXIsIdentifierHead 			; identifier start character
+.12b2	b0 17		bcs $12cb			bcs 	_AXCFail
+.12b4	ca		dex				dex 								; back to first character.
+.12b5	20 52 13	jsr $1352			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
+.12b8	60		rts				rts
+.12b9					_AXCharacter:
+.12b9	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get the character code.
+.12bc	f0 0d		beq $12cb			beq 	_AXCFail 					; can't be EOS.
+.12be	8d 00 04	sta $0400			sta 	AXLeft
+.12c1	bd 1f 04	lda $041f,x			lda 	AXBuffer+1,x 				; get the character after and consume both
+.12c4	e8		inx				inx
+.12c5	e8		inx				inx
+.12c6	c9 27		cmp #$27			cmp 	#"'"						; okay if '
+.12c8	18		clc				clc
+.12c9	f0 51		beq $131c			beq 	_AXNExit
+.12cb					_AXCFail:
+.12cb	38		sec				sec
+.12cc	a9 01		lda #$01			lda 	#AXERRSyntax
+.12ce	60		rts				rts
+.12cf					_AXLabelPage:
+.12cf	20 52 13	jsr $1352			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
+.12d2	b0 0a		bcs $12de			bcs 	_AXLPExit 					; something failed, probably no label.
+.12d4	ad 09 04	lda $0409			lda 	AXEvaluatePage 				; copy page #
 .12d7	8d 00 04	sta $0400			sta 	AXLeft
-.12da	ad 1c 04	lda $041c			lda 	AXProgramCounterStart+1
-.12dd	8d 01 04	sta $0401			sta 	AXLeft+1
-.12e0	18		clc				clc
-.12e1	60		rts				rts
-.12e2					_AXHighByte:
-.12e2	20 0c 12	jsr $120c			jsr 	AXTerm
-.12e5	b0 2a		bcs $1311			bcs 	_AXNExit
-.12e7	ad 01 04	lda $0401			lda 	AXLeft+1
-.12ea	8d 00 04	sta $0400			sta 	AXLeft
-.12ed	9c 01 04	stz $0401			stz 	AXLeft+1
-.12f0	60		rts				rts
-.12f1					_AXLowByte:
-.12f1	20 0c 12	jsr $120c			jsr 	AXTerm
-.12f4	b0 1b		bcs $1311			bcs 	_AXNExit
-.12f6	9c 01 04	stz $0401			stz 	AXLeft+1
-.12f9	60		rts				rts
-.12fa					_AXNegate:
-.12fa	20 0c 12	jsr $120c			jsr 	AXTerm						; get term
-.12fd	b0 12		bcs $1311			bcs 	_AXNExit
-.12ff	38		sec				sec
-.1300	a9 00		lda #$00			lda 	#0
-.1302	ed 00 04	sbc $0400			sbc 	AXLeft
-.1305	8d 00 04	sta $0400			sta 	AXLeft
-.1308	a9 00		lda #$00			lda 	#0
-.130a	ed 01 04	sbc $0401			sbc 	AXLeft+1
-.130d	8d 01 04	sta $0401			sta 	AXLeft+1
-.1310	18		clc				clc 								; success.
-.1311					_AXNExit:
-.1311	60		rts				rts
-.1312					_AXMultiplyBase:
-.1312	c0 02		cpy #$02			cpy 	#2 							; if binary then exit.
-.1314	f0 2a		beq $1340			beq 	_AXMDouble
-.1316	c0 10		cpy #$10			cpy 	#16 						; if hexadecimal
-.1318	f0 1d		beq $1337			beq 	_AXMMultiply16
-.131a	ad 01 04	lda $0401			lda 	AXLeft+1 					; keep original value.
-.131d	48		pha				pha
-.131e	ad 00 04	lda $0400			lda 	AXLeft
-.1321	20 40 13	jsr $1340			jsr 	_AXMDouble 					; x 2
-.1324	20 40 13	jsr $1340			jsr 	_AXMDouble 					; x 4
-.1327	18		clc				clc
-.1328	6d 00 04	adc $0400			adc 	AXLeft 						; add original value, e.g. x 5
-.132b	8d 00 04	sta $0400			sta 	AXLeft
-.132e	68		pla				pla
-.132f	6d 01 04	adc $0401			adc 	AXLeft+1
-.1332	8d 01 04	sta $0401			sta 	AXLeft+1
-.1335	80 09		bra $1340			bra 	_AXMDouble 					; double to x10
-.1337					_AXMMultiply16:
-.1337	20 40 13	jsr $1340			jsr 	_AXMDouble 					; x 2
-.133a	20 40 13	jsr $1340			jsr 	_AXMDouble 					; x 4
-.133d	20 40 13	jsr $1340			jsr 	_AXMDouble 					; x 8, fall through to x 16
-.1340					_AXMDouble:
-.1340	0e 00 04	asl $0400			asl 	AXLeft 						; everyone does left.
-.1343	2e 01 04	rol $0401			rol 	AXLeft+1
-.1346					_AXMExit:
-.1346	60		rts				rts
-.1347					AXEvaluateLabel:
-.1347	20 60 13	jsr $1360			jsr 	AXExtractLabel 				; get a label.
-.134a	b0 13		bcs $135f			bcs 	_AXEExit 					; we couldn't.
-.134c	a9 a9		lda #$a9			lda 	#$A9
-.134e	8d 00 04	sta $0400			sta 	AXLeft
-.1351	a9 44		lda #$44			lda 	#$44
-.1353	8d 01 04	sta $0401			sta 	AXLeft+1
-.1356	9c 02 04	stz $0402			stz 	AXLeft+2
-.1359	a9 04		lda #$04			lda 	#4 							; page of evaluated label
-.135b	8d 09 04	sta $0409			sta 	AXEvaluatePage
-.135e	18		clc				clc
-.135f					_AXEExit:
-.135f	60		rts				rts
-.1360					AXExtractLabel:
-.1360	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; check the first character.
-.1363	20 fe 13	jsr $13fe			jsr 	AXIsIdentifierHead
-.1366	b0 1a		bcs $1382			bcs 	_AXELFail
-.1368	a0 00		ldy #$00			ldy 	#0 							; save position.
-.136a					_AXELLoop:
-.136a	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y 			; save in buffer, bump position
-.136d	c8		iny				iny
-.136e	c0 11		cpy #$11			cpy 	#AXMaxIdentSize+1 			; too long
-.1370	f0 10		beq $1382			beq 	_AXELFail
-.1372	e8		inx				inx 								; consume character
-.1373	a9 00		lda #$00			lda 	#0 							; make ASCIIZ.
-.1375	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
-.1378	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get the next caracter.
-.137b	20 10 14	jsr $1410			jsr 	AXIsIdentifierBody 			; is it a body character
-.137e	90 ea		bcc $136a			bcc 	_AXELLoop 					; if so add it to the label.
-.1380	18		clc				clc 								; successfully acquired a label.
-.1381	60		rts				rts
-.1382					_AXELFail:
-.1382	a9 02		lda #$02			lda 	#AXERRLabel 				; bad label.
-.1384	38		sec				sec
-.1385	60		rts				rts
+.12da	9c 01 04	stz $0401			stz 	AXLeft+1
+.12dd	18		clc				clc
+.12de					_AXLPExit:
+.12de	60		rts				rts
+.12df					_AXProgramCounter:
+.12df	ad 1b 04	lda $041b			lda 	AXProgramCounterStart
+.12e2	8d 00 04	sta $0400			sta 	AXLeft
+.12e5	ad 1c 04	lda $041c			lda 	AXProgramCounterStart+1
+.12e8	8d 01 04	sta $0401			sta 	AXLeft+1
+.12eb	18		clc				clc
+.12ec	60		rts				rts
+.12ed					_AXHighByte:
+.12ed	20 17 12	jsr $1217			jsr 	AXTerm
+.12f0	b0 2a		bcs $131c			bcs 	_AXNExit
+.12f2	ad 01 04	lda $0401			lda 	AXLeft+1
+.12f5	8d 00 04	sta $0400			sta 	AXLeft
+.12f8	9c 01 04	stz $0401			stz 	AXLeft+1
+.12fb	60		rts				rts
+.12fc					_AXLowByte:
+.12fc	20 17 12	jsr $1217			jsr 	AXTerm
+.12ff	b0 1b		bcs $131c			bcs 	_AXNExit
+.1301	9c 01 04	stz $0401			stz 	AXLeft+1
+.1304	60		rts				rts
+.1305					_AXNegate:
+.1305	20 17 12	jsr $1217			jsr 	AXTerm						; get term
+.1308	b0 12		bcs $131c			bcs 	_AXNExit
+.130a	38		sec				sec
+.130b	a9 00		lda #$00			lda 	#0
+.130d	ed 00 04	sbc $0400			sbc 	AXLeft
+.1310	8d 00 04	sta $0400			sta 	AXLeft
+.1313	a9 00		lda #$00			lda 	#0
+.1315	ed 01 04	sbc $0401			sbc 	AXLeft+1
+.1318	8d 01 04	sta $0401			sta 	AXLeft+1
+.131b	18		clc				clc 								; success.
+.131c					_AXNExit:
+.131c	60		rts				rts
+.131d					_AXMultiplyBase:
+.131d	c0 02		cpy #$02			cpy 	#2 							; if binary then exit.
+.131f	f0 2a		beq $134b			beq 	_AXMDouble
+.1321	c0 10		cpy #$10			cpy 	#16 						; if hexadecimal
+.1323	f0 1d		beq $1342			beq 	_AXMMultiply16
+.1325	ad 01 04	lda $0401			lda 	AXLeft+1 					; keep original value.
+.1328	48		pha				pha
+.1329	ad 00 04	lda $0400			lda 	AXLeft
+.132c	20 4b 13	jsr $134b			jsr 	_AXMDouble 					; x 2
+.132f	20 4b 13	jsr $134b			jsr 	_AXMDouble 					; x 4
+.1332	18		clc				clc
+.1333	6d 00 04	adc $0400			adc 	AXLeft 						; add original value, e.g. x 5
+.1336	8d 00 04	sta $0400			sta 	AXLeft
+.1339	68		pla				pla
+.133a	6d 01 04	adc $0401			adc 	AXLeft+1
+.133d	8d 01 04	sta $0401			sta 	AXLeft+1
+.1340	80 09		bra $134b			bra 	_AXMDouble 					; double to x10
+.1342					_AXMMultiply16:
+.1342	20 4b 13	jsr $134b			jsr 	_AXMDouble 					; x 2
+.1345	20 4b 13	jsr $134b			jsr 	_AXMDouble 					; x 4
+.1348	20 4b 13	jsr $134b			jsr 	_AXMDouble 					; x 8, fall through to x 16
+.134b					_AXMDouble:
+.134b	0e 00 04	asl $0400			asl 	AXLeft 						; everyone does left.
+.134e	2e 01 04	rol $0401			rol 	AXLeft+1
+.1351					_AXMExit:
+.1351	60		rts				rts
+.1352					AXEvaluateLabel:
+.1352	20 6b 13	jsr $136b			jsr 	AXExtractLabel 				; get a label.
+.1355	b0 13		bcs $136a			bcs 	_AXEExit 					; we couldn't.
+.1357	a9 a9		lda #$a9			lda 	#$A9
+.1359	8d 00 04	sta $0400			sta 	AXLeft
+.135c	a9 44		lda #$44			lda 	#$44
+.135e	8d 01 04	sta $0401			sta 	AXLeft+1
+.1361	9c 02 04	stz $0402			stz 	AXLeft+2
+.1364	a9 04		lda #$04			lda 	#4 							; page of evaluated label
+.1366	8d 09 04	sta $0409			sta 	AXEvaluatePage
+.1369	18		clc				clc
+.136a					_AXEExit:
+.136a	60		rts				rts
+.136b					AXExtractLabel:
+.136b	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; check the first character.
+.136e	20 09 14	jsr $1409			jsr 	AXIsIdentifierHead
+.1371	b0 1a		bcs $138d			bcs 	_AXELFail
+.1373	a0 00		ldy #$00			ldy 	#0 							; save position.
+.1375					_AXELLoop:
+.1375	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y 			; save in buffer, bump position
+.1378	c8		iny				iny
+.1379	c0 11		cpy #$11			cpy 	#AXMaxIdentSize+1 			; too long
+.137b	f0 10		beq $138d			beq 	_AXELFail
+.137d	e8		inx				inx 								; consume character
+.137e	a9 00		lda #$00			lda 	#0 							; make ASCIIZ.
+.1380	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
+.1383	bd 1e 04	lda $041e,x			lda 	AXBuffer,x 					; get the next caracter.
+.1386	20 1b 14	jsr $141b			jsr 	AXIsIdentifierBody 			; is it a body character
+.1389	90 ea		bcc $1375			bcc 	_AXELLoop 					; if so add it to the label.
+.138b	18		clc				clc 								; successfully acquired a label.
+.138c	60		rts				rts
+.138d					_AXELFail:
+.138d	a9 02		lda #$02			lda 	#AXERRLabel 				; bad label.
+.138f	38		sec				sec
+.1390	60		rts				rts
 .0474					AXDigitCount:
 >0474							.fill 	1
 .0475					AXBase:
 >0475							.fill 	1
-.1386					AXBinaryOperatorList:
->1386	3c 3e					.byte	$3c,$3e ; <>
->1388	3e 3d					.byte	$3e,$3d ; >=
->138a	3c 3d					.byte	$3c,$3d ; <=
->138c	3e 3e					.byte	$3e,$3e ; >>
->138e	3c 3c					.byte	$3c,$3c ; <<
->1390	26 00					.byte	$26,$00 ; &
->1392	7c 00					.byte	$7c,$00 ; |
->1394	5e 00					.byte	$5e,$00 ; ^
->1396	3e 00					.byte	$3e,$00 ; >
->1398	3d 00					.byte	$3d,$00 ; =
->139a	3c 00					.byte	$3c,$00 ; <
->139c	2b 00					.byte	$2b,$00 ; +
->139e	2d 00					.byte	$2d,$00 ; -
->13a0	2a 00					.byte	$2a,$00 ; *
->13a2	2f 00					.byte	$2f,$00 ; /
->13a4	25 00					.byte	$25,$00 ; %
->13a6	00					.byte	$00
-.13a7					AXPrecedence:
->13a7	02					.byte	2 ; <>
->13a8	02					.byte	2 ; >=
->13a9	02					.byte	2 ; <=
->13aa	04					.byte	4 ; >>
->13ab	04					.byte	4 ; <<
->13ac	01					.byte	1 ; &
->13ad	01					.byte	1 ; |
->13ae	01					.byte	1 ; ^
->13af	02					.byte	2 ; >
->13b0	02					.byte	2 ; =
->13b1	02					.byte	2 ; <
->13b2	03					.byte	3 ; +
->13b3	03					.byte	3 ; -
->13b4	04					.byte	4 ; *
->13b5	04					.byte	4 ; /
->13b6	04					.byte	4 ; %
-.13b7					AXBinaryVectors:
->13b7	4d 11					.word	AXBinaryNotEqual                 ; <>
->13b9	7d 11					.word	AXGreaterEqual                   ; >=
->13bb	78 11					.word	AXLessEqual                      ; <=
->13bd	8c 10					.word	AXShiftRight                     ; >>
->13bf	88 10					.word	AXShiftLeft                      ; <<
->13c1	11 11					.word	AXBinaryAnd                      ; &
->13c3	25 11					.word	AXBinaryOra                      ; |
->13c5	39 11					.word	AXBinaryEor                      ; ^
->13c7	65 11					.word	AXGreater                        ; >
->13c9	60 11					.word	AXBinaryEqual                    ; =
->13cb	68 11					.word	AXLess                           ; <
->13cd	e7 10					.word	AXBinaryAdd                      ; +
->13cf	fc 10					.word	AXBinarySub                      ; -
->13d1	56 10					.word	AXBinaryMult                     ; *
->13d3	03 10					.word	AXBinaryDivide                   ; /
->13d5	43 10					.word	AXBinaryModulus                  ; %
-.13d7					AXConvertUpper:
-.13d7	c9 61		cmp #$61			cmp 	#"a"
-.13d9	90 06		bcc $13e1			bcc 	_AXCNotUpper
-.13db	c9 7b		cmp #$7b			cmp 	#"z"+1
-.13dd	b0 02		bcs $13e1			bcs 	_AXCNotUpper
-.13df	49 20		eor #$20			eor 	#$20
-.13e1					_AXCNotUpper:
-.13e1	60		rts				rts
-.13e2					AXIsAlpha:
-.13e2	c9 41		cmp #$41			cmp 	#"A"
-.13e4	90 05		bcc $13eb			bcc 	_AXNotAlpha
-.13e6	c9 5b		cmp #$5b			cmp 	#"Z"+1
-.13e8	b0 01		bcs $13eb			bcs 	_AXNotAlpha
-.13ea	60		rts				rts
-.13eb					_AXNotAlpha:
-.13eb	38		sec				sec
+.1391					AXBinaryOperatorList:
+>1391	3c 3e					.byte	$3c,$3e ; <>
+>1393	3e 3d					.byte	$3e,$3d ; >=
+>1395	3c 3d					.byte	$3c,$3d ; <=
+>1397	3e 3e					.byte	$3e,$3e ; >>
+>1399	3c 3c					.byte	$3c,$3c ; <<
+>139b	26 00					.byte	$26,$00 ; &
+>139d	7c 00					.byte	$7c,$00 ; |
+>139f	5e 00					.byte	$5e,$00 ; ^
+>13a1	3e 00					.byte	$3e,$00 ; >
+>13a3	3d 00					.byte	$3d,$00 ; =
+>13a5	3c 00					.byte	$3c,$00 ; <
+>13a7	2b 00					.byte	$2b,$00 ; +
+>13a9	2d 00					.byte	$2d,$00 ; -
+>13ab	2a 00					.byte	$2a,$00 ; *
+>13ad	2f 00					.byte	$2f,$00 ; /
+>13af	25 00					.byte	$25,$00 ; %
+>13b1	00					.byte	$00
+.13b2					AXPrecedence:
+>13b2	02					.byte	2 ; <>
+>13b3	02					.byte	2 ; >=
+>13b4	02					.byte	2 ; <=
+>13b5	04					.byte	4 ; >>
+>13b6	04					.byte	4 ; <<
+>13b7	01					.byte	1 ; &
+>13b8	01					.byte	1 ; |
+>13b9	01					.byte	1 ; ^
+>13ba	02					.byte	2 ; >
+>13bb	02					.byte	2 ; =
+>13bc	02					.byte	2 ; <
+>13bd	03					.byte	3 ; +
+>13be	03					.byte	3 ; -
+>13bf	04					.byte	4 ; *
+>13c0	04					.byte	4 ; /
+>13c1	04					.byte	4 ; %
+.13c2					AXBinaryVectors:
+>13c2	4d 11					.word	AXBinaryNotEqual                 ; <>
+>13c4	88 11					.word	AXGreaterEqual                   ; >=
+>13c6	83 11					.word	AXLessEqual                      ; <=
+>13c8	8c 10					.word	AXShiftRight                     ; >>
+>13ca	88 10					.word	AXShiftLeft                      ; <<
+>13cc	11 11					.word	AXBinaryAnd                      ; &
+>13ce	25 11					.word	AXBinaryOra                      ; |
+>13d0	39 11					.word	AXBinaryEor                      ; ^
+>13d2	67 11					.word	AXGreater                        ; >
+>13d4	62 11					.word	AXBinaryEqual                    ; =
+>13d6	6a 11					.word	AXLess                           ; <
+>13d8	e7 10					.word	AXBinaryAdd                      ; +
+>13da	fc 10					.word	AXBinarySub                      ; -
+>13dc	56 10					.word	AXBinaryMult                     ; *
+>13de	03 10					.word	AXBinaryDivide                   ; /
+>13e0	43 10					.word	AXBinaryModulus                  ; %
+.13e2					AXConvertUpper:
+.13e2	c9 61		cmp #$61			cmp 	#"a"
+.13e4	90 06		bcc $13ec			bcc 	_AXCNotUpper
+.13e6	c9 7b		cmp #$7b			cmp 	#"z"+1
+.13e8	b0 02		bcs $13ec			bcs 	_AXCNotUpper
+.13ea	49 20		eor #$20			eor 	#$20
+.13ec					_AXCNotUpper:
 .13ec	60		rts				rts
-.13ed					AXIsNumeric:
-.13ed	c9 30		cmp #$30			cmp 	#"0"
-.13ef	90 05		bcc $13f6			bcc 	_AXNotDigit
-.13f1	c9 3a		cmp #$3a			cmp 	#"9"+1
-.13f3	b0 01		bcs $13f6			bcs 	_AXNotDigit
+.13ed					AXIsAlpha:
+.13ed	c9 41		cmp #$41			cmp 	#"A"
+.13ef	90 05		bcc $13f6			bcc 	_AXNotAlpha
+.13f1	c9 5b		cmp #$5b			cmp 	#"Z"+1
+.13f3	b0 01		bcs $13f6			bcs 	_AXNotAlpha
 .13f5	60		rts				rts
-.13f6					_AXNotDigit:
+.13f6					_AXNotAlpha:
 .13f6	38		sec				sec
 .13f7	60		rts				rts
-.13f8					AXIsAlphaNumeric:
-.13f8	20 e2 13	jsr $13e2			jsr 	AXIsAlpha 					; if alpha then exit with yes
-.13fb	b0 f0		bcs $13ed			bcs 	AXIsNumeric 				; no, depends on is numeric
-.13fd	60		rts				rts
-.13fe					AXIsIdentifierHead:
-.13fe	20 e2 13	jsr $13e2			jsr 	AXIsAlpha
-.1401	b0 01		bcs $1404			bcs 	AXCheckIdentifierMisc
-.1403	60		rts				rts
-.1404					AXCheckIdentifierMisc:
-.1404	c9 5f		cmp #$5f			cmp 	#"_"
-.1406	f0 06		beq $140e			beq 	_AXIsIdentB
-.1408	c9 2e		cmp #$2e			cmp 	#"."
-.140a	f0 02		beq $140e			beq 	_AXIsIdentB
-.140c	38		sec				sec
-.140d	60		rts				rts
-.140e					_AXIsIdentB:
-.140e	18		clc				clc
-.140f	60		rts				rts
-.1410					AXIsIdentifierBody:
-.1410	20 f8 13	jsr $13f8			jsr 	AXIsAlphaNumeric
-.1413	b0 ef		bcs $1404			bcs 	AXCheckIdentifierMisc
-.1415	60		rts				rts
+.13f8					AXIsNumeric:
+.13f8	c9 30		cmp #$30			cmp 	#"0"
+.13fa	90 05		bcc $1401			bcc 	_AXNotDigit
+.13fc	c9 3a		cmp #$3a			cmp 	#"9"+1
+.13fe	b0 01		bcs $1401			bcs 	_AXNotDigit
+.1400	60		rts				rts
+.1401					_AXNotDigit:
+.1401	38		sec				sec
+.1402	60		rts				rts
+.1403					AXIsAlphaNumeric:
+.1403	20 ed 13	jsr $13ed			jsr 	AXIsAlpha 					; if alpha then exit with yes
+.1406	b0 f0		bcs $13f8			bcs 	AXIsNumeric 				; no, depends on is numeric
+.1408	60		rts				rts
+.1409					AXIsIdentifierHead:
+.1409	20 ed 13	jsr $13ed			jsr 	AXIsAlpha
+.140c	b0 01		bcs $140f			bcs 	AXCheckIdentifierMisc
+.140e	60		rts				rts
+.140f					AXCheckIdentifierMisc:
+.140f	c9 5f		cmp #$5f			cmp 	#"_"
+.1411	f0 06		beq $1419			beq 	_AXIsIdentB
+.1413	c9 2e		cmp #$2e			cmp 	#"."
+.1415	f0 02		beq $1419			beq 	_AXIsIdentB
+.1417	38		sec				sec
+.1418	60		rts				rts
+.1419					_AXIsIdentB:
+.1419	18		clc				clc
+.141a	60		rts				rts
+.141b					AXIsIdentifierBody:
+.141b	20 03 14	jsr $1403			jsr 	AXIsAlphaNumeric
+.141e	b0 ef		bcs $140f			bcs 	AXCheckIdentifierMisc
+.1420	60		rts				rts
 
 ;******  Return to file: main.asm
 
-.1416	a2 ff		ldx #$ff	Start:	ldx 	#$FF
-.1418	9a		txs				txs
-.1419	20 1e 14	jsr $141e			jsr 	TestExpressions
-.141c	80 fe		bra $141c	h1:		bra 	h1
+.1421	a2 ff		ldx #$ff	Start:	ldx 	#$FF
+.1423	9a		txs				txs
+.1424	20 29 14	jsr $1429			jsr 	TestExpressions
+.1427	80 fe		bra $1427	h1:		bra 	h1
 
 ;******  Processing file: testing/testexpr.asm
 
-.141e					TestExpressions:
->141e	db						.byte 	$DB
-.141f	a9 14		lda #$14			lda 	#TestData >> 8
-.1421	85 31		sta $31				sta 	zTemp+1
-.1423	a9 74		lda #$74			lda 	#TestData & $FF
-.1425	85 30		sta $30				sta 	zTemp
-.1427					_TestLoop:
-.1427	b2 30		lda ($30)			lda 	(zTemp)
-.1429	d0 03		bne $142e			bne 	_TestNotEnd
-.142b	4c ff ff	jmp $ffff			jmp 	$FFFF
-.142e					_TestNotEnd:
-.142e	a0 01		ldy #$01			ldy 	#1
-.1430					_Copy1:
-.1430	b1 30		lda ($30),y			lda 	(zTemp),y
-.1432	20 d7 13	jsr $13d7			jsr 	AXConvertUpper
-.1435	99 1d 04	sta $041d,y			sta 	AXBuffer-1,y
-.1438	c8		iny				iny
-.1439	c9 00		cmp #$00			cmp 	#0
-.143b	d0 f3		bne $1430			bne 	_Copy1
-.143d	5a		phy				phy
-.143e	a2 00		ldx #$00			ldx 	#0
-.1440	20 8f 11	jsr $118f			jsr 	AXExpression
-.1443	b0 27		bcs $146c			bcs 	_ErrorOccurred
-.1445	7a		ply				ply
-.1446	b1 30		lda ($30),y			lda 	(zTemp),y
-.1448	cd 00 04	cmp $0400			cmp 	AXLeft
-.144b	d0 15		bne $1462			bne 	_ResultWrong
-.144d	c8		iny				iny
-.144e	b1 30		lda ($30),y			lda 	(zTemp),y
-.1450	cd 01 04	cmp $0401			cmp 	AXLeft+1
-.1453	d0 0d		bne $1462			bne 	_ResultWrong
-.1455	18		clc				clc
-.1456	b2 30		lda ($30)			lda 	(zTemp)
-.1458	65 30		adc $30				adc 	zTemp
-.145a	85 30		sta $30				sta 	zTemp
-.145c	90 c9		bcc $1427			bcc 	_TestLoop
-.145e	e6 31		inc $31				inc 	zTemp+1
-.1460	80 c5		bra $1427			bra 	_TestLoop
-.1462					_ResultWrong:
-.1462	a6 30		ldx $30				ldx 	zTemp
-.1464	a4 31		ldy $31				ldy 	zTemp+1
-.1466	a9 ee		lda #$ee			lda 	#$EE
->1468	eb						.byte 	$EB
-.1469	4c 62 14	jmp $1462			jmp 	_ResultWrong
-.146c					_ErrorOccurred:
-.146c	a2 ee		ldx #$ee			ldx 	#$EE
-.146e	a0 ee		ldy #$ee			ldy 	#$EE
->1470	db						.byte 	$DB
-.1471	4c 6c 14	jmp $146c			jmp 	_ErrorOccurred
-.1474					TestData:
->1474	0b						.byte 	_tde-TestData
->1475	28 32 2b 33 29 2a 34 00				.text 	"(2+3)*4",0
->147d	14 00						.word 	20
-.147f					_tde:
->147f	00						.byte 	0
+.1429					TestExpressions:
+.1429	a9 14		lda #$14			lda 	#TestData >> 8 				; zTemp points to test data
+.142b	85 31		sta $31				sta 	zTemp+1
+.142d	a9 7e		lda #$7e			lda 	#TestData & $FF
+.142f	85 30		sta $30				sta 	zTemp
+.1431					_TestLoop:
+.1431	b2 30		lda ($30)			lda 	(zTemp) 					; check done
+.1433	d0 03		bne $1438			bne 	_TestNotEnd
+.1435	4c ff ff	jmp $ffff			jmp 	$FFFF
+.1438					_TestNotEnd:
+.1438	a0 01		ldy #$01			ldy 	#1 							; copy test text to buffer
+.143a					_Copy1:
+.143a	b1 30		lda ($30),y			lda 	(zTemp),y
+.143c	20 e2 13	jsr $13e2			jsr 	AXConvertUpper
+.143f	99 1d 04	sta $041d,y			sta 	AXBuffer-1,y
+.1442	c8		iny				iny
+.1443	c9 00		cmp #$00			cmp 	#0
+.1445	d0 f3		bne $143a			bne 	_Copy1
+.1447	5a		phy				phy 								; evaluate, check error
+.1448	a2 00		ldx #$00			ldx 	#0
+.144a	20 9a 11	jsr $119a			jsr 	AXExpression
+.144d	b0 27		bcs $1476			bcs 	_ErrorOccurred
+.144f	7a		ply				ply
+.1450	b1 30		lda ($30),y			lda 	(zTemp),y 					; check result
+.1452	cd 00 04	cmp $0400			cmp 	AXLeft
+.1455	d0 15		bne $146c			bne 	_ResultWrong
+.1457	c8		iny				iny
+.1458	b1 30		lda ($30),y			lda 	(zTemp),y
+.145a	cd 01 04	cmp $0401			cmp 	AXLeft+1
+.145d	d0 0d		bne $146c			bne 	_ResultWrong
+.145f	18		clc				clc 								; next test
+.1460	b2 30		lda ($30)			lda 	(zTemp)
+.1462	65 30		adc $30				adc 	zTemp
+.1464	85 30		sta $30				sta 	zTemp
+.1466	90 c9		bcc $1431			bcc 	_TestLoop
+.1468	e6 31		inc $31				inc 	zTemp+1
+.146a	80 c5		bra $1431			bra 	_TestLoop
+.146c					_ResultWrong:
+.146c	a6 30		ldx $30				ldx 	zTemp
+.146e	a4 31		ldy $31				ldy 	zTemp+1
+.1470	a9 ee		lda #$ee			lda 	#$EE
+>1472	db						.byte 	$DB
+.1473	4c 6c 14	jmp $146c			jmp 	_ResultWrong
+.1476					_ErrorOccurred:
+.1476	a2 ee		ldx #$ee			ldx 	#$EE
+.1478	a0 ee		ldy #$ee			ldy 	#$EE
+>147a	db						.byte 	$DB
+.147b	4c 76 14	jmp $1476			jmp 	_ErrorOccurred
+.147e					TestData:
+
+;******  Processing file: testing/../build/testdata.inc
+
+>147e	0c					.byte	12
+>147f	35 32 30 38 38 3e 3e 35			.text	'52088>>5',0
+>1487	00
+>1488	5b 06					.word	1627
+>148a	1c					.byte	28
+>148b	35 38 35 39 35 20 20 25			.text	'58595  %%100011101111011',0
+>1493	25 31 30 30 30 31 31 31 30 31 31 31 31 30 31 31
+>14a3	00
+>14a4	72 0e					.word	3698
+>14a6	1b					.byte	27
+>14a7	24 36 37 36 32 3c 25 31			.text	'$6762<%1101011110100011',0
+>14af	31 30 31 30 31 31 31 31 30 31 30 30 30 31 31 00
+>14bf	ff ff					.word	65535
+>14c1	1b					.byte	27
+>14c2	25 31 30 30 30 31 31 30			.text	'%1000110011011111&$AFEC',0
+>14ca	30 31 31 30 31 31 31 31 31 26 24 41 46 45 43 00
+>14da	cc 8c					.word	36044
+>14dc	10					.byte	16
+>14dd	34 31 38 36 20 20 7c 33			.text	'4186  |38226',0
+>14e5	38 32 32 36 00
+>14ea	5a 95					.word	38234
+>14ec	0d					.byte	13
+>14ed	24 32 32 46 32 3e 3e 33			.text	'$22F2>>33',0
+>14f5	33 00
+>14f7	00 00					.word	0
+>14f9	0c					.byte	12
+>14fa	34 38 31 33 35 3c 3c 30			.text	'48135<<0',0
+>1502	00
+>1503	07 bc					.word	48135
+>1505	12					.byte	18
+>1506	31 35 32 34 20 20 20 3c			.text	'1524   <>$2012',0
+>150e	3e 24 32 30 31 32 00
+>1515	ff ff					.word	65535
+>1517	0f					.byte	15
+>1518	31 37 30 36 31 3e 3e 20			.text	'17061>>  10',0
+>1520	20 31 30 00
+>1524	10 00					.word	16
+>1526	10					.byte	16
+>1527	35 32 37 33 33 20 25 33			.text	'52733 %32714',0
+>152f	32 37 31 34 00
+>1534	33 4e					.word	20019
+>1536	10					.byte	16
+>1537	34 33 36 32 31 3d 20 34			.text	'43621= 43621',0
+>153f	33 36 32 31 00
+>1544	ff ff					.word	65535
+>1546	0f					.byte	15
+>1547	34 30 34 33 30 26 35 30			.text	'40430&50187',0
+>154f	31 38 37 00
+>1553	0a 84					.word	33802
+>1555	0f					.byte	15
+>1556	35 38 35 32 32 5e 24 45			.text	'58522^$ECBC',0
+>155e	43 42 43 00
+>1562	26 08					.word	2086
+>1564	13					.byte	19
+>1565	35 30 30 32 37 20 20 5e			.text	'50027  ^  $1327',0
+>156d	20 20 24 31 33 32 37 00
+>1575	4c d0					.word	53324
+>1577	1e					.byte	30
+>1578	36 34 32 37 37 20 20 20			.text	'64277   =%1100001101011100',0
+>1580	3d 25 31 31 30 30 30 30 31 31 30 31 30 31 31 31
+>1590	30 30 00
+>1593	00 00					.word	0
+>1595	10					.byte	16
+>1596	32 33 30 32 34 26 20 31			.text	'23024& 15849',0
+>159e	35 38 34 39 00
+>15a3	e0 19					.word	6624
+>15a5	10					.byte	16
+>15a6	32 33 39 35 37 20 2d 35			.text	'23957 -54557',0
+>15ae	34 35 35 37 00
+>15b3	78 88					.word	34936
+>15b5	0e					.byte	14
+>15b6	31 37 37 30 34 3d 32 36			.text	'17704=2616',0
+>15be	31 36 00
+>15c1	00 00					.word	0
+>15c3	0f					.byte	15
+>15c4	32 38 30 32 34 2b 34 31			.text	'28024+41305',0
+>15cc	33 30 35 00
+>15d0	d1 0e					.word	3793
+>15d2	1c					.byte	28
+>15d3	25 31 31 31 31 30 31 30			.text	'%1111010101001001  << 27',0
+>15db	31 30 31 30 30 31 30 30 31 20 20 3c 3c 20 32 37
+>15eb	00
+>15ec	00 00					.word	0
+>15ee	1d					.byte	29
+>15ef	25 31 31 31 30 31 31 30			.text	'%1110110110111001^  $9E39',0
+>15f7	31 31 30 31 31 31 30 30 31 5e 20 20 24 39 45 33
+>1607	39 00
+>1609	80 73					.word	29568
+>160b	1c					.byte	28
+>160c	37 36 33 37 2b 20 20 25			.text	'7637+  %1001010000101100',0
+>1614	31 30 30 31 30 31 30 30 30 30 31 30 31 31 30 30
+>1624	00
+>1625	01 b2					.word	45569
+>1627	10					.byte	16
+>1628	34 30 31 39 31 3d 20 35			.text	'40191= 50605',0
+>1630	30 36 30 35 00
+>1635	00 00					.word	0
+>1637	1b					.byte	27
+>1638	31 34 30 31 37 2d 25 31			.text	'14017-%1111000010010100',0
+>1640	31 31 31 30 30 30 30 31 30 30 31 30 31 30 30 00
+>1650	2d 46					.word	17965
+>1652	0f					.byte	15
+>1653	33 37 32 34 39 2f 24 31			.text	'37249/$1EE1',0
+>165b	45 45 31 00
+>165f	04 00					.word	4
+>1661	12					.byte	18
+>1662	35 37 37 34 37 2a 20 20			.text	'57747*   62474',0
+>166a	20 36 32 34 37 34 00
+>1671	be eb					.word	60350
+>1673	1e					.byte	30
+>1674	31 38 30 36 38 20 20 20			.text	'18068   ^%1011010101100101',0
+>167c	5e 25 31 30 31 31 30 31 30 31 30 31 31 30 30 31
+>168c	30 31 00
+>168f	f1 f3					.word	62449
+>1691	0f					.byte	15
+>1692	35 30 32 39 34 2b 31 31			.text	'50294+11017',0
+>169a	30 31 37 00
+>169e	7f ef					.word	61311
+>16a0	0f					.byte	15
+>16a1	32 39 35 36 37 26 35 31			.text	'29567&51355',0
+>16a9	33 35 35 00
+>16ad	1b 40					.word	16411
+>16af	1a					.byte	26
+>16b0	24 32 42 34 30 3d 25 31			.text	'$2B40=%111010010101001',0
+>16b8	31 31 30 31 30 30 31 30 31 30 31 30 30 31 00
+>16c7	00 00					.word	0
+>16c9	12					.byte	18
+>16ca	31 32 36 32 38 2a 20 20			.text	'12628*   56652',0
+>16d2	20 35 36 36 35 32 00
+>16d9	f0 28					.word	10480
+>16db	11					.byte	17
+>16dc	33 33 30 37 33 20 20 2a			.text	'33073  *$1C3D',0
+>16e4	24 31 43 33 44 00
+>16ea	ad 24					.word	9389
+>16ec	0d					.byte	13
+>16ed	34 35 35 33 2f 36 39 39			.text	'4553/6993',0
+>16f5	33 00
+>16f7	00 00					.word	0
+>16f9	10					.byte	16
+>16fa	34 32 30 32 30 3c 3e 34			.text	'42020<>42020',0
+>1702	32 30 32 30 00
+>1707	00 00					.word	0
+>1709	10					.byte	16
+>170a	38 37 38 35 3c 20 20 35			.text	'8785<  59869',0
+>1712	39 38 36 39 00
+>1717	ff ff					.word	65535
+>1719	0f					.byte	15
+>171a	32 37 33 39 36 2f 34 35			.text	'27396/45766',0
+>1722	37 36 36 00
+>1726	00 00					.word	0
+>1728	14					.byte	20
+>1729	35 34 33 30 31 20 20 20			.text	'54301   >>%11101',0
+>1731	3e 3e 25 31 31 31 30 31 00
+>173a	00 00					.word	0
+>173c	10					.byte	16
+>173d	34 33 38 39 33 3c 20 24			.text	'43893< $4C31',0
+>1745	34 43 33 31 00
+>174a	00 00					.word	0
+>174c	1b					.byte	27
+>174d	33 33 35 33 32 3d 25 31			.text	'33532=%1000011110111011',0
+>1755	30 30 30 30 31 31 31 31 30 31 31 31 30 31 31 00
+>1765	00 00					.word	0
+>1767	12					.byte	18
+>1768	35 32 30 38 38 26 20 20			.text	'52088&   58320',0
+>1770	20 35 38 33 32 30 00
+>1777	50 c3					.word	50000
+>1779	0f					.byte	15
+>177a	33 36 37 39 35 2f 24 43			.text	'36795/$C10E',0
+>1782	31 30 45 00
+>1786	00 00					.word	0
+>1788	1e					.byte	30
+>1789	36 32 31 35 30 20 20 20			.text	'62150   ^%1110101000110111',0
+>1791	5e 25 31 31 31 30 31 30 31 30 30 30 31 31 30 31
+>17a1	31 31 00
+>17a4	f1 18					.word	6385
+>17a6	1d					.byte	29
+>17a7	25 31 30 31 31 30 31 30			.text	'%1011010010011111^  12175',0
+>17af	30 31 30 30 31 31 31 31 31 5e 20 20 31 32 31 37
+>17bf	35 00
+>17c1	10 9b					.word	39696
+>17c3	10					.byte	16
+>17c4	24 33 39 30 46 20 2b 24			.text	'$390F +$F687',0
+>17cc	46 36 38 37 00
+>17d1	96 2f					.word	12182
+>17d3	15					.byte	21
+>17d4	34 31 36 31 39 20 20 20			.text	'41619   *   41365',0
+>17dc	2a 20 20 20 34 31 33 36 35 00
+>17e6	8f 12					.word	4751
+>17e8	1b					.byte	27
+>17e9	25 31 31 30 31 30 30 31			.text	'%110100110010000   >>17',0
+>17f1	31 30 30 31 30 30 30 30 20 20 20 3e 3e 31 37 00
+>1801	00 00					.word	0
+>1803	1e					.byte	30
+>1804	34 38 36 36 33 7c 20 20			.text	'48663|   %1000110011101110',0
+>180c	20 25 31 30 30 30 31 31 30 30 31 31 31 30 31 31
+>181c	31 30 00
+>181f	ff be					.word	48895
+>1821	12					.byte	18
+>1822	32 33 30 36 32 3d 20 20			.text	'23062=   23062',0
+>182a	20 32 33 30 36 32 00
+>1831	ff ff					.word	65535
+>1833	0f					.byte	15
+>1834	33 36 33 31 36 26 34 30			.text	'36316&40229',0
+>183c	32 32 39 00
+>1840	04 8d					.word	36100
+>1842	13					.byte	19
+>1843	36 32 31 37 38 20 20 20			.text	'62178   <>65288',0
+>184b	3c 3e 36 35 32 38 38 00
+>1853	ff ff					.word	65535
+>1855	0e					.byte	14
+>1856	39 37 37 3d 20 31 30 30			.text	'977= 10098',0
+>185e	39 38 00
+>1861	00 00					.word	0
+>1863	10					.byte	16
+>1864	32 33 34 37 37 2d 20 32			.text	'23477- 23986',0
+>186c	33 39 38 36 00
+>1871	03 fe					.word	65027
+>1873	10					.byte	16
+>1874	37 36 36 35 20 20 5e 24			.text	'7665  ^$B90F',0
+>187c	42 39 30 46 00
+>1881	fe a4					.word	42238
+>1883	0d					.byte	13
+>1884	35 33 34 38 31 20 3c 3c			.text	'53481 <<6',0
+>188c	36 00
+>188e	40 3a					.word	14912
+>1890	1e					.byte	30
+>1891	25 31 30 30 30 31 30 31			.text	'%1000101110111000   -21004',0
+>1899	31 31 30 31 31 31 30 30 30 20 20 20 2d 32 31 30
+>18a9	30 34 00
+>18ac	ac 39					.word	14764
+>18ae	0e					.byte	14
+>18af	24 34 45 45 39 25 24 39			.text	'$4EE9%$943',0
+>18b7	34 33 00
+>18ba	d1 04					.word	1233
+>18bc	1e					.byte	30
+>18bd	25 31 30 30 31 31 30 31			.text	'%1001101100111011 %  60497',0
+>18c5	31 30 30 31 31 31 30 31 31 20 25 20 20 36 30 34
+>18d5	39 37 00
+>18d8	3b 9b					.word	39739
+>18da	0f					.byte	15
+>18db	24 43 41 39 31 2a 20 32			.text	'$CA91* 2397',0
+>18e3	33 39 37 00
+>18e7	ad af					.word	44973
+>18e9	18					.byte	24
+>18ea	25 31 31 30 31 31 31 30			.text	'%1101110010111010>>5',0
+>18f2	30 31 30 31 31 31 30 31 30 3e 3e 35 00
+>18ff	e5 06					.word	1765
+>1901	23					.byte	35
+>1902	25 31 30 30 30 30 30 31			.text	'%10000011101100<%10000011101100',0
+>190a	31 31 30 31 31 30 30 3c 25 31 30 30 30 30 30 31
+>191a	31 31 30 31 31 30 30 00
+>1922	00 00					.word	0
+>1924	0f					.byte	15
+>1925	33 33 39 30 33 3c 24 35			.text	'33903<$571A',0
+>192d	37 31 41 00
+>1931	00 00					.word	0
+>1933	0f					.byte	15
+>1934	34 31 32 35 35 7c 34 30			.text	'41255|40724',0
+>193c	37 32 34 00
+>1940	37 bf					.word	48951
+>1942	1f					.byte	31
+>1943	24 45 32 32 30 20 20 20			.text	'$E220   + %1001101001010000',0
+>194b	2b 20 25 31 30 30 31 31 30 31 30 30 31 30 31 30
+>195b	30 30 30 00
+>195f	70 7c					.word	31856
+>1961	0f					.byte	15
+>1962	35 38 39 35 39 2a 24 32			.text	'58959*$221F',0
+>196a	32 31 46 00
+>196e	91 61					.word	24977
+>1970	12					.byte	18
+>1971	24 45 30 39 32 26 20 20			.text	'$E092&   10662',0
+>1979	20 31 30 36 36 32 00
+>1980	82 20					.word	8322
+>1982	10					.byte	16
+>1983	24 32 35 39 39 20 26 36			.text	'$2599 &60252',0
+>198b	30 32 35 32 00
+>1990	18 21					.word	8472
+>1992	19					.byte	25
+>1993	25 31 31 30 30 31 30 31			.text	'%110010100100011>>  5',0
+>199b	30 30 31 30 30 30 31 31 3e 3e 20 20 35 00
+>19a9	29 03					.word	809
+>19ab	0f					.byte	15
+>19ac	31 30 38 36 38 2d 33 35			.text	'10868-35360',0
+>19b4	33 36 30 00
+>19b8	54 a0					.word	41044
+>19ba	0f					.byte	15
+>19bb	24 41 38 33 30 3d 31 30			.text	'$A830=10729',0
+>19c3	37 32 39 00
+>19c7	00 00					.word	0
+>19c9	0e					.byte	14
+>19ca	38 38 38 38 3e 3e 20 20			.text	'8888>>   1',0
+>19d2	20 31 00
+>19d5	5c 11					.word	4444
+>19d7	1e					.byte	30
+>19d8	36 32 34 33 34 5e 20 20			.text	'62434^   %1010101001110110',0
+>19e0	20 25 31 30 31 30 31 30 31 30 30 31 31 31 30 31
+>19f0	31 30 00
+>19f3	94 59					.word	22932
+>19f5	11					.byte	17
+>19f6	34 32 39 36 34 3d 20 20			.text	'42964=  42964',0
+>19fe	34 32 39 36 34 00
+>1a04	ff ff					.word	65535
+>1a06	0f					.byte	15
+>1a07	36 31 31 35 36 5e 35 31			.text	'61156^51644',0
+>1a0f	36 34 34 00
+>1a13	58 27					.word	10072
+>1a15	13					.byte	19
+>1a16	34 36 38 31 38 20 20 20			.text	'46818   <>46818',0
+>1a1e	3c 3e 34 36 38 31 38 00
+>1a26	00 00					.word	0
+>1a28	0d					.byte	13
+>1a29	31 30 39 37 31 3c 3c 32			.text	'10971<<20',0
+>1a31	30 00
+>1a33	00 00					.word	0
+>1a35	1e					.byte	30
+>1a36	39 39 30 33 20 20 20 7c			.text	'9903   |  %100110111111110',0
+>1a3e	20 20 25 31 30 30 31 31 30 31 31 31 31 31 31 31
+>1a4e	31 30 00
+>1a51	ff 6f					.word	28671
+>1a53	14					.byte	20
+>1a54	34 37 32 38 31 20 20 2a			.text	'47281  *   $795D',0
+>1a5c	20 20 20 24 37 39 35 44 00
+>1a65	4d c1					.word	49485
+>1a67	0f					.byte	15
+>1a68	33 32 38 39 33 3c 24 31			.text	'32893<$147B',0
+>1a70	34 37 42 00
+>1a74	00 00					.word	0
+>1a76	17					.byte	23
+>1a77	31 35 32 33 35 20 20 20			.text	'15235   >>   %10110',0
+>1a7f	3e 3e 20 20 20 25 31 30 31 31 30 00
+>1a8b	00 00					.word	0
+>1a8d	10					.byte	16
+>1a8e	35 38 30 38 20 20 3d 34			.text	'5808  =49162',0
+>1a96	39 31 36 32 00
+>1a9b	00 00					.word	0
+>1a9d	0e					.byte	14
+>1a9e	36 33 32 32 35 3c 35 38			.text	'63225<5857',0
+>1aa6	35 37 00
+>1aa9	00 00					.word	0
+>1aab	0e					.byte	14
+>1aac	32 37 33 31 30 20 3c 3c			.text	'27310 <<20',0
+>1ab4	32 30 00
+>1ab7	00 00					.word	0
+>1ab9	0f					.byte	15
+>1aba	33 32 33 33 35 3c 3e 36			.text	'32335<>6316',0
+>1ac2	33 31 36 00
+>1ac6	ff ff					.word	65535
+>1ac8	12					.byte	18
+>1ac9	36 31 32 36 31 20 20 20			.text	'61261   ^44385',0
+>1ad1	5e 34 34 33 38 35 00
+>1ad8	2c 42					.word	16940
+>1ada	0f					.byte	15
+>1adb	24 44 32 38 46 26 24 31			.text	'$D28F&$18C4',0
+>1ae3	38 43 34 00
+>1ae7	84 10					.word	4228
+>1ae9	1b					.byte	27
+>1aea	25 31 31 30 30 30 30 30			.text	'%1100000111011011%41506',0
+>1af2	31 31 31 30 31 31 30 31 31 25 34 31 35 30 36 00
+>1b02	b9 1f					.word	8121
+>1b04	1a					.byte	26
+>1b05	25 31 30 31 30 30 30 30			.text	'%101000010101000^11960',0
+>1b0d	31 30 31 30 31 30 30 30 5e 31 31 39 36 30 00
+>1b1c	10 7e					.word	32272
+>1b1e	1a					.byte	26
+>1b1f	24 36 38 31 44 7c 25 31			.text	'$681D|%101011000010101',0
+>1b27	30 31 30 31 31 30 30 30 30 31 30 31 30 31 00
+>1b36	1d 7e					.word	32285
+>1b38	10					.byte	16
+>1b39	34 33 35 39 37 20 3d 34			.text	'43597 =43597',0
+>1b41	33 35 39 37 00
+>1b46	ff ff					.word	65535
+>1b48	0f					.byte	15
+>1b49	31 38 39 33 30 2a 34 39			.text	'18930*49667',0
+>1b51	36 36 37 00
+>1b55	d6 41					.word	16854
+>1b57	11					.byte	17
+>1b58	35 38 38 35 33 7c 20 20			.text	'58853|  55496',0
+>1b60	35 35 34 39 36 00
+>1b66	ed fd					.word	65005
+>1b68	12					.byte	18
+>1b69	35 31 37 37 36 20 20 20			.text	'51776   /11981',0
+>1b71	2f 31 31 39 38 31 00
+>1b78	04 00					.word	4
+>1b7a	0f					.byte	15
+>1b7b	36 34 32 39 30 2b 36 35			.text	'64290+65086',0
+>1b83	30 38 36 00
+>1b87	60 f9					.word	63840
+>1b89	0f					.byte	15
+>1b8a	24 41 31 39 39 7c 24 46			.text	'$A199|$FD94',0
+>1b92	44 39 34 00
+>1b96	9d fd					.word	64925
+>1b98	1a					.byte	26
+>1b99	25 31 31 31 31 30 31 30			.text	'%111101001010100<<%111',0
+>1ba1	30 31 30 31 30 31 30 30 3c 3c 25 31 31 31 00
+>1bb0	00 2a					.word	10752
+>1bb2	12					.byte	18
+>1bb3	32 39 32 36 36 20 20 20			.text	'29266   %20640',0
+>1bbb	25 32 30 36 34 30 00
+>1bc2	b2 21					.word	8626
+>1bc4	0f					.byte	15
+>1bc5	33 35 30 37 32 20 20 3c			.text	'35072  <<13',0
+>1bcd	3c 31 33 00
+>1bd1	00 00					.word	0
+>1bd3	28					.byte	40
+>1bd4	25 31 30 31 30 31 30 31			.text	'%101010100110101/  %1001000000100011',0
+>1bdc	30 30 31 31 30 31 30 31 2f 20 20 25 31 30 30 31
+>1bec	30 30 30 30 30 30 31 30 30 30 31 31 00
+>1bf9	00 00					.word	0
+>1bfb	12					.byte	18
+>1bfc	33 32 39 31 38 20 20 20			.text	'32918   |58910',0
+>1c04	7c 35 38 39 31 30 00
+>1c0b	9e e6					.word	59038
+>1c0d	0f					.byte	15
+>1c0e	35 37 37 36 30 20 3d 37			.text	'57760 =7052',0
+>1c16	30 35 32 00
+>1c1a	00 00					.word	0
+>1c1c	0f					.byte	15
+>1c1d	31 33 34 34 31 2b 20 36			.text	'13441+ 6233',0
+>1c25	32 33 33 00
+>1c29	da 4c					.word	19674
+>1c2b	0f					.byte	15
+>1c2c	32 33 33 37 37 3c 32 38			.text	'23377<28350',0
+>1c34	33 35 30 00
+>1c38	ff ff					.word	65535
+>1c3a	10					.byte	16
+>1c3b	31 31 32 32 30 20 2a 31			.text	'11220 *16428',0
+>1c43	36 34 32 38 00
+>1c48	70 88					.word	34928
+>1c4a	12					.byte	18
+>1c4b	24 45 38 37 44 25 20 20			.text	'$E87D%   47403',0
+>1c53	20 34 37 34 30 33 00
+>1c5a	52 2f					.word	12114
+>1c5c	10					.byte	16
+>1c5d	32 37 38 30 38 2a 20 20			.text	'27808*  4646',0
+>1c65	34 36 34 36 00
+>1c6a	c0 5f					.word	24512
+>1c6c	1c					.byte	28
+>1c6d	25 31 30 30 30 30 30 30			.text	'%10000001100100   <>$DF9',0
+>1c75	31 31 30 30 31 30 30 20 20 20 3c 3e 24 44 46 39
+>1c85	00
+>1c86	ff ff					.word	65535
+>1c88	1a					.byte	26
+>1c89	25 31 30 31 30 31 30 30			.text	'%101010001111110+18289',0
+>1c91	30 31 31 31 31 31 31 30 2b 31 38 32 38 39 00
+>1ca0	ef 9b					.word	39919
+>1ca2	0f					.byte	15
+>1ca3	34 35 31 37 36 3d 34 39			.text	'45176=49222',0
+>1cab	32 32 32 00
+>1caf	00 00					.word	0
+>1cb1	1b					.byte	27
+>1cb2	24 44 41 31 41 3d 25 31			.text	'$DA1A=%1100010011110101',0
+>1cba	31 30 30 30 31 30 30 31 31 31 31 30 31 30 31 00
+>1cca	00 00					.word	0
+>1ccc	11					.byte	17
+>1ccd	34 35 38 38 30 3c 20 20			.text	'45880<  $C3D1',0
+>1cd5	24 43 33 44 31 00
+>1cdb	ff ff					.word	65535
+>1cdd	0f					.byte	15
+>1cde	36 33 30 37 39 2b 34 33			.text	'63079+43414',0
+>1ce6	34 31 34 00
+>1cea	fd 9f					.word	40957
+>1cec	11					.byte	17
+>1ced	34 39 36 39 33 25 20 20			.text	'49693%  $8177',0
+>1cf5	24 38 31 37 37 00
+>1cfb	a6 40					.word	16550
+>1cfd	1d					.byte	29
+>1cfe	31 30 33 35 33 2d 20 20			.text	'10353-  %1001100000101100',0
+>1d06	25 31 30 30 31 31 30 30 30 30 30 31 30 31 31 30
+>1d16	30 00
+>1d18	45 90					.word	36933
+>1d1a	1d					.byte	29
+>1d1b	25 31 31 31 31 30 31 31			.text	'%1111011111101000+  60453',0
+>1d23	31 31 31 31 30 31 30 30 30 2b 20 20 36 30 34 35
+>1d33	33 00
+>1d35	0d e4					.word	58381
+>1d37	10					.byte	16
+>1d38	36 31 36 38 37 20 20 25			.text	'61687  %5335',0
+>1d40	35 33 33 35 00
+>1d45	ba 0b					.word	3002
+>1d47	0c					.byte	12
+>1d48	32 35 30 31 36 3c 3c 30			.text	'25016<<0',0
+>1d50	00
+>1d51	b8 61					.word	25016
+>1d53	0d					.byte	13
+>1d54	34 36 31 39 30 2f 31 36			.text	'46190/161',0
+>1d5c	31 00
+>1d5e	1e 01					.word	286
+>1d60	0f					.byte	15
+>1d61	31 32 38 35 33 5e 34 30			.text	'12853^40181',0
+>1d69	31 38 31 00
+>1d6d	c0 ae					.word	44736
+>1d6f	0f					.byte	15
+>1d70	35 32 30 37 35 26 34 38			.text	'52075&48541',0
+>1d78	35 34 31 00
+>1d7c	09 89					.word	35081
+>1d7e	11					.byte	17
+>1d7f	24 46 37 46 35 20 20 2a			.text	'$F7F5  *$D0F8',0
+>1d87	24 44 30 46 38 00
+>1d8d	58 45					.word	17752
+>1d8f	0f					.byte	15
+>1d90	33 36 39 31 31 26 35 31			.text	'36911&51647',0
+>1d98	36 34 37 00
+>1d9c	2f 80					.word	32815
+>1d9e	11					.byte	17
+>1d9f	36 33 35 39 38 20 20 3c			.text	'63598  <>4010',0
+>1da7	3e 34 30 31 30 00
+>1dad	ff ff					.word	65535
+>1daf	0f					.byte	15
+>1db0	32 35 30 36 38 2f 32 34			.text	'25068/24089',0
+>1db8	30 38 39 00
+>1dbc	01 00					.word	1
+>1dbe	11					.byte	17
+>1dbf	32 31 32 31 33 20 20 5e			.text	'21213  ^10500',0
+>1dc7	31 30 35 30 30 00
+>1dcd	d9 7b					.word	31705
+>1dcf	12					.byte	18
+>1dd0	24 41 39 46 45 20 20 20			.text	'$A9FE   <64002',0
+>1dd8	3c 36 34 30 30 32 00
+>1ddf	ff ff					.word	65535
+>1de1	1e					.byte	30
+>1de2	32 33 39 37 35 20 20 20			.text	'23975   |%1101010010111000',0
+>1dea	7c 25 31 31 30 31 30 31 30 30 31 30 31 31 31 30
+>1dfa	30 30 00
+>1dfd	bf dd					.word	56767
+>1dff	10					.byte	16
+>1e00	31 38 37 36 35 20 2f 35			.text	'18765 /58708',0
+>1e08	38 37 30 38 00
+>1e0d	00 00					.word	0
+>1e0f	1d					.byte	29
+>1e10	25 31 31 30 31 31 30 31			.text	'%1101101111111001*  13922',0
+>1e18	31 31 31 31 31 31 30 30 31 2a 20 20 31 33 39 32
+>1e28	32 00
+>1e2a	52 bb					.word	47954
+>1e2c	1b					.byte	27
+>1e2d	24 46 35 30 41 20 20 20			.text	'$F50A   ^%1010000000111',0
+>1e35	5e 25 31 30 31 30 30 30 30 30 30 30 31 31 31 00
+>1e45	0d e1					.word	57613
+>1e47	10					.byte	16
+>1e48	39 34 33 34 20 20 2a 33			.text	'9434  *36677',0
+>1e50	36 36 37 37 00
+>1e55	c2 b4					.word	46274
+>1e57	13					.byte	19
+>1e58	31 34 35 33 37 20 20 20			.text	'14537   >>   27',0
+>1e60	3e 3e 20 20 20 32 37 00
+>1e68	00 00					.word	0
+>1e6a	1a					.byte	26
+>1e6b	33 30 31 36 33 25 25 31			.text	'30163%%100001011100001',0
+>1e73	30 30 30 30 31 30 31 31 31 30 30 30 30 31 00
+>1e82	f2 32					.word	13042
+>1e84	0f					.byte	15
+>1e85	33 35 31 32 36 7c 34 39			.text	'35126|49734',0
+>1e8d	37 33 34 00
+>1e91	76 cb					.word	52086
+>1e93	0f					.byte	15
+>1e94	36 32 30 32 39 3c 35 38			.text	'62029<58075',0
+>1e9c	30 37 35 00
+>1ea0	00 00					.word	0
+>1ea2	25					.byte	37
+>1ea3	25 31 31 31 30 30 31 31			.text	'%111001111101111<%111001111101111',0
+>1eab	31 31 31 30 31 31 31 31 3c 25 31 31 31 30 30 31
+>1ebb	31 31 31 31 30 31 31 31 31 00
+>1ec5	00 00					.word	0
+>1ec7	12					.byte	18
+>1ec8	34 31 31 39 36 3c 3c 20			.text	'41196<<  %1011',0
+>1ed0	20 25 31 30 31 31 00
+>1ed7	00 60					.word	24576
+>1ed9	0f					.byte	15
+>1eda	32 35 35 32 30 20 20 20			.text	'25520   >>7',0
+>1ee2	3e 3e 37 00
+>1ee6	c7 00					.word	199
+>1ee8	1b					.byte	27
+>1ee9	31 30 37 33 36 3c 25 31			.text	'10736<%1100101011000010',0
+>1ef1	31 30 30 31 30 31 30 31 31 30 30 30 30 31 30 00
+>1f01	ff ff					.word	65535
+>1f03	11					.byte	17
+>1f04	31 31 30 30 32 7c 20 20			.text	'11002|   9201',0
+>1f0c	20 39 32 30 31 00
+>1f12	fb 2b					.word	11259
+>1f14	0d					.byte	13
+>1f15	34 33 37 30 3c 36 36 32			.text	'4370<6627',0
+>1f1d	37 00
+>1f1f	ff ff					.word	65535
+>1f21	0e					.byte	14
+>1f22	24 41 43 46 39 2a 31 39			.text	'$ACF9*1944',0
+>1f2a	34 34 00
+>1f2d	d8 82					.word	33496
+>1f2f	10					.byte	16
+>1f30	35 31 37 37 20 26 20 20			.text	'5177 &  9724',0
+>1f38	39 37 32 34 00
+>1f3d	38 04					.word	1080
+>1f3f	1c					.byte	28
+>1f40	24 35 33 36 44 5e 20 25			.text	'$536D^ %1011110000001100',0
+>1f48	31 30 31 31 31 31 30 30 30 30 30 30 31 31 30 30
+>1f58	00
+>1f59	61 ef					.word	61281
+>1f5b	0f					.byte	15
+>1f5c	24 45 46 39 36 26 35 37			.text	'$EF96&57357',0
+>1f64	33 35 37 00
+>1f68	04 e0					.word	57348
+>1f6a	0f					.byte	15
+>1f6b	31 36 36 35 36 7c 35 38			.text	'16656|58285',0
+>1f73	32 38 35 00
+>1f77	bd e3					.word	58301
+>1f79	0e					.byte	14
+>1f7a	32 32 32 33 25 33 37 36			.text	'2223%37618',0
+>1f82	31 38 00
+>1f85	af 08					.word	2223
+>1f87	10					.byte	16
+>1f88	35 39 32 30 30 3c 3e 33			.text	'59200<>34995',0
+>1f90	34 39 39 35 00
+>1f95	ff ff					.word	65535
+>1f97	11					.byte	17
+>1f98	24 39 39 41 46 20 20 20			.text	'$99AF   /7685',0
+>1fa0	2f 37 36 38 35 00
+>1fa6	05 00					.word	5
+>1fa8	0b					.byte	11
+>1fa9	34 31 31 30 35 2a 38 00			.text	'41105*8',0
+>1fb1	88 04					.word	1160
+>1fb3	19					.byte	25
+>1fb4	25 31 30 30 30 31 30 30			.text	'%100010001101110-7230',0
+>1fbc	30 31 31 30 31 31 31 30 2d 37 32 33 30 00
+>1fca	30 28					.word	10288
+>1fcc	12					.byte	18
+>1fcd	33 37 35 31 38 20 20 20			.text	'37518   ^25739',0
+>1fd5	5e 32 35 37 33 39 00
+>1fdc	05 f6					.word	62981
+>1fde	0e					.byte	14
+>1fdf	24 46 32 46 33 20 3c 3c			.text	'$F2F3 <<$2',0
+>1fe7	24 32 00
+>1fea	cc cb					.word	52172
+>1fec	11					.byte	17
+>1fed	31 32 35 39 39 3c 3e 20			.text	'12599<> 12599',0
+>1ff5	31 32 35 39 39 00
+>1ffb	00 00					.word	0
+>1ffd	0f					.byte	15
+>1ffe	32 36 37 34 33 5e 31 39			.text	'26743^19986',0
+>2006	39 38 36 00
+>200a	65 26					.word	9829
+>200c	0f					.byte	15
+>200d	33 38 37 34 30 2d 35 37			.text	'38740-57227',0
+>2015	32 32 37 00
+>2019	c9 b7					.word	47049
+>201b	1e					.byte	30
+>201c	36 31 35 35 30 2a 20 20			.text	'61550*   %1100111110001110',0
+>2024	20 25 31 31 30 30 31 31 31 31 31 30 30 30 31 31
+>2034	31 30 00
+>2037	04 4f					.word	20228
+>2039	1b					.byte	27
+>203a	25 31 31 31 31 30 30 31			.text	'%1111001100110100%$B632',0
+>2042	31 30 30 31 31 30 31 30 30 25 24 42 36 33 32 00
+>2052	02 3d					.word	15618
+>2054	11					.byte	17
+>2055	34 36 36 31 39 20 20 3c			.text	'46619  <41405',0
+>205d	34 31 34 30 35 00
+>2063	00 00					.word	0
+>2065	12					.byte	18
+>2066	24 39 45 33 35 3d 20 20			.text	'$9E35=   50634',0
+>206e	20 35 30 36 33 34 00
+>2075	00 00					.word	0
+>2077	10					.byte	16
+>2078	24 37 34 35 32 20 20 7c			.text	'$7452  |$7A8',0
+>2080	24 37 41 38 00
+>2085	fa 77					.word	30714
+>2087	28					.byte	40
+>2088	25 31 30 30 30 30 31 31			.text	'%100001101110111=  %1001000000000100',0
+>2090	30 31 31 31 30 31 31 31 3d 20 20 25 31 30 30 31
+>20a0	30 30 30 30 30 30 30 30 30 31 30 30 00
+>20ad	00 00					.word	0
+>20af	0f					.byte	15
+>20b0	32 33 39 38 3c 3e 34 37			.text	'2398<>47278',0
+>20b8	32 37 38 00
+>20bc	ff ff					.word	65535
+>20be	0f					.byte	15
+>20bf	24 32 41 41 32 3d 34 31			.text	'$2AA2=41209',0
+>20c7	32 30 39 00
+>20cb	00 00					.word	0
+>20cd	1c					.byte	28
+>20ce	32 30 39 38 34 20 20 20			.text	'20984   =%10111011001111',0
+>20d6	3d 25 31 30 31 31 31 30 31 31 30 30 31 31 31 31
+>20e6	00
+>20e7	00 00					.word	0
+>20e9	0d					.byte	13
+>20ea	38 36 39 35 2d 37 38 33			.text	'8695-7834',0
+>20f2	34 00
+>20f4	5d 03					.word	861
+>20f6	12					.byte	18
+>20f7	24 43 31 37 33 25 20 20			.text	'$C173%   52988',0
+>20ff	20 35 32 39 38 38 00
+>2106	73 c1					.word	49523
+>2108	1b					.byte	27
+>2109	25 31 30 31 30 31 31 31			.text	'%1010111100101111& 6779',0
+>2111	31 30 30 31 30 31 31 31 31 26 20 36 37 37 39 00
+>2121	2b 0a					.word	2603
+>2123	0d					.byte	13
+>2124	35 36 31 39 35 26 37 33			.text	'56195&737',0
+>212c	37 00
+>212e	81 02					.word	641
+>2130	12					.byte	18
+>2131	24 31 45 35 43 25 20 20			.text	'$1E5C%   62834',0
+>2139	20 36 32 38 33 34 00
+>2140	5c 1e					.word	7772
+>2142	12					.byte	18
+>2143	31 37 30 37 31 20 20 20			.text	'17071   /25347',0
+>214b	2f 32 35 33 34 37 00
+>2152	00 00					.word	0
+>2154	16					.byte	22
+>2155	32 33 39 33 32 2d 25 31			.text	'23932-%11000011001',0
+>215d	31 30 30 30 30 31 31 30 30 31 00
+>2168	63 57					.word	22371
+>216a	10					.byte	16
+>216b	35 32 33 36 32 20 3c 31			.text	'52362 <15003',0
+>2173	35 30 30 33 00
+>2178	00 00					.word	0
+>217a	0f					.byte	15
+>217b	35 34 38 37 36 3c 24 34			.text	'54876<$4955',0
+>2183	39 35 35 00
+>2187	00 00					.word	0
+>2189	11					.byte	17
+>218a	35 39 35 34 34 20 20 2a			.text	'59544  *35646',0
+>2192	33 35 36 34 36 00
+>2198	d0 dc					.word	56528
+>219a	0e					.byte	14
+>219b	24 46 45 30 32 3e 3e 20			.text	'$FE02>> 14',0
+>21a3	31 34 00
+>21a6	03 00					.word	3
+>21a8	0f					.byte	15
+>21a9	32 33 36 33 31 20 25 32			.text	'23631 %2170',0
+>21b1	31 37 30 00
+>21b5	8b 07					.word	1931
+>21b7	11					.byte	17
+>21b8	34 36 34 39 36 20 20 26			.text	'46496  &$7F6A',0
+>21c0	24 37 46 36 41 00
+>21c6	20 35					.word	13600
+>21c8	13					.byte	19
+>21c9	35 32 37 39 39 20 3c 20			.text	'52799 <   52799',0
+>21d1	20 20 35 32 37 39 39 00
+>21d9	00 00					.word	0
+>21db	10					.byte	16
+>21dc	33 33 37 39 38 20 20 3c			.text	'33798  <<%10',0
+>21e4	3c 25 31 30 00
+>21e9	18 10					.word	4120
+>21eb	0f					.byte	15
+>21ec	38 34 37 31 20 2d 35 39			.text	'8471 -59192',0
+>21f4	31 39 32 00
+>21f8	df 39					.word	14815
+>21fa	12					.byte	18
+>21fb	32 36 39 39 31 20 25 20			.text	'26991 %  43679',0
+>2203	20 34 33 36 37 39 00
+>220a	6f 69					.word	26991
+>220c	0e					.byte	14
+>220d	32 37 31 39 3c 31 35 33			.text	'2719<15338',0
+>2215	33 38 00
+>2218	ff ff					.word	65535
+>221a	1e					.byte	30
+>221b	25 31 30 30 30 31 31 30			.text	'%1000110010000011-   64775',0
+>2223	30 31 30 30 30 30 30 31 31 2d 20 20 20 36 34 37
+>2233	37 35 00
+>2236	7c 8f					.word	36732
+>2238	0d					.byte	13
+>2239	32 34 38 32 39 3c 3c 33			.text	'24829<<33',0
+>2241	33 00
+>2243	00 00					.word	0
+>2245	0f					.byte	15
+>2246	32 33 31 38 36 25 33 33			.text	'23186%33682',0
+>224e	36 38 32 00
+>2252	92 5a					.word	23186
+>2254	1e					.byte	30
+>2255	25 31 31 30 30 31 31 31			.text	'%1100111100011111&   41415',0
+>225d	31 30 30 30 31 31 31 31 31 26 20 20 20 34 31 34
+>226d	31 35 00
+>2270	07 81					.word	33031
+>2272	10					.byte	16
+>2273	24 39 42 45 43 3c 3e 24			.text	'$9BEC<>$9BEC',0
+>227b	39 42 45 43 00
+>2280	00 00					.word	0
+>2282	1d					.byte	29
+>2283	25 31 31 31 31 30 31 30			.text	'%111101011110011  <<   18',0
+>228b	31 31 31 31 30 30 31 31 20 20 3c 3c 20 20 20 31
+>229b	38 00
+>229d	00 00					.word	0
+>229f	11					.byte	17
+>22a0	36 33 33 39 30 20 20 20			.text	'63390   =8407',0
+>22a8	3d 38 34 30 37 00
+>22ae	00 00					.word	0
+>22b0	10					.byte	16
+>22b1	32 30 36 34 36 3c 3e 35			.text	'20646<>51359',0
+>22b9	31 33 35 39 00
+>22be	ff ff					.word	65535
+>22c0	20					.byte	32
+>22c1	25 31 31 30 30 30 30 30			.text	'%1100000101%%111000011101111',0
+>22c9	31 30 31 25 25 31 31 31 30 30 30 30 31 31 31 30
+>22d9	31 31 31 31 00
+>22de	05 03					.word	773
+>22e0	10					.byte	16
+>22e1	35 33 32 30 33 20 7c 35			.text	'53203 |52763',0
+>22e9	32 37 36 33 00
+>22ee	db cf					.word	53211
+>22f0	10					.byte	16
+>22f1	33 32 33 38 32 5e 20 31			.text	'32382^ 13083',0
+>22f9	33 30 38 33 00
+>22fe	65 4d					.word	19813
+>2300	0e					.byte	14
+>2301	35 36 33 35 2b 24 44 36			.text	'5635+$D612',0
+>2309	31 32 00
+>230c	15 ec					.word	60437
+>230e	0c					.byte	12
+>230f	32 31 30 31 20 3c 3c 37			.text	'2101 <<7',0
+>2317	00
+>2318	80 1a					.word	6784
+>231a	0f					.byte	15
+>231b	31 33 35 30 33 20 2a 37			.text	'13503 *7548',0
+>2323	35 34 38 00
+>2327	84 2f					.word	12164
+>2329	18					.byte	24
+>232a	34 33 35 37 39 2b 25 31			.text	'43579+%1010001001011',0
+>2332	30 31 30 30 30 31 30 30 31 30 31 31 00
+>233f	86 be					.word	48774
+>2341	0f					.byte	15
+>2342	24 41 41 46 43 2f 36 31			.text	'$AAFC/61243',0
+>234a	32 34 33 00
+>234e	00 00					.word	0
+>2350	11					.byte	17
+>2351	36 33 32 35 39 3d 20 20			.text	'63259=  $3BF6',0
+>2359	24 33 42 46 36 00
+>235f	00 00					.word	0
+>2361	1a					.byte	26
+>2362	34 36 38 2d 20 25 31 31			.text	'468- %1111111101011000',0
+>236a	31 31 31 31 31 31 30 31 30 31 31 30 30 30 00
+>2379	7c 02					.word	636
+>237b	1c					.byte	28
+>237c	25 31 30 31 30 31 30 31			.text	'%1010101001101010-  8644',0
+>2384	30 30 31 31 30 31 30 31 30 2d 20 20 38 36 34 34
+>2394	00
+>2395	a6 88					.word	34982
+>2397	11					.byte	17
+>2398	35 30 36 39 36 20 20 2f			.text	'50696  /16757',0
+>23a0	31 36 37 35 37 00
+>23a6	03 00					.word	3
+>23a8	0f					.byte	15
+>23a9	34 34 32 32 34 5e 36 32			.text	'44224^62708',0
+>23b1	37 30 38 00
+>23b5	34 58					.word	22580
+>23b7	0f					.byte	15
+>23b8	24 38 41 31 39 25 33 32			.text	'$8A19%32483',0
+>23c0	34 38 33 00
+>23c4	36 0b					.word	2870
+>23c6	0d					.byte	13
+>23c7	35 30 38 34 3d 32 32 34			.text	'5084=2244',0
+>23cf	34 00
+>23d1	00 00					.word	0
+>23d3	11					.byte	17
+>23d4	31 38 38 38 34 2a 20 20			.text	'18884*  38760',0
+>23dc	33 38 37 36 30 00
+>23e2	a0 93					.word	37792
+>23e4	1b					.byte	27
+>23e5	25 31 30 30 31 30 31 30			.text	'%10010100101011%  29794',0
+>23ed	30 31 30 31 30 31 31 25 20 20 32 39 37 39 34 00
+>23fd	2b 25					.word	9515
+>23ff	1c					.byte	28
+>2400	25 31 30 31 31 31 30 30			.text	'%101110001000101 ^ 60460',0
+>2408	30 31 30 30 30 31 30 31 20 5e 20 36 30 34 36 30
+>2418	00
+>2419	69 b0					.word	45161
+>241b	10					.byte	16
+>241c	32 38 33 33 20 20 20 2b			.text	'2833   +2715',0
+>2424	32 37 31 35 00
+>2429	ac 15					.word	5548
+>242b	10					.byte	16
+>242c	34 35 30 33 30 20 2b 31			.text	'45030 +12310',0
+>2434	32 33 31 30 00
+>2439	fc df					.word	57340
+>243b	27					.byte	39
+>243c	25 31 30 30 31 30 30 31			.text	'%1001001100000110 ^%111110110110100',0
+>2444	31 30 30 30 30 30 31 31 30 20 5e 25 31 31 31 31
+>2454	31 30 31 31 30 31 31 30 31 30 30 00
+>2460	b2 ee					.word	61106
+>2462	13					.byte	19
+>2463	33 37 32 36 38 20 2d 20			.text	'37268 -   23842',0
+>246b	20 20 32 33 38 34 32 00
+>2473	72 34					.word	13426
+>2475	10					.byte	16
+>2476	36 32 33 39 36 3c 3e 33			.text	'62396<>30982',0
+>247e	30 39 38 32 00
+>2483	ff ff					.word	65535
+>2485	14					.byte	20
+>2486	34 32 34 37 36 20 20 2d			.text	'42476  -   $4113',0
+>248e	20 20 20 24 34 31 31 33 00
+>2497	d9 64					.word	25817
+>2499	1e					.byte	30
+>249a	31 38 31 38 39 20 20 3c			.text	'18189  < %1111111111110101',0
+>24a2	20 25 31 31 31 31 31 31 31 31 31 31 31 31 30 31
+>24b2	30 31 00
+>24b5	ff ff					.word	65535
+>24b7	27					.byte	39
+>24b8	25 31 30 30 31 30 31 31			.text	'%1001011001100000%%1100010110010000',0
+>24c0	30 30 31 31 30 30 30 30 30 25 25 31 31 30 30 30
+>24d0	31 30 31 31 30 30 31 30 30 30 30 00
+>24dc	60 96					.word	38496
+>24de	12					.byte	18
+>24df	32 33 33 34 33 20 20 20			.text	'23343   %$F1A4',0
+>24e7	25 24 46 31 41 34 00
+>24ee	2f 5b					.word	23343
+>24f0	1a					.byte	26
+>24f1	25 31 30 30 30 30 31 31			.text	'%1000011101101110=5654',0
+>24f9	31 30 31 31 30 31 31 31 30 3d 35 36 35 34 00
+>2508	00 00					.word	0
+>250a	0f					.byte	15
+>250b	35 38 32 39 35 3e 3e 20			.text	'58295>>  16',0
+>2513	20 31 36 00
+>2517	00 00					.word	0
+>2519	10					.byte	16
+>251a	24 41 39 41 37 3c 20 24			.text	'$A9A7< $AFD0',0
+>2522	41 46 44 30 00
+>2527	ff ff					.word	65535
+>2529	19					.byte	25
+>252a	25 31 30 30 31 30 30 30			.text	'%100100000111111&7180',0
+>2532	30 30 31 31 31 31 31 31 26 37 31 38 30 00
+>2540	0c 08					.word	2060
+>2542	10					.byte	16
+>2543	35 33 35 33 2a 20 20 20			.text	'5353*   7428',0
+>254b	37 34 32 38 00
+>2550	a4 b8					.word	47268
+>2552	0e					.byte	14
+>2553	32 31 38 33 32 2d 32 30			.text	'21832-2014',0
+>255b	31 34 00
+>255e	6a 4d					.word	19818
+>2560	0f					.byte	15
+>2561	31 31 39 34 32 26 32 38			.text	'11942&28176',0
+>2569	31 37 36 00
+>256d	00 2e					.word	11776
+>256f	1b					.byte	27
+>2570	25 31 30 30 31 31 30 30			.text	'%1001100110111001+$F48D',0
+>2578	31 31 30 31 31 31 30 30 31 2b 24 46 34 38 44 00
+>2588	46 8e					.word	36422
+>258a	1b					.byte	27
+>258b	25 31 31 30 30 31 31 31			.text	'%1100111101011001*18562',0
+>2593	31 30 31 30 31 31 30 30 31 2a 31 38 35 36 32 00
+>25a3	32 53					.word	21298
+>25a5	0f					.byte	15
+>25a6	36 35 32 31 36 5e 34 30			.text	'65216^40798',0
+>25ae	37 39 38 00
+>25b2	9e 61					.word	24990
+>25b4	14					.byte	20
+>25b5	31 31 36 38 31 3c 3c 20			.text	'11681<<  %100011',0
+>25bd	20 25 31 30 30 30 31 31 00
+>25c6	00 00					.word	0
+>25c8	13					.byte	19
+>25c9	34 30 33 39 35 20 20 20			.text	'40395   ^ $3807',0
+>25d1	5e 20 24 33 38 30 37 00
+>25d9	cc a5					.word	42444
+>25db	0f					.byte	15
+>25dc	31 37 32 32 37 26 33 38			.text	'17227&38505',0
+>25e4	35 30 35 00
+>25e8	49 02					.word	585
+>25ea	0f					.byte	15
+>25eb	33 33 35 38 39 2f 24 43			.text	'33589/$C7EB',0
+>25f3	37 45 42 00
+>25f7	00 00					.word	0
+>25f9	11					.byte	17
+>25fa	32 36 36 31 31 3e 3e 25			.text	'26611>>%10100',0
+>2602	31 30 31 30 30 00
+>2608	00 00					.word	0
+>260a	1e					.byte	30
+>260b	36 30 33 32 39 20 20 3c			.text	'60329  < %1101110000010011',0
+>2613	20 25 31 31 30 31 31 31 30 30 30 30 30 31 30 30
+>2623	31 31 00
+>2626	00 00					.word	0
+>2628	12					.byte	18
+>2629	35 33 38 37 34 20 20 20			.text	'53874   +27632',0
+>2631	2b 32 37 36 33 32 00
+>2638	62 3e					.word	15970
+>263a	10					.byte	16
+>263b	32 37 30 32 37 5e 20 34			.text	'27027^ 48455',0
+>2643	38 34 35 35 00
+>2648	d4 d4					.word	54484
+>264a	1b					.byte	27
+>264b	25 31 30 31 30 31 30 30			.text	'%1010100011101001<34296',0
+>2653	30 31 31 31 30 31 30 30 31 3c 33 34 32 39 36 00
+>2663	00 00					.word	0
+>2665	12					.byte	18
+>2666	32 32 38 36 35 20 20 20			.text	'22865   /$D907',0
+>266e	2f 24 44 39 30 37 00
+>2675	00 00					.word	0
+>2677	11					.byte	17
+>2678	33 36 32 38 39 20 20 7c			.text	'36289  |43844',0
+>2680	34 33 38 34 34 00
+>2686	c5 af					.word	44997
+>2688	1c					.byte	28
+>2689	25 31 31 30 31 30 31 31			.text	'%1101011110010101<> 3159',0
+>2691	31 31 30 30 31 30 31 30 31 3c 3e 20 33 31 35 39
+>26a1	00
+>26a2	ff ff					.word	65535
+>26a4	0f					.byte	15
+>26a5	34 38 33 32 31 2a 34 35			.text	'48321*45728',0
+>26ad	37 32 38 00
+>26b1	a0 2a					.word	10912
+>26b3	0e					.byte	14
+>26b4	33 36 33 35 38 2b 34 37			.text	'36358+4721',0
+>26bc	32 31 00
+>26bf	77 a0					.word	41079
+>26c1	12					.byte	18
+>26c2	24 36 34 44 31 2b 20 20			.text	'$64D1+   20279',0
+>26ca	20 32 30 32 37 39 00
+>26d1	08 b4					.word	46088
+>26d3	12					.byte	18
+>26d4	24 36 34 32 43 20 20 20			.text	'$642C   ^$E7D3',0
+>26dc	5e 24 45 37 44 33 00
+>26e3	ff 83					.word	33791
+>26e5	0f					.byte	15
+>26e6	38 36 39 33 3c 3e 24 43			.text	'8693<>$C314',0
+>26ee	33 31 34 00
+>26f2	ff ff					.word	65535
+>26f4	1a					.byte	26
+>26f5	37 31 39 35 5e 25 31 31			.text	'7195^%1100000010001101',0
+>26fd	30 30 30 30 30 30 31 30 30 30 31 31 30 31 00
+>270c	96 dc					.word	56470
+>270e	0e					.byte	14
+>270f	37 34 39 37 2b 36 32 37			.text	'7497+62737',0
+>2717	33 37 00
+>271a	5a 12					.word	4698
+>271c	0f					.byte	15
+>271d	33 38 33 32 35 5e 36 30			.text	'38325^60452',0
+>2725	34 35 32 00
+>2729	91 79					.word	31121
+>272b	1a					.byte	26
+>272c	39 33 39 33 3c 25 31 30			.text	'9393<%1011101100101101',0
+>2734	31 31 31 30 31 31 30 30 31 30 31 31 30 31 00
+>2743	ff ff					.word	65535
+>2745	10					.byte	16
+>2746	31 35 38 38 39 25 20 31			.text	'15889% 15548',0
+>274e	35 35 34 38 00
+>2753	55 01					.word	341
+>2755	0e					.byte	14
+>2756	32 33 32 36 33 3c 31 35			.text	'23263<1528',0
+>275e	32 38 00
+>2761	00 00					.word	0
+>2763	1a					.byte	26
+>2764	25 31 30 30 30 30 30 31			.text	'%100000100000110^64949',0
+>276c	30 30 30 30 30 31 31 30 5e 36 34 39 34 39 00
+>277b	b3 bc					.word	48307
+>277d	0f					.byte	15
+>277e	31 36 35 33 31 2f 33 37			.text	'16531/37528',0
+>2786	35 32 38 00
+>278a	00 00					.word	0
+>278c	11					.byte	17
+>278d	24 42 30 44 39 20 20 2a			.text	'$B0D9  *10458',0
+>2795	31 30 34 35 38 00
+>279b	ca 80					.word	32970
+>279d	0f					.byte	15
+>279e	33 31 37 34 31 2b 33 33			.text	'31741+33905',0
+>27a6	39 30 35 00
+>27aa	6e 00					.word	110
+>27ac	0f					.byte	15
+>27ad	34 30 34 30 30 26 32 36			.text	'40400&26472',0
+>27b5	34 37 32 00
+>27b9	40 05					.word	1344
+>27bb	11					.byte	17
+>27bc	24 35 31 44 31 26 20 20			.text	'$51D1&  53546',0
+>27c4	35 33 35 34 36 00
+>27ca	00 51					.word	20736
+>27cc	1b					.byte	27
+>27cd	25 31 31 30 30 31 31 31			.text	'%11001110001111<  30066',0
+>27d5	30 30 30 31 31 31 31 3c 20 20 33 30 30 36 36 00
+>27e5	ff ff					.word	65535
+>27e7	12					.byte	18
+>27e8	32 32 34 38 30 20 20 20			.text	'22480   =26428',0
+>27f0	3d 32 36 34 32 38 00
+>27f7	00 00					.word	0
+>27f9	10					.byte	16
+>27fa	35 37 32 38 30 3c 3e 33			.text	'57280<>30172',0
+>2802	30 31 37 32 00
+>2807	ff ff					.word	65535
+>2809	1e					.byte	30
+>280a	25 31 30 30 30 30 30 30			.text	'%1000000010111110+   63983',0
+>2812	30 31 30 31 31 31 31 31 30 2b 20 20 20 36 33 39
+>2822	38 33 00
+>2825	ad 7a					.word	31405
+>2827	0f					.byte	15
+>2828	38 32 38 38 20 7c 34 36			.text	'8288 |46741',0
+>2830	37 34 31 00
+>2834	f5 b6					.word	46837
+>2836	14					.byte	20
+>2837	35 38 36 36 39 20 20 3d			.text	'58669  =   64697',0
+>283f	20 20 20 36 34 36 39 37 00
+>2848	00 00					.word	0
+>284a	10					.byte	16
+>284b	35 36 30 36 34 20 3c 31			.text	'56064 <14484',0
+>2853	34 34 38 34 00
+>2858	00 00					.word	0
+>285a	10					.byte	16
+>285b	24 42 43 34 37 3c 3e 35			.text	'$BC47<>52801',0
+>2863	32 38 30 31 00
+>2868	ff ff					.word	65535
+>286a	0f					.byte	15
+>286b	33 36 32 30 37 20 3d 35			.text	'36207 =5764',0
+>2873	37 36 34 00
+>2877	00 00					.word	0
+>2879	12					.byte	18
+>287a	35 38 32 38 30 20 20 3d			.text	'58280  = $2B18',0
+>2882	20 24 32 42 31 38 00
+>2889	00 00					.word	0
+>288b	10					.byte	16
+>288c	32 37 39 36 33 20 2f 20			.text	'27963 / 5902',0
+>2894	35 39 30 32 00
+>2899	04 00					.word	4
+>289b	10					.byte	16
+>289c	31 39 39 32 37 7c 20 20			.text	'19927|  9270',0
+>28a4	39 32 37 30 00
+>28a9	f7 6d					.word	28151
+>28ab	0f					.byte	15
+>28ac	31 32 31 31 33 5e 33 31			.text	'12113^31601',0
+>28b4	36 30 31 00
+>28b8	20 54					.word	21536
+>28ba	1a					.byte	26
+>28bb	24 34 38 31 31 26 25 31			.text	'$4811&%111100001011000',0
+>28c3	31 31 31 30 30 30 30 31 30 31 31 30 30 30 00
+>28d2	10 48					.word	18448
+>28d4	20					.byte	32
+>28d5	35 35 37 30 31 20 20 20			.text	'55701   %  %1001001011001111',0
+>28dd	25 20 20 25 31 30 30 31 30 30 31 30 31 31 30 30
+>28ed	31 31 31 31 00
+>28f2	c6 46					.word	18118
+>28f4	0f					.byte	15
+>28f5	32 30 35 37 34 2d 33 38			.text	'20574-38531',0
+>28fd	35 33 31 00
+>2901	db b9					.word	47579
+>2903	11					.byte	17
+>2904	31 31 34 33 33 20 20 26			.text	'11433  &48589',0
+>290c	34 38 35 38 39 00
+>2912	89 2c					.word	11401
+>2914	1b					.byte	27
+>2915	31 35 36 37 39 5e 25 31			.text	'15679^%1101110010101111',0
+>291d	31 30 31 31 31 30 30 31 30 31 30 31 31 31 31 00
+>292d	90 e1					.word	57744
+>292f	13					.byte	19
+>2930	32 38 31 36 39 20 3d 20			.text	'28169 =   32488',0
+>2938	20 20 33 32 34 38 38 00
+>2940	00 00					.word	0
+>2942	11					.byte	17
+>2943	33 35 33 37 31 3c 3e 20			.text	'35371<> 24744',0
+>294b	32 34 37 34 34 00
+>2951	ff ff					.word	65535
+>2953	0f					.byte	15
+>2954	24 33 44 38 45 2f 24 36			.text	'$3D8E/$6625',0
+>295c	36 32 35 00
+>2960	00 00					.word	0
+>2962	10					.byte	16
+>2963	24 33 35 38 35 3c 3e 32			.text	'$3585<>29175',0
+>296b	39 31 37 35 00
+>2970	ff ff					.word	65535
+>2972	11					.byte	17
+>2973	34 33 31 36 35 25 20 20			.text	'43165%   3726',0
+>297b	20 33 37 32 36 00
+>2981	83 08					.word	2179
+>2983	0f					.byte	15
+>2984	36 30 31 31 30 3d 24 33			.text	'60110=$371F',0
+>298c	37 31 46 00
+>2990	00 00					.word	0
+>2992	26					.byte	38
+>2993	25 31 30 31 30 30 30 30			.text	'%1010000100000110%%101111011101101',0
+>299b	31 30 30 30 30 30 31 31 30 25 25 31 30 31 31 31
+>29ab	31 30 31 31 31 30 31 31 30 31 00
+>29b6	19 42					.word	16921
+>29b8	28					.byte	40
+>29b9	25 31 31 31 31 30 30 30			.text	'%1111000100011111| %1001110001100101',0
+>29c1	31 30 30 30 31 31 31 31 31 7c 20 25 31 30 30 31
+>29d1	31 31 30 30 30 31 31 30 30 31 30 31 00
+>29de	7f fd					.word	64895
+>29e0	1f					.byte	31
+>29e1	25 31 30 31 30 31 30 30			.text	'%1010100000000101 &   30845',0
+>29e9	30 30 30 30 30 30 31 30 31 20 26 20 20 20 33 30
+>29f9	38 34 35 00
+>29fd	05 28					.word	10245
+>29ff	12					.byte	18
+>2a00	32 30 34 39 33 2d 20 20			.text	'20493-   36322',0
+>2a08	20 33 36 33 32 32 00
+>2a0f	2b c2					.word	49707
+>2a11	0f					.byte	15
+>2a12	24 42 38 30 45 2d 32 38			.text	'$B80E-28228',0
+>2a1a	32 32 38 00
+>2a1e	ca 49					.word	18890
+>2a20	0f					.byte	15
+>2a21	35 36 34 36 30 2a 32 33			.text	'56460*23256',0
+>2a29	32 35 36 00
+>2a2d	20 4e					.word	20000
+>2a2f	10					.byte	16
+>2a30	33 35 38 38 25 20 20 35			.text	'3588%  55316',0
+>2a38	35 33 31 36 00
+>2a3d	04 0e					.word	3588
+>2a3f	0f					.byte	15
+>2a40	34 30 37 39 30 2b 35 31			.text	'40790+51523',0
+>2a48	35 32 33 00
+>2a4c	99 68					.word	26777
+>2a4e	0d					.byte	13
+>2a4f	31 33 34 33 3e 3e 24 31			.text	'1343>>$12',0
+>2a57	32 00
+>2a59	00 00					.word	0
+>2a5b	0e					.byte	14
+>2a5c	31 38 32 31 37 3c 24 37			.text	'18217<$773',0
+>2a64	37 33 00
+>2a67	00 00					.word	0
+>2a69	1c					.byte	28
+>2a6a	25 31 30 31 31 30 30 31			.text	'%1011001101010101- 61192',0
+>2a72	31 30 31 30 31 30 31 30 31 2d 20 36 31 31 39 32
+>2a82	00
+>2a83	4d c4					.word	50253
+>2a85	11					.byte	17
+>2a86	32 39 30 36 38 2f 20 20			.text	'29068/  31148',0
+>2a8e	33 31 31 34 38 00
+>2a94	00 00					.word	0
+>2a96	10					.byte	16
+>2a97	36 31 36 36 31 3c 20 36			.text	'61661< 61661',0
+>2a9f	31 36 36 31 00
+>2aa4	00 00					.word	0
+>2aa6	13					.byte	19
+>2aa7	24 39 38 38 35 20 20 3c			.text	'$9885  <> $9885',0
+>2aaf	3e 20 24 39 38 38 35 00
+>2ab7	00 00					.word	0
+>2ab9	0f					.byte	15
+>2aba	36 33 39 31 32 3c 31 35			.text	'63912<15777',0
+>2ac2	37 37 37 00
+>2ac6	00 00					.word	0
+>2ac8	1c					.byte	28
+>2ac9	35 31 31 33 34 2f 20 20			.text	'51134/  %111011010000001',0
+>2ad1	25 31 31 31 30 31 31 30 31 30 30 30 30 30 30 31
+>2ae1	00
+>2ae2	01 00					.word	1
+>2ae4	11					.byte	17
+>2ae5	38 36 38 35 2f 20 20 20			.text	'8685/   $8584',0
+>2aed	24 38 35 38 34 00
+>2af3	00 00					.word	0
+>2af5	0d					.byte	13
+>2af6	31 32 36 34 39 3c 3c 32			.text	'12649<<29',0
+>2afe	39 00
+>2b00	00 00					.word	0
+>2b02	0d					.byte	13
+>2b03	24 38 44 33 43 3c 3c 33			.text	'$8D3C<<33',0
+>2b0b	33 00
+>2b0d	00 00					.word	0
+>2b0f	0e					.byte	14
+>2b10	24 35 39 32 2d 32 34 37			.text	'$592-24745',0
+>2b18	34 35 00
+>2b1b	e9 a4					.word	42217
+>2b1d	1d					.byte	29
+>2b1e	33 37 33 32 34 20 20 3c			.text	'37324  <%1111011100011011',0
+>2b26	25 31 31 31 31 30 31 31 31 30 30 30 31 31 30 31
+>2b36	31 00
+>2b38	ff ff					.word	65535
+>2b3a	1d					.byte	29
+>2b3b	25 31 30 30 30 30 30 31			.text	'%1000001100111001|   8660',0
+>2b43	31 30 30 31 31 31 30 30 31 7c 20 20 20 38 36 36
+>2b53	30 00
+>2b55	fd a3					.word	41981
+>2b57	12					.byte	18
+>2b58	32 32 30 35 30 20 20 20			.text	'22050   |16781',0
+>2b60	7c 31 36 37 38 31 00
+>2b67	af 57					.word	22447
+>2b69	0f					.byte	15
+>2b6a	35 38 38 32 34 2a 31 35			.text	'58824*15113',0
+>2b72	31 31 33 00
+>2b76	08 2c					.word	11272
+>2b78	0e					.byte	14
+>2b79	36 35 33 34 39 3c 3c 24			.text	'65349<<$13',0
+>2b81	31 33 00
+>2b84	00 00					.word	0
+>2b86	11					.byte	17
+>2b87	35 38 32 32 37 20 20 20			.text	'58227   <<%11',0
+>2b8f	3c 3c 25 31 31 00
+>2b95	98 1b					.word	7064
+>2b97	12					.byte	18
+>2b98	24 41 46 43 44 3d 20 20			.text	'$AFCD=   41692',0
+>2ba0	20 34 31 36 39 32 00
+>2ba7	00 00					.word	0
+>2ba9	0f					.byte	15
+>2baa	24 33 37 45 39 25 24 33			.text	'$37E9%$33E1',0
+>2bb2	33 45 31 00
+>2bb6	08 04					.word	1032
+>2bb8	0f					.byte	15
+>2bb9	36 31 31 36 39 3c 3c 20			.text	'61169<<  17',0
+>2bc1	20 31 37 00
+>2bc5	00 00					.word	0
+>2bc7	0f					.byte	15
+>2bc8	24 43 41 38 36 5e 24 31			.text	'$CA86^$1B38',0
+>2bd0	42 33 38 00
+>2bd4	be d1					.word	53694
+>2bd6	10					.byte	16
+>2bd7	33 32 34 37 38 3d 20 20			.text	'32478=  4877',0
+>2bdf	34 38 37 37 00
+>2be4	00 00					.word	0
+>2be6	1b					.byte	27
+>2be7	25 31 30 30 31 30 31 31			.text	'%100101101010101 ^18413',0
+>2bef	30 31 30 31 30 31 30 31 20 5e 31 38 34 31 33 00
+>2bff	b8 0c					.word	3256
+>2c01	0f					.byte	15
+>2c02	33 31 37 32 32 7c 31 36			.text	'31722|16302',0
+>2c0a	33 30 32 00
+>2c0e	ee 7f					.word	32750
+>2c10	10					.byte	16
+>2c11	24 31 44 46 39 3c 3e 31			.text	'$1DF9<>12989',0
+>2c19	32 39 38 39 00
+>2c1e	ff ff					.word	65535
+>2c20	10					.byte	16
+>2c21	24 44 35 46 30 20 2f 24			.text	'$D5F0 /$D1EA',0
+>2c29	44 31 45 41 00
+>2c2e	01 00					.word	1
+>2c30	0f					.byte	15
+>2c31	31 39 34 37 37 2f 31 36			.text	'19477/16061',0
+>2c39	30 36 31 00
+>2c3d	01 00					.word	1
+>2c3f	11					.byte	17
+>2c40	35 35 39 39 32 20 25 20			.text	'55992 % 12747',0
+>2c48	31 32 37 34 37 00
+>2c4e	8c 13					.word	5004
+>2c50	12					.byte	18
+>2c51	32 37 30 35 34 20 20 2a			.text	'27054  * $A069',0
+>2c59	20 24 41 30 36 39 00
+>2c60	5e 18					.word	6238
+>2c62	0f					.byte	15
+>2c63	24 46 35 31 30 7c 24 39			.text	'$F510|$9E16',0
+>2c6b	45 31 36 00
+>2c6f	16 ff					.word	65302
+>2c71	0d					.byte	13
+>2c72	34 33 33 39 36 3c 3c 24			.text	'43396<<$7',0
+>2c7a	37 00
+>2c7c	00 c2					.word	49664
+>2c7e	10					.byte	16
+>2c7f	39 30 32 2f 20 20 20 35			.text	'902/   59247',0
+>2c87	39 32 34 37 00
+>2c8c	00 00					.word	0
+>2c8e	12					.byte	18
+>2c8f	24 38 43 44 35 2d 20 20			.text	'$8CD5-   $F9C3',0
+>2c97	20 24 46 39 43 33 00
+>2c9e	12 93					.word	37650
+>2ca0	0f					.byte	15
+>2ca1	34 36 37 31 30 3c 3e 35			.text	'46710<>5435',0
+>2ca9	34 33 35 00
+>2cad	ff ff					.word	65535
+>2caf	11					.byte	17
+>2cb0	24 45 43 41 35 20 20 7c			.text	'$ECA5  |21998',0
+>2cb8	32 31 39 39 38 00
+>2cbe	ef fd					.word	65007
+>2cc0	1e					.byte	30
+>2cc1	36 33 37 31 31 20 20 20			.text	'63711   -%1010110100110011',0
+>2cc9	2d 25 31 30 31 30 31 31 30 31 30 30 31 31 30 30
+>2cd9	31 31 00
+>2cdc	ac 4b					.word	19372
+>2cde	0e					.byte	14
+>2cdf	24 31 31 41 35 20 3e 3e			.text	'$11A5 >>29',0
+>2ce7	32 39 00
+>2cea	00 00					.word	0
+>2cec	14					.byte	20
+>2ced	34 34 33 30 33 20 20 26			.text	'44303  &   $792C',0
+>2cf5	20 20 20 24 37 39 32 43 00
+>2cfe	0c 29					.word	10508
+>2d00	26					.byte	38
+>2d01	25 31 30 31 31 31 31 30			.text	'%101111001010101%%1101011001010111',0
+>2d09	30 31 30 31 30 31 30 31 25 25 31 31 30 31 30 31
+>2d19	31 30 30 31 30 31 30 31 31 31 00
+>2d24	55 5e					.word	24149
+>2d26	1a					.byte	26
+>2d27	25 31 31 30 31 31 30 31			.text	'%1101101011000010%1095',0
+>2d2f	30 31 31 30 30 30 30 31 30 25 31 30 39 35 00
+>2d3e	9d 00					.word	157
+>2d40	1c					.byte	28
+>2d41	25 31 31 31 31 31 30 31			.text	'%111110100001000<<%10111',0
+>2d49	30 30 30 30 31 30 30 30 3c 3c 25 31 30 31 31 31
+>2d59	00
+>2d5a	00 00					.word	0
+>2d5c	0e					.byte	14
+>2d5d	34 37 36 20 20 20 3e 3e			.text	'476   >>$C',0
+>2d65	24 43 00
+>2d68	00 00					.word	0
+>2d6a	0f					.byte	15
+>2d6b	32 38 37 33 20 20 20 3c			.text	'2873   <<31',0
+>2d73	3c 33 31 00
+>2d77	00 00					.word	0
+>2d79	1b					.byte	27
+>2d7a	31 31 38 33 35 2d 25 31			.text	'11835-%1011001111100011',0
+>2d82	30 31 31 30 30 31 31 31 31 31 30 30 30 31 31 00
+>2d92	58 7a					.word	31320
+>2d94	0f					.byte	15
+>2d95	31 31 33 30 20 2a 32 30			.text	'1130 *20973',0
+>2d9d	39 37 33 00
+>2da1	22 a0					.word	40994
+>2da3	1e					.byte	30
+>2da4	31 30 33 37 33 20 20 20			.text	'10373   ^%1000011110011000',0
+>2dac	5e 25 31 30 30 30 30 31 31 31 31 30 30 31 31 30
+>2dbc	30 30 00
+>2dbf	1d af					.word	44829
+>2dc1	10					.byte	16
+>2dc2	24 38 31 43 46 3c 3e 24			.text	'$81CF<>$81CF',0
+>2dca	38 31 43 46 00
+>2dcf	00 00					.word	0
+>2dd1	0e					.byte	14
+>2dd2	24 32 35 31 42 2d 31 38			.text	'$251B-1871',0
+>2dda	37 31 00
+>2ddd	cc 1d					.word	7628
+>2ddf	0f					.byte	15
+>2de0	32 35 35 39 37 2a 24 34			.text	'25597*$4510',0
+>2de8	35 31 30 00
+>2dec	d0 70					.word	28880
+>2dee	11					.byte	17
+>2def	31 31 36 38 32 20 20 2a			.text	'11682  *$15E6',0
+>2df7	24 31 35 45 36 00
+>2dfd	8c 49					.word	18828
+>2dff	11					.byte	17
+>2e00	31 35 30 30 33 20 20 7c			.text	'15003  |59663',0
+>2e08	35 39 36 36 33 00
+>2e0e	9f fb					.word	64415
+>2e10	10					.byte	16
+>2e11	34 35 39 33 36 20 3c 34			.text	'45936 <45936',0
+>2e19	35 39 33 36 00
+>2e1e	00 00					.word	0
+>2e20	0e					.byte	14
+>2e21	35 34 38 39 35 3e 3e 20			.text	'54895>> 18',0
+>2e29	31 38 00
+>2e2c	00 00					.word	0
+>2e2e	1c					.byte	28
+>2e2f	25 31 31 31 30 30 30 31			.text	'%111000100111101>>%11110',0
+>2e37	30 30 31 31 31 31 30 31 3e 3e 25 31 31 31 31 30
+>2e47	00
+>2e48	00 00					.word	0
+>2e4a	1b					.byte	27
+>2e4b	32 30 39 31 32 2f 25 31			.text	'20912/%1101010101110000',0
+>2e53	31 30 31 30 31 30 31 30 31 31 31 30 30 30 30 00
+>2e63	00 00					.word	0
+>2e65	1d					.byte	29
+>2e66	36 31 30 30 35 7c 20 20			.text	'61005|  %1000010001000101',0
+>2e6e	25 31 30 30 30 30 31 30 30 30 31 30 30 30 31 30
+>2e7e	31 00
+>2e80	4d ee					.word	61005
+>2e82	12					.byte	18
+>2e83	35 36 36 34 39 2f 20 20			.text	'56649/   39415',0
+>2e8b	20 33 39 34 31 35 00
+>2e92	01 00					.word	1
+>2e94	0f					.byte	15
+>2e95	31 38 33 39 37 7c 24 39			.text	'18397|$9829',0
+>2e9d	38 32 39 00
+>2ea1	fd df					.word	57341
+>2ea3	0f					.byte	15
+>2ea4	31 33 32 37 39 7c 35 38			.text	'13279|58829',0
+>2eac	38 32 39 00
+>2eb0	df f7					.word	63455
+>2eb2	1b					.byte	27
+>2eb3	24 31 35 30 39 20 26 25			.text	'$1509 &%111001010110111',0
+>2ebb	31 31 31 30 30 31 30 31 30 31 31 30 31 31 31 00
+>2ecb	01 10					.word	4097
+>2ecd	2a					.byte	42
+>2ece	25 31 31 31 31 30 31 31			.text	'%1111011110011010   +%1100110100100011',0
+>2ed6	31 31 30 30 31 31 30 31 30 20 20 20 2b 25 31 31
+>2ee6	30 30 31 31 30 31 30 30 31 30 30 30 31 31 00
+>2ef5	bd c4					.word	50365
+>2ef7	1d					.byte	29
+>2ef8	25 31 30 31 31 31 30 31			.text	'%1011101011111000  -35768',0
+>2f00	30 31 31 31 31 31 30 30 30 20 20 2d 33 35 37 36
+>2f10	38 00
+>2f12	40 2f					.word	12096
+>2f14	12					.byte	18
+>2f15	24 32 35 30 31 2d 20 20			.text	'$2501-   55115',0
+>2f1d	20 35 35 31 31 35 00
+>2f24	b6 4d					.word	19894
+>2f26	1e					.byte	30
+>2f27	32 31 34 30 32 20 3d 20			.text	'21402 =  %1001101110110110',0
+>2f2f	20 25 31 30 30 31 31 30 31 31 31 30 31 31 30 31
+>2f3f	31 30 00
+>2f42	00 00					.word	0
+>2f44	1b					.byte	27
+>2f45	36 35 31 31 38 3c 20 20			.text	'65118<   %1001101100010',0
+>2f4d	20 25 31 30 30 31 31 30 31 31 30 30 30 31 30 00
+>2f5d	00 00					.word	0
+>2f5f	10					.byte	16
+>2f60	34 32 36 30 35 20 2a 31			.text	'42605 *14724',0
+>2f68	34 37 32 34 00
+>2f6d	34 15					.word	5428
+>2f6f	0e					.byte	14
+>2f70	31 31 35 37 3c 3e 31 31			.text	'1157<>1157',0
+>2f78	35 37 00
+>2f7b	00 00					.word	0
+>2f7d	18					.byte	24
+>2f7e	36 38 30 30 2a 25 31 30			.text	'6800*%10111101111110',0
+>2f86	31 31 31 31 30 31 31 31 31 31 31 30 00
+>2f93	e0 82					.word	33504
+>2f95	1d					.byte	29
+>2f96	25 31 31 31 31 30 30 31			.text	'%111100111010001   %30206',0
+>2f9e	31 31 30 31 30 30 30 31 20 20 20 25 33 30 32 30
+>2fae	36 00
+>2fb0	d3 03					.word	979
+>2fb2	0f					.byte	15
+>2fb3	34 32 35 38 36 3d 34 31			.text	'42586=41966',0
+>2fbb	39 36 36 00
+>2fbf	00 00					.word	0
+>2fc1	0f					.byte	15
+>2fc2	24 31 31 43 43 3c 36 34			.text	'$11CC<64896',0
+>2fca	38 39 36 00
+>2fce	ff ff					.word	65535
+>2fd0	10					.byte	16
+>2fd1	24 46 38 31 30 20 25 33			.text	'$F810 %37146',0
+>2fd9	37 31 34 36 00
+>2fde	f6 66					.word	26358
+>2fe0	11					.byte	17
+>2fe1	24 35 33 45 42 25 20 20			.text	'$53EB%  $3C50',0
+>2fe9	24 33 43 35 30 00
+>2fef	9b 17					.word	6043
+>2ff1	1b					.byte	27
+>2ff2	25 31 31 31 30 30 31 30			.text	'%1110010010101000=$37A4',0
+>2ffa	30 31 30 31 30 31 30 30 30 3d 24 33 37 41 34 00
+>300a	00 00					.word	0
+>300c	0d					.byte	13
+>300d	24 39 39 30 36 3c 3c 32			.text	'$9906<<26',0
+>3015	36 00
+>3017	00 00					.word	0
+>3019	10					.byte	16
+>301a	32 39 30 35 34 3e 3e 20			.text	'29054>>  $22',0
+>3022	20 24 32 32 00
+>3027	00 00					.word	0
+>3029	29					.byte	41
+>302a	25 31 31 30 31 31 30 30			.text	'%110110000111101*   %1101111111101101',0
+>3032	30 30 31 31 31 31 30 31 2a 20 20 20 25 31 31 30
+>3042	31 31 31 31 31 31 31 31 30 31 31 30 31 00
+>3050	79 57					.word	22393
+>3052	1e					.byte	30
+>3053	25 31 31 30 30 30 30 31			.text	'%1100001101011101&   26376',0
+>305b	31 30 31 30 31 31 31 30 31 26 20 20 20 32 36 33
+>306b	37 36 00
+>306e	08 43					.word	17160
+>3070	11					.byte	17
+>3071	33 38 33 20 20 20 5e 20			.text	'383   ^ $86D6',0
+>3079	24 38 36 44 36 00
+>307f	a9 87					.word	34729
+>3081	1c					.byte	28
+>3082	25 31 31 30 31 31 30 30			.text	'%11011001000000   <$80AC',0
+>308a	31 30 30 30 30 30 30 20 20 20 3c 24 38 30 41 43
+>309a	00
+>309b	ff ff					.word	65535
+>309d	11					.byte	17
+>309e	24 45 32 30 42 20 20 26			.text	'$E20B  &36126',0
+>30a6	33 36 31 32 36 00
+>30ac	0a 80					.word	32778
+>30ae	12					.byte	18
+>30af	35 34 33 31 30 20 20 20			.text	'54310   &38832',0
+>30b7	26 33 38 38 33 32 00
+>30be	20 94					.word	37920
+>30c0	11					.byte	17
+>30c1	35 34 30 33 34 2d 20 20			.text	'54034-  27664',0
+>30c9	32 37 36 36 34 00
+>30cf	02 67					.word	26370
+>30d1	1c					.byte	28
+>30d2	32 31 32 33 31 20 3c 25			.text	'21231 <%1011110010010111',0
+>30da	31 30 31 31 31 31 30 30 31 30 30 31 30 31 31 31
+>30ea	00
+>30eb	ff ff					.word	65535
+>30ed	0e					.byte	14
+>30ee	34 34 3c 3e 20 31 34 36			.text	'44<> 14686',0
+>30f6	38 36 00
+>30f9	ff ff					.word	65535
+>30fb	12					.byte	18
+>30fc	36 32 39 37 30 2d 20 20			.text	'62970-   28663',0
+>3104	20 32 38 36 36 33 00
+>310b	03 86					.word	34307
+>310d	0e					.byte	14
+>310e	24 37 41 37 38 5e 32 39			.text	'$7A78^2915',0
+>3116	31 35 00
+>3119	1b 71					.word	28955
+>311b	0f					.byte	15
+>311c	34 30 34 39 39 2b 24 41			.text	'40499+$AB20',0
+>3124	42 32 30 00
+>3128	53 49					.word	18771
+>312a	11					.byte	17
+>312b	31 30 38 31 33 2f 20 20			.text	'10813/  $7CB9',0
+>3133	24 37 43 42 39 00
+>3139	00 00					.word	0
+>313b	10					.byte	16
+>313c	35 35 33 35 35 3c 3c 20			.text	'55355<<   20',0
+>3144	20 20 32 30 00
+>3149	00 00					.word	0
+>314b	1a					.byte	26
+>314c	25 31 31 30 31 31 30 31			.text	'%110110110111000=64319',0
+>3154	31 30 31 31 31 30 30 30 3d 36 34 33 31 39 00
+>3163	00 00					.word	0
+>3165	10					.byte	16
+>3166	31 38 37 39 33 25 20 20			.text	'18793%  4752',0
+>316e	34 37 35 32 00
+>3173	b9 11					.word	4537
+>3175	11					.byte	17
+>3176	24 31 41 42 37 20 3c 3e			.text	'$1AB7 <>12331',0
+>317e	31 32 33 33 31 00
+>3184	ff ff					.word	65535
+>3186	1b					.byte	27
+>3187	24 38 45 34 41 7c 25 31			.text	'$8E4A|%1100110101110100',0
+>318f	31 30 30 31 31 30 31 30 31 31 31 30 31 30 30 00
+>319f	7e cf					.word	53118
+>31a1	10					.byte	16
+>31a2	31 34 30 34 31 26 20 32			.text	'14041& 27880',0
+>31aa	37 38 38 30 00
+>31af	c8 24					.word	9416
+>31b1	0d					.byte	13
+>31b2	32 36 31 31 31 3c 34 37			.text	'26111<474',0
+>31ba	34 00
+>31bc	00 00					.word	0
+>31be	10					.byte	16
+>31bf	24 35 34 38 42 3c 3e 35			.text	'$548B<>57669',0
+>31c7	37 36 36 39 00
+>31cc	ff ff					.word	65535
+>31ce	0c					.byte	12
+>31cf	33 30 31 35 30 3c 3c 35			.text	'30150<<5',0
+>31d7	00
+>31d8	c0 b8					.word	47296
+>31da	0e					.byte	14
+>31db	35 34 32 36 26 34 38 35			.text	'5426&48591',0
+>31e3	39 31 00
+>31e6	02 15					.word	5378
+>31e8	12					.byte	18
+>31e9	32 38 38 38 31 20 20 20			.text	'28881   =15765',0
+>31f1	3d 31 35 37 36 35 00
+>31f8	00 00					.word	0
+>31fa	0d					.byte	13
+>31fb	31 39 33 25 32 38 39 37			.text	'193%28979',0
+>3203	39 00
+>3205	c1 00					.word	193
+>3207	12					.byte	18
+>3208	24 33 33 35 34 3c 3e 20			.text	'$3354<>   6252',0
+>3210	20 20 36 32 35 32 00
+>3217	ff ff					.word	65535
+>3219	11					.byte	17
+>321a	33 38 31 30 39 7c 20 20			.text	'38109|  22731',0
+>3222	32 32 37 33 31 00
+>3228	df dc					.word	56543
+>322a	1c					.byte	28
+>322b	31 38 35 31 31 20 2d 25			.text	'18511 -%1100110110110010',0
+>3233	31 31 30 30 31 31 30 31 31 30 31 31 30 30 31 30
+>3243	00
+>3244	9d 7a					.word	31389
+>3246	1a					.byte	26
+>3247	36 33 33 33 38 3d 25 31			.text	'63338=%111011010010111',0
+>324f	31 31 30 31 31 30 31 30 30 31 30 31 31 31 00
+>325e	00 00					.word	0
+>3260	0e					.byte	14
+>3261	33 30 31 31 32 2b 39 34			.text	'30112+9405',0
+>3269	30 35 00
+>326c	5d 9a					.word	39517
+>326e	11					.byte	17
+>326f	24 45 44 43 37 3c 20 20			.text	'$EDC7<  56042',0
+>3277	35 36 30 34 32 00
+>327d	00 00					.word	0
+>327f	10					.byte	16
+>3280	33 39 33 30 39 3c 3e 35			.text	'39309<>53138',0
+>3288	33 31 33 38 00
+>328d	ff ff					.word	65535
+>328f	12					.byte	18
+>3290	31 38 37 35 34 20 20 20			.text	'18754   *$4597',0
+>3298	2a 24 34 35 39 37 00
+>329f	ee ff					.word	65518
+>32a1	17					.byte	23
+>32a2	31 38 34 39 35 26 25 31			.text	'18495&%101110010010',0
+>32aa	30 31 31 31 30 30 31 30 30 31 30 00
+>32b6	12 08					.word	2066
+>32b8	10					.byte	16
+>32b9	32 38 30 37 20 20 2b 32			.text	'2807  +20861',0
+>32c1	30 38 36 31 00
+>32c6	74 5c					.word	23668
+>32c8	12					.byte	18
+>32c9	35 39 34 35 37 20 20 20			.text	'59457   /37631',0
+>32d1	2f 33 37 36 33 31 00
+>32d8	01 00					.word	1
+>32da	12					.byte	18
+>32db	37 35 38 35 20 20 3c 20			.text	'7585  <  63338',0
+>32e3	20 36 33 33 33 38 00
+>32ea	ff ff					.word	65535
+>32ec	0e					.byte	14
+>32ed	24 33 41 35 44 3c 3c 24			.text	'$3A5D<<$11',0
+>32f5	31 31 00
+>32f8	00 00					.word	0
+>32fa	12					.byte	18
+>32fb	32 37 33 34 37 20 20 20			.text	'27347   &55021',0
+>3303	26 35 35 30 32 31 00
+>330a	c1 42					.word	17089
+>330c	0f					.byte	15
+>330d	24 37 38 46 39 3d 24 39			.text	'$78F9=$9F74',0
+>3315	46 37 34 00
+>3319	00 00					.word	0
+>331b	0d					.byte	13
+>331c	32 34 38 35 37 3e 3e 32			.text	'24857>>23',0
+>3324	33 00
+>3326	00 00					.word	0
+>3328	12					.byte	18
+>3329	33 37 36 34 32 2b 20 20			.text	'37642+   $14EC',0
+>3331	20 24 31 34 45 43 00
+>3338	f6 a7					.word	42998
+>333a	0e					.byte	14
+>333b	33 37 34 36 30 26 38 37			.text	'37460&8795',0
+>3343	39 35 00
+>3346	50 02					.word	592
+>3348	1b					.byte	27
+>3349	31 37 36 38 32 20 20 20			.text	'17682   < %100010111010',0
+>3351	3c 20 25 31 30 30 30 31 30 31 31 31 30 31 30 00
+>3361	00 00					.word	0
+>3363	0f					.byte	15
+>3364	33 37 38 38 35 2f 24 44			.text	'37885/$D8D5',0
+>336c	38 44 35 00
+>3370	00 00					.word	0
+>3372	1b					.byte	27
+>3373	24 38 30 37 30 3c 20 25			.text	'$8070< %110110110010100',0
+>337b	31 31 30 31 31 30 31 31 30 30 31 30 31 30 30 00
+>338b	00 00					.word	0
+>338d	12					.byte	18
+>338e	34 30 35 38 38 20 20 3c			.text	'40588  <<   30',0
+>3396	3c 20 20 20 33 30 00
+>339d	00 00					.word	0
+>339f	26					.byte	38
+>33a0	25 31 30 30 31 31 31 30			.text	'%100111010101010^%1111001000000000',0
+>33a8	31 30 31 30 31 30 31 30 5e 25 31 31 31 31 30 30
+>33b8	31 30 30 30 30 30 30 30 30 30 00
+>33c3	aa bc					.word	48298
+>33c5	11					.byte	17
+>33c6	34 37 35 35 37 3d 20 20			.text	'47557=  $B29F',0
+>33ce	24 42 32 39 46 00
+>33d4	00 00					.word	0
+>33d6	0c					.byte	12
+>33d7	34 35 31 31 33 3c 3c 30			.text	'45113<<0',0
+>33df	00
+>33e0	39 b0					.word	45113
+>33e2	0f					.byte	15
+>33e3	35 32 31 32 32 26 34 36			.text	'52122&46785',0
+>33eb	37 38 35 00
+>33ef	80 82					.word	33408
+>33f1	15					.byte	21
+>33f2	33 36 36 34 31 20 20 20			.text	'36641   +   $20B2',0
+>33fa	2b 20 20 20 24 32 30 42 32 00
+>3404	d3 af					.word	45011
+>3406	0f					.byte	15
+>3407	31 37 35 35 37 7c 34 34			.text	'17557|44016',0
+>340f	30 31 36 00
+>3413	f5 ef					.word	61429
+>3415	1b					.byte	27
+>3416	25 31 30 30 31 31 30 31			.text	'%100110111001111 ^22019',0
+>341e	31 31 30 30 31 31 31 31 20 5e 32 32 30 31 39 00
+>342e	cc 1b					.word	7116
+>3430	0e					.byte	14
+>3431	32 31 30 30 31 3c 3c 20			.text	'21001<< 24',0
+>3439	32 34 00
+>343c	00 00					.word	0
+>343e	19					.byte	25
+>343f	25 31 30 30 30 31 31 30			.text	'%10001101000   ^$FD69',0
+>3447	31 30 30 30 20 20 20 5e 24 46 44 36 39 00
+>3455	01 f9					.word	63745
+>3457	1d					.byte	29
+>3458	31 30 34 33 37 3d 20 20			.text	'10437=   %100101000101001',0
+>3460	20 25 31 30 30 31 30 31 30 30 30 31 30 31 30 30
+>3470	31 00
+>3472	00 00					.word	0
+>3474	11					.byte	17
+>3475	33 36 36 37 30 20 20 26			.text	'36670  &16648',0
+>347d	31 36 36 34 38 00
+>3483	08 01					.word	264
+>3485	1b					.byte	27
+>3486	36 35 30 34 31 5e 25 31			.text	'65041^%1000010111101010',0
+>348e	30 30 30 30 31 30 31 31 31 31 30 31 30 31 30 00
+>349e	fb 7b					.word	31739
+>34a0	0f					.byte	15
+>34a1	34 38 37 30 32 25 33 32			.text	'48702%32239',0
+>34a9	32 33 39 00
+>34ad	4f 40					.word	16463
+>34af	12					.byte	18
+>34b0	35 35 38 33 34 20 20 20			.text	'55834   |$7B83',0
+>34b8	7c 24 37 42 38 33 00
+>34bf	9b fb					.word	64411
+>34c1	0f					.byte	15
+>34c2	33 36 38 38 39 3c 34 37			.text	'36889<47620',0
+>34ca	36 32 30 00
+>34ce	ff ff					.word	65535
+>34d0	0f					.byte	15
+>34d1	31 39 33 37 34 2f 34 34			.text	'19374/44073',0
+>34d9	30 37 33 00
+>34dd	00 00					.word	0
+>34df	0e					.byte	14
+>34e0	34 37 34 34 35 3c 3c 20			.text	'47445<< 10',0
+>34e8	31 30 00
+>34eb	00 54					.word	21504
+>34ed	1a					.byte	26
+>34ee	25 31 31 30 31 31 31 30			.text	'%110111011110000- 4002',0
+>34f6	31 31 31 31 30 30 30 30 2d 20 34 30 30 32 00
+>3505	4e 5f					.word	24398
+>3507	0d					.byte	13
+>3508	31 39 31 34 37 3e 3e 32			.text	'19147>>27',0
+>3510	37 00
+>3512	00 00					.word	0
+>3514	0e					.byte	14
+>3515	35 35 33 36 34 3c 3c 24			.text	'55364<<$11',0
+>351d	31 31 00
+>3520	00 00					.word	0
+>3522	1b					.byte	27
+>3523	25 31 31 31 30 30 30 31			.text	'%1110001101100010+43211',0
+>352b	31 30 31 31 30 30 30 31 30 2b 34 33 32 31 31 00
+>353b	2d 8c					.word	35885
+>353d	0f					.byte	15
+>353e	24 39 37 34 44 2a 24 44			.text	'$974D*$D70D',0
+>3546	37 30 44 00
+>354a	e9 59					.word	23017
+>354c	11					.byte	17
+>354d	34 30 30 38 32 20 20 2b			.text	'40082  +26829',0
+>3555	32 36 38 32 39 00
+>355b	5f 05					.word	1375
+>355d	11					.byte	17
+>355e	32 31 39 39 34 20 3d 20			.text	'21994 =  6340',0
+>3566	20 36 33 34 30 00
+>356c	00 00					.word	0
+>356e	0e					.byte	14
+>356f	39 39 35 36 26 35 31 35			.text	'9956&51584',0
+>3577	38 34 00
+>357a	80 00					.word	128
+>357c	0f					.byte	15
+>357d	33 36 30 38 36 25 31 35			.text	'36086%15912',0
+>3585	39 31 32 00
+>3589	a6 10					.word	4262
+>358b	0d					.byte	13
+>358c	37 33 38 3c 3e 36 35 33			.text	'738<>6537',0
+>3594	37 00
+>3596	ff ff					.word	65535
+>3598	20					.byte	32
+>3599	25 31 30 30 30 31 30 31			.text	'%1000101100000010   >>%10111',0
+>35a1	31 30 30 30 30 30 30 31 30 20 20 20 3e 3e 25 31
+>35b1	30 31 31 31 00
+>35b6	00 00					.word	0
+>35b8	19					.byte	25
+>35b9	36 38 31 38 20 20 2a 25			.text	'6818  *%1011111100011',0
+>35c1	31 30 31 31 31 31 31 31 30 30 30 31 31 00
+>35cf	a6 2b					.word	11174
+>35d1	0f					.byte	15
+>35d2	31 35 34 31 30 3c 31 35			.text	'15410<15410',0
+>35da	34 31 30 00
+>35de	00 00					.word	0
+>35e0	29					.byte	41
+>35e1	25 31 31 31 31 30 30 30			.text	'%1111000100100011  =%1111000100100011',0
+>35e9	31 30 30 31 30 30 30 31 31 20 20 3d 25 31 31 31
+>35f9	31 30 30 30 31 30 30 31 30 30 30 31 31 00
+>3607	ff ff					.word	65535
+>3609	0f					.byte	15
+>360a	36 32 37 36 36 2f 24 45			.text	'62766/$E3AE',0
+>3612	33 41 45 00
+>3616	01 00					.word	1
+>3618	12					.byte	18
+>3619	24 33 43 31 32 20 20 2f			.text	'$3C12  / 16306',0
+>3621	20 31 36 33 30 36 00
+>3628	00 00					.word	0
+>362a	13					.byte	19
+>362b	24 35 35 44 38 20 20 3e			.text	'$55D8  >>%11011',0
+>3633	3e 25 31 31 30 31 31 00
+>363b	00 00					.word	0
+>363d	0f					.byte	15
+>363e	34 30 30 38 30 2b 34 34			.text	'40080+44767',0
+>3646	37 36 37 00
+>364a	6f 4b					.word	19311
+>364c	11					.byte	17
+>364d	36 31 39 33 37 7c 20 20			.text	'61937|   2826',0
+>3655	20 32 38 32 36 00
+>365b	fb fb					.word	64507
+>365d	1b					.byte	27
+>365e	25 31 31 31 30 31 30 31			.text	'%111010101001011<>22576',0
+>3666	30 31 30 30 31 30 31 31 3c 3e 32 32 35 37 36 00
+>3676	ff ff					.word	65535
+>3678	1e					.byte	30
+>3679	24 46 31 35 41 25 20 20			.text	'$F15A%   %1100110000000100',0
+>3681	20 25 31 31 30 30 31 31 30 30 30 30 30 30 30 31
+>3691	30 30 00
+>3694	56 25					.word	9558
+>3696	0e					.byte	14
+>3697	24 41 46 36 36 5e 32 39			.text	'$AF66^2963',0
+>369f	36 33 00
+>36a2	f5 a4					.word	42229
+>36a4	14					.byte	20
+>36a5	24 39 43 42 46 3c 3c 20			.text	'$9CBF<<   %10000',0
+>36ad	20 20 25 31 30 30 30 30 00
+>36b6	00 00					.word	0
+>36b8	1a					.byte	26
+>36b9	25 31 30 30 30 31 31 30			.text	'%100011011001111<<  31',0
+>36c1	31 31 30 30 31 31 31 31 3c 3c 20 20 33 31 00
+>36d0	00 00					.word	0
+>36d2	0f					.byte	15
+>36d3	36 30 36 38 32 26 35 31			.text	'60682&51177',0
+>36db	31 37 37 00
+>36df	08 c5					.word	50440
+>36e1	10					.byte	16
+>36e2	32 30 33 30 33 3e 3e 20			.text	'20303>>   16',0
+>36ea	20 20 31 36 00
+>36ef	00 00					.word	0
+>36f1	0f					.byte	15
+>36f2	24 41 37 44 38 2b 35 35			.text	'$A7D8+55027',0
+>36fa	30 32 37 00
+>36fe	cb 7e					.word	32459
+>3700	11					.byte	17
+>3701	24 43 32 41 44 20 20 25			.text	'$C2AD  %18393',0
+>3709	31 38 33 39 33 00
+>370f	fb 32					.word	13051
+>3711	0f					.byte	15
+>3712	24 42 30 32 30 3c 3e 31			.text	'$B020<>1681',0
+>371a	36 38 31 00
+>371e	ff ff					.word	65535
+>3720	1a					.byte	26
+>3721	25 31 30 30 31 30 30 31			.text	'%100100100100010*11059',0
+>3729	30 30 31 30 30 30 31 30 2a 31 31 30 35 39 00
+>3738	c6 47					.word	18374
+>373a	0d					.byte	13
+>373b	24 43 33 46 34 3c 3c 24			.text	'$C3F4<<$9',0
+>3743	39 00
+>3745	00 e8					.word	59392
+>3747	12					.byte	18
+>3748	24 44 32 41 39 20 20 20			.text	'$D2A9   %61949',0
+>3750	25 36 31 39 34 39 00
+>3757	a9 d2					.word	53929
+>3759	1a					.byte	26
+>375a	36 32 38 31 26 25 31 30			.text	'6281&%1001000110001101',0
+>3762	30 31 30 30 30 31 31 30 30 30 31 31 30 31 00
+>3771	89 10					.word	4233
+>3773	0f					.byte	15
+>3774	33 37 31 31 39 3c 24 44			.text	'37119<$D163',0
+>377c	31 36 33 00
+>3780	ff ff					.word	65535
+>3782	1e					.byte	30
+>3783	39 39 37 34 20 20 20 2d			.text	'9974   - %1011000100111101',0
+>378b	20 25 31 30 31 31 30 30 30 31 30 30 31 31 31 31
+>379b	30 31 00
+>379e	b9 75					.word	30137
+>37a0	1d					.byte	29
+>37a1	33 32 39 35 34 3d 20 20			.text	'32954=  %1101100110010111',0
+>37a9	25 31 31 30 31 31 30 30 31 31 30 30 31 30 31 31
+>37b9	31 00
+>37bb	00 00					.word	0
+>37bd	0c					.byte	12
+>37be	34 39 30 30 3c 3c 32 30			.text	'4900<<20',0
+>37c6	00
+>37c7	00 00					.word	0
+>37c9	1b					.byte	27
+>37ca	24 45 41 37 39 2f 25 31			.text	'$EA79/%1011110111110011',0
+>37d2	30 31 31 31 31 30 31 31 31 31 31 30 30 31 31 00
+>37e2	01 00					.word	1
+>37e4	10					.byte	16
+>37e5	35 34 38 33 33 20 2b 32			.text	'54833 +25015',0
+>37ed	35 30 31 35 00
+>37f2	e8 37					.word	14312
+>37f4	1e					.byte	30
+>37f5	33 37 35 31 32 20 20 20			.text	'37512   =%1010100010000011',0
+>37fd	3d 25 31 30 31 30 31 30 30 30 31 30 30 30 30 30
+>380d	31 31 00
+>3810	00 00					.word	0
+>3812	0f					.byte	15
+>3813	31 30 37 37 34 2f 24 35			.text	'10774/$5C67',0
+>381b	43 36 37 00
+>381f	00 00					.word	0
+>3821	1b					.byte	27
+>3822	25 31 31 31 31 30 30 31			.text	'%111100111110010&  5680',0
+>382a	31 31 31 31 30 30 31 30 26 20 20 35 36 38 30 00
+>383a	30 10					.word	4144
+>383c	0e					.byte	14
+>383d	24 43 33 31 44 5e 36 33			.text	'$C31D^6311',0
+>3845	31 31 00
+>3848	ba db					.word	56250
+>384a	0e					.byte	14
+>384b	24 39 36 30 33 2b 37 35			.text	'$9603+7519',0
+>3853	31 39 00
+>3856	62 b3					.word	45922
+>3858	0f					.byte	15
+>3859	33 32 37 34 33 7c 31 31			.text	'32743|11283',0
+>3861	32 38 33 00
+>3865	f7 7f					.word	32759
+>3867	1a					.byte	26
+>3868	24 34 37 36 38 2d 25 31			.text	'$4768-%101110110100011',0
+>3870	30 31 31 31 30 31 31 30 31 30 30 30 31 31 00
+>387f	c5 e9					.word	59845
+>3881	0f					.byte	15
+>3882	31 38 33 32 31 2a 35 34			.text	'18321*54337',0
+>388a	33 33 37 00
+>388e	d1 3f					.word	16337
+>3890	10					.byte	16
+>3891	34 33 31 33 37 20 5e 24			.text	'43137 ^$64F3',0
+>3899	36 34 46 33 00
+>389e	72 cc					.word	52338
+>38a0	11					.byte	17
+>38a1	35 35 35 39 36 2a 20 20			.text	'55596*  $3682',0
+>38a9	24 33 36 38 32 00
+>38af	58 90					.word	36952
+>38b1	0e					.byte	14
+>38b2	31 34 33 32 2b 33 36 35			.text	'1432+36564',0
+>38ba	36 34 00
+>38bd	6c 94					.word	37996
+>38bf	0d					.byte	13
+>38c0	31 32 31 37 33 3c 3c 24			.text	'12173<<$A',0
+>38c8	41 00
+>38ca	00 34					.word	13312
+>38cc	14					.byte	20
+>38cd	35 35 38 30 38 20 20 20			.text	'55808   +  43368',0
+>38d5	2b 20 20 34 33 33 36 38 00
+>38de	68 83					.word	33640
+>38e0	12					.byte	18
+>38e1	35 37 38 30 33 26 20 20			.text	'57803&   $461A',0
+>38e9	20 24 34 36 31 41 00
+>38f0	0a 40					.word	16394
+>38f2	0f					.byte	15
+>38f3	24 37 30 36 45 2f 31 39			.text	'$706E/19510',0
+>38fb	35 31 30 00
+>38ff	01 00					.word	1
+>3901	10					.byte	16
+>3902	34 32 35 37 33 20 20 20			.text	'42573   <<18',0
+>390a	3c 3c 31 38 00
+>390f	00 00					.word	0
+>3911	0f					.byte	15
+>3912	31 35 33 38 36 2b 24 45			.text	'15386+$E366',0
+>391a	33 36 36 00
+>391e	80 1f					.word	8064
+>3920	0e					.byte	14
+>3921	37 36 36 37 3d 20 24 42			.text	'7667= $BEF',0
+>3929	45 46 00
+>392c	00 00					.word	0
+>392e	12					.byte	18
+>392f	33 34 36 39 35 2d 20 20			.text	'34695-   14878',0
+>3937	20 31 34 38 37 38 00
+>393e	69 4d					.word	19817
+>3940	10					.byte	16
+>3941	24 44 35 33 44 20 3d 24			.text	'$D53D =$CF33',0
+>3949	43 46 33 33 00
+>394e	00 00					.word	0
+>3950	13					.byte	19
+>3951	33 39 35 37 35 20 20 20			.text	'39575   + 63335',0
+>3959	2b 20 36 33 33 33 35 00
+>3961	fe 91					.word	37374
+>3963	10					.byte	16
+>3964	34 37 37 35 30 20 20 7c			.text	'47750  |4722',0
+>396c	34 37 32 32 00
+>3971	f6 ba					.word	47862
+>3973	10					.byte	16
+>3974	35 38 38 35 38 2d 20 34			.text	'58858- 49722',0
+>397c	39 37 32 32 00
+>3981	b0 23					.word	9136
+>3983	0f					.byte	15
+>3984	34 39 38 33 32 3c 3c 20			.text	'49832<< $16',0
+>398c	24 31 36 00
+>3990	00 00					.word	0
+>3992	1e					.byte	30
+>3993	32 30 32 33 31 20 2f 20			.text	'20231 /  %1110101110000011',0
+>399b	20 25 31 31 31 30 31 30 31 31 31 30 30 30 30 30
+>39ab	31 31 00
+>39ae	00 00					.word	0
+>39b0	1b					.byte	27
+>39b1	24 38 37 42 38 3d 25 31			.text	'$87B8=%1000010001110111',0
+>39b9	30 30 30 30 31 30 30 30 31 31 31 30 31 31 31 00
+>39c9	00 00					.word	0
+>39cb	10					.byte	16
+>39cc	32 30 34 34 31 20 20 2a			.text	'20441  *4785',0
+>39d4	34 37 38 35 00
+>39d9	09 77					.word	30473
+>39db	0f					.byte	15
+>39dc	32 39 32 36 37 2f 35 33			.text	'29267/53207',0
+>39e4	32 30 37 00
+>39e8	00 00					.word	0
+>39ea	12					.byte	18
+>39eb	34 39 31 39 36 20 20 20			.text	'49196   %15474',0
+>39f3	25 31 35 34 37 34 00
+>39fa	d6 0a					.word	2774
+>39fc	0c					.byte	12
+>39fd	37 32 34 32 3c 3c 33 33			.text	'7242<<33',0
+>3a05	00
+>3a06	00 00					.word	0
+>3a08	0f					.byte	15
+>3a09	34 31 35 30 31 2a 36 30			.text	'41501*60542',0
+>3a11	35 34 32 00
+>3a15	46 86					.word	34374
+>3a17	1c					.byte	28
+>3a18	24 35 31 43 32 20 2f 25			.text	'$51C2 /%1100001111101001',0
+>3a20	31 31 30 30 30 30 31 31 31 31 31 30 31 30 30 31
+>3a30	00
+>3a31	00 00					.word	0
+
+;******  Return to file: testing/testexpr.asm
+
+>3a33	00						.byte 	0
 >0030					zTemp:	.fill 	2
 
 ;******  Return to file: main.asm

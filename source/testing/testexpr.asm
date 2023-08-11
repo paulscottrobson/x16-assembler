@@ -58,7 +58,7 @@ _ResultWrong: 								; answer wrong
 		ldx 	zTemp
 		ldy 	zTemp+1
 		lda 	#$EE
-		.byte 	$EB
+		.byte 	$DB
 		jmp 	_ResultWrong
 
 _ErrorOccurred: 							; error in evaluation.
@@ -68,10 +68,7 @@ _ErrorOccurred: 							; error in evaluation.
 		jmp 	_ErrorOccurred
 
 TestData:	
-		.byte 	_tde-TestData
-		.text 	"(2+3)*4",0
-		.word 	20
-_tde:		
+		.include "../build/testdata.inc"
 		.byte 	0
 
 		.send as16code

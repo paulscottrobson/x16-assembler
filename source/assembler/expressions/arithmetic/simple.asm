@@ -84,11 +84,12 @@ AXBinaryEor: ;; [^]
 AXBinaryNotEqual: ;; [<>]
 		jsr 	AXBinaryEor
 		lda 	AXLeft
-		eor 	AXLeft+1
+		ora 	AXLeft+1
 		beq 	_AXBEExit
-		dec 	AXLeft 
-		dec 	AXLeft+1
+		lda 	#$FF
 _AXBEExit:
+		sta 	AXLeft
+		sta 	AXLeft+1
 		clc
 		rts
 
@@ -118,7 +119,10 @@ AXGreater: ;; [>]
 ; ************************************************************************************************
 
 AXLess: ;; [<]
-		jsr 	AXBinarySub
+		lda 	AXLeft
+		cmp 	AXRight
+		lda 	AXLeft+1
+		sbc 	AXRight+1
 		lda 	#$00
 		bcs 	_AXIsGtr
 		dec 	a

@@ -1,6 +1,6 @@
 TODO:
 	Expression evaluation:
-		Test base for expressions and build it up.
+		Unary operators
 		Test parenthesis.
-		
+
 	Identifier design and add to label evaluate stuff.

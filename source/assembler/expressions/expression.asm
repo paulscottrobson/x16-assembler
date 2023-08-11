@@ -60,7 +60,7 @@ _AXFindBinOp:
 		;
 		lda 	AXBinaryOperatorList+1,y 	; second character to match
 		beq 	_AXConsume1 				; if zero, then matched a single one, and consume 1.
-		cmp 	AXBuffer,x 					; if wrong, go to next.
+		cmp 	AXBuffer+1,x 				; if wrong, go to next.
 		bne 	_AXFindBinOp
 		inx 								; consume 2 character
 _AXConsume1:

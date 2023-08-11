@@ -298,7 +298,7 @@ AXShiftMain:
 		lda 	AXRight 					; if shift > 15 then zero
 		and 	#$F0
 		ora 	AXRight+1
-		beq 	_AXShiftZero
+		bne 	_AXShiftZero
 		;
 		lda 	AXRight 					; shift zero, exit as unchanged.
 		beq 	_AXExit
@@ -453,11 +453,12 @@ AXBinaryEor: ;; [^]
 AXBinaryNotEqual: ;; [<>]
 		jsr 	AXBinaryEor
 		lda 	AXLeft
-		eor 	AXLeft+1
+		ora 	AXLeft+1
 		beq 	_AXBEExit
-		dec 	AXLeft
-		dec 	AXLeft+1
+		lda 	#$FF
 _AXBEExit:
+		sta 	AXLeft
+		sta 	AXLeft+1
 		clc
 		rts
 
@@ -487,7 +488,10 @@ AXGreater: ;; [>]
 ; ************************************************************************************************
 
 AXLess: ;; [<]
-		jsr 	AXBinarySub
+		lda 	AXLeft
+		cmp 	AXRight
+		lda 	AXLeft+1
+		sbc 	AXRight+1
 		lda 	#$00
 		bcs 	_AXIsGtr
 		dec 	a
@@ -600,7 +604,7 @@ _AXFindBinOp:
 		;
 		lda 	AXBinaryOperatorList+1,y 	; second character to match
 		beq 	_AXConsume1 				; if zero, then matched a single one, and consume 1.
-		cmp 	AXBuffer,x 					; if wrong, go to next.
+		cmp 	AXBuffer+1,x 				; if wrong, go to next.
 		bne 	_AXFindBinOp
 		inx 								; consume 2 character
 _AXConsume1:
