@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		errors.inc
-;		Purpose:	Error codes
-;		Created:	9th August 2023
+;		Name:		00main.asm
+;		Purpose:	Entry point.
+;		Created:	12th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -14,17 +14,38 @@
 
 ; ************************************************************************************************
 ;
-;										Error codes
+;									Assemble code : API at YX
 ;
 ; ************************************************************************************************
 
-AXERREOF = $00 								; end of file, not assembler error.
-AXERRSyntax = $01 							; general syntax error.
-AXERRIdentifier = $02 						; bad identifier, missing/too long.
-AXERRDivZero = $03 							; divide by zero.
-AXERRRedefine = $04 						; value of an identifier has changed.
-AXERRNotFound = $05 						; source file not found.
+AXAssemble:
+		stx 	AXAPI 						; save the API.
+		sty 	AXAPI+1
+		jsr 	AXIReset 					; reset the identifier system.
+		lda 	#1
+		jsr 	AXAssemblerPass
+
+; ************************************************************************************************
+;
+;											Do Pass A
+;
+; ************************************************************************************************
+
+
+AXAssemblerPass:
+		sta 	AXPass 						; set the pass
+
+		stz 	AXProgramCounter 			; zero the program counter + bank
+		stz 	AXProgramCounter+1
+		stz 	AXProgramCounter+3
+
+		ldx 	#0 							; assemble the default file.
+		ldy 	#0
+		jsr 	AXAssembleFile
+		rts
+
 		.send as16code
+
 
 ; ************************************************************************************************
 ;

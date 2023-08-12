@@ -51,16 +51,19 @@ AXLeft:										; left and right evaluation
 AXRight:
 		.fill 	3
 
-AXProgramCounter:							; program counter
+AXProgramCounter:							; program counter / bank
 		.fill 	3
 
-AXEvaluatePage: 							; page # of evaluated label.
+AXEvaluatePage: 							; page # of last evaluated label.
 		.fill 	1
 
 AXLabelBuffer: 								; buffer for label to be evaluated (ASCIIZ, U/C)
 		.fill 	AXMaxIdentSize+1
 
 AXCurrent:									; address of currently selected identifier.
+		.fill 	2
+
+AXAPI:  									; API call address.
 		.fill 	2
 
 AXPass:										; pass (1 or 2)
@@ -73,6 +76,14 @@ AXPass:										; pass (1 or 2)
 ; ************************************************************************************************
 
 AXStartFrame:
+
+AXFileHandle:	 							; file handle
+		.fill 	1
+AXLastCharacter:							; last character read.
+		.fill 	1
+
+AXLineNumber: 								; line number.
+		.fill 	2
 
 AXProgramCounterStart: 						; PCTR at instruction start.
 		.fill 	3
@@ -115,11 +126,12 @@ AXEndFrame:
 ;
 ; ************************************************************************************************
 
+AXERREOF = $00 								; end of file, not assembler error.
 AXERRSyntax = $01 							; general syntax error.
 AXERRIdentifier = $02 						; bad identifier, missing/too long.
 AXERRDivZero = $03 							; divide by zero.
 AXERRRedefine = $04 						; value of an identifier has changed.
-
+AXERRNotFound = $05 						; source file not found.
 		.send as16code
 
 ; ************************************************************************************************
@@ -162,6 +174,240 @@ AXID_DataAux = 		6
 AXID_Identifier = 	7
 
 		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		00main.asm
+;		Purpose:	Entry point.
+;		Created:	12th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Assemble code : API at YX
+;
+; ************************************************************************************************
+
+AXAssemble:
+		stx 	AXAPI 						; save the API.
+		sty 	AXAPI+1
+		jsr 	AXIReset 					; reset the identifier system.
+		lda 	#1
+		jsr 	AXAssemblerPass
+
+; ************************************************************************************************
+;
+;											Do Pass A
+;
+; ************************************************************************************************
+
+
+AXAssemblerPass:
+		sta 	AXPass 						; set the pass
+
+		stz 	AXProgramCounter 			; zero the program counter + bank
+		stz 	AXProgramCounter+1
+		stz 	AXProgramCounter+3
+
+		ldx 	#0 							; assemble the default file.
+		ldy 	#0
+		jsr 	AXAssembleFile
+		rts
+
+		.send as16code
+
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		assemble.asm
+;		Purpose:	Assemble a line from the source
+;		Created:	12th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Assemble file, YX is file name/NULL
+;
+; ************************************************************************************************
+
+AXAssembleLine:
+		clc
+		rts
+
+
+		.send as16code
+
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		file.asm
+;		Purpose:	Assemble a single file
+;		Created:	12th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Assemble file, YX is file name/NULL
+;
+; ************************************************************************************************
+
+AXAssembleFile:
+		.byte 	$DB
+		lda 	#1 							; open the source file.
+		jsr 	AXCallAPI
+		sta 	AXFileHandle 				; save handle
+		lda 	#AXERRNotFound 				; return not found if failed.
+		bcs 	_AXAFExit
+		;
+		stz 	AXLastCharacter 			; no last character
+		lda 	#1 							; set line number to 1
+		sta 	AXLineNumber
+		stz 	AXLineNumber+1
+		;
+		;		The main assembler loop.
+		;
+_AXMainLoop:
+		lda 	AXProgramCounter 			; copy program counter to program counter start
+		sta 	AXProgramCounterStart 		; this is the value used in the unary function *
+		lda 	AXProgramCounter+1
+		sta 	AXProgramCounterStart+1
+		lda 	AXProgramCounter+2
+		sta 	AXProgramCounterStart+2
+		;
+		jsr 	AXReadLine 					; read the next line
+		bcs 	_AXAFError 					; exit if problem (e.g. too long/eof)
+		jsr 	AXAssembleLine 				; assemble it.
+		bcs 	_AXAFError 					; exit if problem there.
+
+		inc 	AXLineNumber 				; bump line number
+		bne 	_AXMainLoop
+		inc 	AXLineNumber+1
+		bra 	_AXMainLoop
+
+		;
+		;		Come here on error *or* EOF
+		;
+_AXAFError:
+		cmp 	#AXERREOF 					; was the error EOF, which isn't an error :)
+		sec 								; if not, still report an error
+		bne 	_AFAXCloseExit
+		clc 								; if EOF, end of file, it's okay.
+
+_AFAXCloseExit:
+		php 								; save error flag and error ID
+		pha
+		lda 	#2 							; close the file.
+		ldx 	AXFileHandle
+		jsr 	AXCallAPI
+		pla 								; restore flag/id and exit.
+		plp
+_AXAFExit:
+		rts
+
+; ************************************************************************************************
+;
+;										Call the API function
+;
+; ************************************************************************************************
+
+AXCallAPI:
+		jmp 	(AXAPI)
+
+		.send as16code
+
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		read.asm
+;		Purpose:	Read a line from the source
+;		Created:	12th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Assemble file, YX is file name/NULL
+;
+; ************************************************************************************************
+
+AXReadLine:
+		clc
+		rts
+
+
+		.send as16code
+
 
 ; ************************************************************************************************
 ;
@@ -1128,6 +1374,7 @@ AXBase: 									; temporary for base.
 ;
 ;	This file is automatically generated.
 ;
+	.section as16code
 AXBinaryOperatorList:
 	.byte	$3c,$3e ; <>
 	.byte	$3e,$3d ; >=
@@ -1146,9 +1393,11 @@ AXBinaryOperatorList:
 	.byte	$2f,$00 ; /
 	.byte	$25,$00 ; %
 	.byte	$00
+	.send as16code
 ;
 ;	This file is automatically generated.
 ;
+	.section as16code
 AXPrecedence:
 	.byte	2 ; <>
 	.byte	2 ; >=
@@ -1166,9 +1415,11 @@ AXPrecedence:
 	.byte	4 ; *
 	.byte	4 ; /
 	.byte	4 ; %
+	.send as16code
 ;
 ;	This file is automatically generated.
 ;
+	.section as16code
 AXBinaryVectors:
 	.word	AXBinaryNotEqual                 ; <>
 	.word	AXGreaterEqual                   ; >=
@@ -1186,6 +1437,7 @@ AXBinaryVectors:
 	.word	AXBinaryMult                     ; *
 	.word	AXBinaryDivide                   ; /
 	.word	AXBinaryModulus                  ; %
+	.send as16code
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;

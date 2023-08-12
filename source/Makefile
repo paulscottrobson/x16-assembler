@@ -39,7 +39,7 @@ ASMDATADESC = -D ASMDATA=$(ASMDATA) -D ASMDATAEND=$(ASMDATAEND) -D ASMDATACTL=$(
 BINDIR = $(ROOTDIR)bin$(S)
 BINFILE = build$(S)asm.prg
 EMULATOR = $(BINDIR)x16emu$(APPSTEM) -prg $(BINFILE),1000 -run -debug -scale 2 -dump R
-ASSEMBLER = 64tass -q -c -C $(MEMORYMAP) $(ASMDATADESC) -Wall main.asm -L build$(S)asm.lst -o $(BINFILE) 
+ASSEMBLER = 64tass -c -C $(MEMORYMAP) $(ASMDATADESC) -Wall main.asm -L build$(S)asm.lst -o $(BINFILE) 
 
 all: assemble
 

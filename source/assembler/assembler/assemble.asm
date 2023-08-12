@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		errors.inc
-;		Purpose:	Error codes
-;		Created:	9th August 2023
+;		Name:		assemble.asm
+;		Purpose:	Assemble a line from the source
+;		Created:	12th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -14,17 +14,17 @@
 
 ; ************************************************************************************************
 ;
-;										Error codes
+;									Assemble file, YX is file name/NULL
 ;
 ; ************************************************************************************************
 
-AXERREOF = $00 								; end of file, not assembler error.
-AXERRSyntax = $01 							; general syntax error.
-AXERRIdentifier = $02 						; bad identifier, missing/too long.
-AXERRDivZero = $03 							; divide by zero.
-AXERRRedefine = $04 						; value of an identifier has changed.
-AXERRNotFound = $05 						; source file not found.
+AXAssembleLine:
+		clc
+		rts		
+
+
 		.send as16code
+
 
 ; ************************************************************************************************
 ;

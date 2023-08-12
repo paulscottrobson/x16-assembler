@@ -48,10 +48,10 @@ AXLeft:										; left and right evaluation
 AXRight:
 		.fill 	3
 
-AXProgramCounter:							; program counter		
+AXProgramCounter:							; program counter / bank
 		.fill 	3 	
 
-AXEvaluatePage: 							; page # of evaluated label.
+AXEvaluatePage: 							; page # of last evaluated label.
 		.fill 	1
 
 AXLabelBuffer: 								; buffer for label to be evaluated (ASCIIZ, U/C)
@@ -59,7 +59,10 @@ AXLabelBuffer: 								; buffer for label to be evaluated (ASCIIZ, U/C)
 
 AXCurrent:									; address of currently selected identifier.
 		.fill 	2
-		
+
+AXAPI:  									; API call address.
+		.fill 	2		
+
 AXPass:										; pass (1 or 2)
 		.fill 	1		
 		
@@ -70,6 +73,14 @@ AXPass:										; pass (1 or 2)
 ; ************************************************************************************************
 
 AXStartFrame:
+
+AXFileHandle:	 							; file handle			
+		.fill 	1
+AXLastCharacter:							; last character read.
+		.fill 	1
+
+AXLineNumber: 								; line number.
+		.fill 	2				
 
 AXProgramCounterStart: 						; PCTR at instruction start.
 		.fill 	3

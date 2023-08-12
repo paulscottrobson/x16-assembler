@@ -36,25 +36,31 @@
 
 		.include "build/libassembler.asm"
 
-Start:	ldx 	#$FF
-		txs
-		jsr 	AXIReset
+Start:	
 
 		.if 	TESTING==1
+		jsr 	AXIReset
 		jsr 	TestExpressions
+		.endif
+
+		.if 	TESTING==2
+		ldx 	#TestAPIHandler & $FF
+		ldy 	#TestAPIHandler >> 8
+		jsr 	AXAssemble
+		rts
 		.endif
 
 		;jmp 	$FFFF
 		.byte 	$DB
 h1:		bra 	h1		
 
-lbl1:	.text 	'ORA','C'+$80
-lbl2:	.text 	'F.','2'+$80
-
 		.send as16code
 
 		.if 	TESTING==1
 		.include "testing/testexpr.asm"
+		.endif
+		.if 	TESTING==2
+		.include "testing/testapi.asm"
 		.endif
 
 ; ************************************************************************************************

@@ -1,7 +1,7 @@
 TODO:
 
-	Devise input system.
-	Dummy Input system & basic testing.
+
+	Read line.
 	Assemble line with predefined state, capitalised, no comments etc (Output system)
 
 	Error system
@@ -11,3 +11,6 @@ TODO:
 	Includes.	
 
 	Check collision of stack / identifiers.
+	
+	Pass 2 - throw out undefined values.
+	Pass 1 - only assign when expression is defined.
