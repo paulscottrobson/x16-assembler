@@ -65,5 +65,11 @@ test: prelim
 	$(CDEL) *.bin
 	$(EMULATOR)
 
+expr: prelim
+	$(PYTHON) testing$(S)setupexpr.py >build$(S)testdata.inc
+	$(ASSEMBLER) -D TESTING=1
+	$(CDEL) *.bin
+	$(EMULATOR)
+
 ident:
 	$(PYTHON) scripts$(S)showident.py $(ASMDATA)

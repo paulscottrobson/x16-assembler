@@ -53,6 +53,8 @@ AXIPut:
 ;
 ;								Put Data YX to DataLow/High, and set flag
 ;
+;				  Put can *FAIL* if defined and different - a redefinition error.
+;
 ; ************************************************************************************************
 
 AXIPutData:	
@@ -62,7 +64,23 @@ AXIPutData:
 		lda 	AXCurrent+1
 		sta 	AXTemp0+1
 
-		tya
+		phy 								; save Y on stack.
+		ldy 	#AXID_Flags
+		lda 	(AXTemp0),y 				; check if defined.
+		bmi 	_AXIPutOkay 				; no, it is always okay to put.
+
+		pla  								; get MSB back
+		pha
+		ldy 	#AXID_DataHigh
+		cmp 	(AXTemp0),y
+		bne 	_AXIPutError 				; if value has changed, that's an error
+		txa 								; check LSB
+		ldy 	#AXID_DataLow
+		cmp 	(AXTemp0),y
+		bne 	_AXIPutError 				; if value has changed, that's an error
+
+_AXIPutOkay:
+		pla
 		ldy 	#AXID_DataHigh 				; write high byte
 		sta 	(AXTemp0),y 			
 
@@ -76,7 +94,15 @@ AXIPutData:
 		sta 	(AXTemp0),y
 
 		jsr 	AXIClose 					; close access
+		clc
 		rts
+
+_AXIPutError:
+		pla 								; throw saved Y
+		jsr 	AXIClose 					; return with error redefine.
+		lda 	#AXERRRedefine
+		sec		
+		rts		
 
 		.send as16code
 

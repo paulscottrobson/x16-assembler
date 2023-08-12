@@ -21,7 +21,7 @@
 AXERRSyntax = $01 							; general syntax error.
 AXERRIdentifier = $02 						; bad identifier, missing/too long.
 AXERRDivZero = $03 							; divide by zero.
-AXERRDuplicate = $04 						; identifier defined twice.
+AXERRRedefine = $04 						; value of an identifier has changed.
 
 		.send as16code
 

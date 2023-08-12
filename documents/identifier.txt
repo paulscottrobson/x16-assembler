@@ -16,6 +16,8 @@ Identifier Structure
 
 +4,+5 	Data bytes
 
-+6 		Identifier (name in upper case, bit 7 of last character set.)
++6 		Aux Data Byte.
+
++7 		Identifier (name in upper case, bit 7 of last character set.)
 
 +n 		Any supplemental data (e.g. Macro Body)

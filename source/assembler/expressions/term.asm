@@ -282,15 +282,30 @@ AXEvaluateLabel:
 		jsr 	AXExtractIdentifier 		; get a label. 
 		bcs 	_AXEExit 					; we couldn't.
 
-		lda 	#$A9
-		sta 	AXLeft
-		lda 	#$44
+		phx 								; save current position
+
+		ldx 	#AXLabelBuffer & $FF		; create or find the value.
+		ldy 	#AXLabelBuffer >> 8
+		jsr 	AXICreateFind 		
+		;
+		ldy 	#AXID_DataLow 				; copy data
+		jsr		AXIGet
+		sta 	AXLeft+0
+
+		ldy 	#AXID_DataHigh
+		jsr 	AXIGet
 		sta 	AXLeft+1
-		lda 	#$80
+
+		ldy 	#AXID_Flags 				; just the undefined flag.
+		jsr 	AXIGet
+		and 	#$80
 		sta 	AXLeft+2
 
-		lda 	#4 							; page of evaluated label
+		lda 	#AXID_DataAux 				; get bank page of label.
+		jsr 	AXIGet
 		sta 	AXEvaluatePage 
+
+		plx 								; restore current position.
 		clc
 
 _AXEExit:

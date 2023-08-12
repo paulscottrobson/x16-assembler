@@ -40,10 +40,6 @@ Start:	ldx 	#$FF
 		txs
 		jsr 	AXIReset
 
-		.if 	TESTING==1
-		jsr 	TestExpressions
-		.endif
-
 		ldx 	#lbl1 & $FF
 		ldy 	#lbl1 >> 8
 		jsr 	AXICreateFind
@@ -51,6 +47,7 @@ Start:	ldx 	#$FF
 		lda 	#AXIT_Label
 		ldy 	#AXID_Type
 		jsr 	AXIPut
+		.byte 	$DB
 		ldy 	#$7F
 		ldx 	#$FE
 		jsr 	AXIPutData
@@ -64,6 +61,10 @@ Start:	ldx 	#$FF
 		ldy 	#$01
 		ldx 	#$2A
 		jsr 	AXIPutData
+
+		.if 	TESTING==1
+		jsr 	TestExpressions
+		.endif
 
 		;jmp 	$FFFF
 		.byte 	$DB

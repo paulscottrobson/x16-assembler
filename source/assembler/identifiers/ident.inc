@@ -23,7 +23,8 @@ AXID_Type = 		2
 AXID_Flags = 		3
 AXID_DataLow = 		4
 AXID_DataHigh = 	5
-AXID_Identifier = 	6
+AXID_DataAux = 		6
+AXID_Identifier = 	7
 
 		.send as16code
 

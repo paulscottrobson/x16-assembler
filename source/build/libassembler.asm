@@ -118,7 +118,7 @@ AXEndFrame:
 AXERRSyntax = $01 							; general syntax error.
 AXERRIdentifier = $02 						; bad identifier, missing/too long.
 AXERRDivZero = $03 							; divide by zero.
-AXERRDuplicate = $04 						; identifier defined twice.
+AXERRRedefine = $04 						; value of an identifier has changed.
 
 		.send as16code
 
@@ -158,7 +158,8 @@ AXID_Type = 		2
 AXID_Flags = 		3
 AXID_DataLow = 		4
 AXID_DataHigh = 	5
-AXID_Identifier = 	6
+AXID_DataAux = 		6
+AXID_Identifier = 	7
 
 		.send as16code
 
@@ -723,12 +724,27 @@ _AXConsume1:
 		asl 	a 							; now index into vector table
 		phx 								; save buffer pos so we can use indexing
 		tax
+
+		lda 	AXLeft+2 					; check both are defined values (e.g. bit 7 clear)
+		ora 	AXRight+2
+		bmi 	_AXNoValue
+
 		jsr 	_AXDoOperator 				; call the operator code.
 		plx 								; restore buffer position.
 		bcc 	_AXEExpressionLoop 			; and go round again if no error
 		ply 								; throw the precedence on the stack.
 		sec
 		rts
+		;
+		;		No value, return 0/undefined as one of the values is undefined.
+		;
+_AXNoValue:
+		stz 	AXLeft
+		stz 	AXLeft+1
+		lda	 	#$80
+		sta 	AXLeft+2
+		plx
+		bra 	_AXEExpressionLoop
 
 _AXDoOperator:
 		jmp 	(AXBinaryVectors,x)
@@ -1060,15 +1076,30 @@ AXEvaluateLabel:
 		jsr 	AXExtractIdentifier 		; get a label.
 		bcs 	_AXEExit 					; we couldn't.
 
-		lda 	#$A9
-		sta 	AXLeft
-		lda 	#$44
+		phx 								; save current position
+
+		ldx 	#AXLabelBuffer & $FF		; create or find the value.
+		ldy 	#AXLabelBuffer >> 8
+		jsr 	AXICreateFind
+		;
+		ldy 	#AXID_DataLow 				; copy data
+		jsr		AXIGet
+		sta 	AXLeft+0
+
+		ldy 	#AXID_DataHigh
+		jsr 	AXIGet
 		sta 	AXLeft+1
-		lda 	#$80
+
+		ldy 	#AXID_Flags 				; just the undefined flag.
+		jsr 	AXIGet
+		and 	#$80
 		sta 	AXLeft+2
 
-		lda 	#4 							; page of evaluated label
+		lda 	#AXID_DataAux 				; get bank page of label.
+		jsr 	AXIGet
 		sta 	AXEvaluatePage
+
+		plx 								; restore current position.
 		clc
 
 _AXEExit:
@@ -1197,8 +1228,8 @@ AXIClose:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		create.asm
-;		Purpose:	Create an identifier
+;		Name:		createfind.asm
+;		Purpose:	Create/Find an identifier
 ;		Created:	11th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -1358,6 +1389,8 @@ AXIPut:
 ;
 ;								Put Data YX to DataLow/High, and set flag
 ;
+;				  Put can *FAIL* if defined and different - a redefinition error.
+;
 ; ************************************************************************************************
 
 AXIPutData:
@@ -1367,7 +1400,23 @@ AXIPutData:
 		lda 	AXCurrent+1
 		sta 	AXTemp0+1
 
-		tya
+		phy 								; save Y on stack.
+		ldy 	#AXID_Flags
+		lda 	(AXTemp0),y 				; check if defined.
+		bmi 	_AXIPutOkay 				; no, it is always okay to put.
+
+		pla  								; get MSB back
+		pha
+		ldy 	#AXID_DataHigh
+		cmp 	(AXTemp0),y
+		bne 	_AXIPutError 				; if value has changed, that's an error
+		txa 								; check LSB
+		ldy 	#AXID_DataLow
+		cmp 	(AXTemp0),y
+		bne 	_AXIPutError 				; if value has changed, that's an error
+
+_AXIPutOkay:
+		pla
 		ldy 	#AXID_DataHigh 				; write high byte
 		sta 	(AXTemp0),y
 
@@ -1381,6 +1430,14 @@ AXIPutData:
 		sta 	(AXTemp0),y
 
 		jsr 	AXIClose 					; close access
+		clc
+		rts
+
+_AXIPutError:
+		pla 								; throw saved Y
+		jsr 	AXIClose 					; return with error redefine.
+		lda 	#AXERRRedefine
+		sec
 		rts
 
 		.send as16code

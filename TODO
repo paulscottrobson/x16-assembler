@@ -1,7 +1,4 @@
 TODO:
-	Make it work on evaluator.
-	Expressions with unknown values.
-	PutData can fail.
 
 	Devise input system.
 	Dummy Input system & basic testing.
@@ -12,3 +9,5 @@ TODO:
 	Pseudo operations
 	Macros
 	Includes.	
+
+	Check collision of stack / identifiers.

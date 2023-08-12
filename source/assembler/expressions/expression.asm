@@ -116,12 +116,27 @@ _AXConsume1:
 		asl 	a 							; now index into vector table
 		phx 								; save buffer pos so we can use indexing
 		tax
+
+		lda 	AXLeft+2 					; check both are defined values (e.g. bit 7 clear)
+		ora 	AXRight+2
+		bmi 	_AXNoValue
+
 		jsr 	_AXDoOperator 				; call the operator code.
 		plx 								; restore buffer position.
 		bcc 	_AXEExpressionLoop 			; and go round again if no error
 		ply 								; throw the precedence on the stack.
 		sec
 		rts
+		;
+		;		No value, return 0/undefined as one of the values is undefined.
+		;
+_AXNoValue:
+		stz 	AXLeft			
+		stz 	AXLeft+1
+		lda	 	#$80	
+		sta 	AXLeft+2
+		plx
+		bra 	_AXEExpressionLoop
 
 _AXDoOperator:
 		jmp 	(AXBinaryVectors,x)
