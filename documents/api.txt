@@ -1,0 +1,12 @@
+Assembler API
+=============
+
+Cmd: (in A)	
+
+	1		Open character source YX where YX is an ASCIIZ string (external source) or NULL (default source)
+	 			Returns CC (okay) CS (failed) and a reference handle in A.
+
+	2	 	Close character source, reference handle in X.
+
+	3 		Read next character from source X => A. Returns CS if end of file *before* the read, e.g. it failed.
+

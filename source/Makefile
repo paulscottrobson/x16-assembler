@@ -73,3 +73,9 @@ expr: prelim
 
 ident:
 	$(PYTHON) scripts$(S)showident.py $(ASMDATA)
+
+asm: prelim	
+	$(PYTHON) testing$(S)source.py testing$(S)source.txt >assembler$(S)generated$(S)sourcebytes.dat
+	$(ASSEMBLER) -D TESTING=2
+	$(CDEL) *.bin
+	$(EMULATOR)
