@@ -36,12 +36,8 @@ AXExpressionAtA:
 ; ================================================================================================
 
 _AXEExpressionLoop:		
-		lda 	AXBuffer,x 					; skip spaces.
-		inx
-		cmp 	#' '
-		beq 	_AXEExpressionLoop
-		dex
-
+		jsr 	AXGet 						; get next non space.
+		
 		; ========================================================================================
 		;
 		;							Identify the binary operator, if any.

@@ -28,11 +28,7 @@
 ;
 ; ************************************************************************************************
 
-AXTerm:	lda 	AXBuffer,x 					; remove any leading spaces.
-		inx
-		cmp 	#' '
-		beq 	AXTerm
-		dex
+AXTerm:	jsr		AXGet
 		;
 		stz 	AXLeft+2 					; clear the undefined flag & value
 		stz 	AXLeft
@@ -107,10 +103,8 @@ _AXParenthesis:
 		jsr 	AXExpression 				; body of parenthesis expression.
 		bcs 	_AXPExit 					; error ?
 _AXFindParent:
-		lda 	AXBuffer,x 					; skip spaces looking for )
-		inx
-		cmp 	#' '
-		beq 	_AXFindParent
+		jsr 	AXGet 						; next non-space
+		inx 								; consume
 		cmp 	#')'
 		clc
 		beq 	_AXPExit
@@ -270,6 +264,21 @@ _AXMDouble:
 		asl 	AXLeft 						; everyone does left.
 		rol 	AXLeft+1
 _AXMExit:		
+		rts
+
+; ************************************************************************************************
+;
+;							Get next non space character from buffer
+;
+; ************************************************************************************************
+
+AXGet:
+		lda 	AXBuffer,x 					
+		inx
+		cmp 	#' '
+		beq 	AXGet
+		dex
+		cmp 	#0
 		rts
 
 ; ************************************************************************************************
