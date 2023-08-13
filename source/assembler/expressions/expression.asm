@@ -37,7 +37,7 @@ AXExpressionAtA:
 
 _AXEExpressionLoop:		
 		jsr 	AXGet 						; get next non space.
-		
+
 		; ========================================================================================
 		;
 		;							Identify the binary operator, if any.
@@ -179,4 +179,3 @@ AXOperatorPos:								; operator offset in buffer.
 ;		==== 			=====
 ;
 ; ************************************************************************************************
-

@@ -24,7 +24,8 @@ AXAssemble:
 		jsr 	AXIReset 					; reset the identifier system.
 		lda 	#1
 		jsr 	AXAssemblerPass
-
+		rts
+		
 ; ************************************************************************************************
 ;
 ;											Do Pass A

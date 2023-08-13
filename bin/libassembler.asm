@@ -212,6 +212,7 @@ AXAssemble:
 		jsr 	AXIReset 					; reset the identifier system.
 		lda 	#1
 		jsr 	AXAssemblerPass
+		rts
 
 ; ************************************************************************************************
 ;
@@ -306,7 +307,6 @@ AXAssembleLine:
 ; ************************************************************************************************
 
 AXAssembleFile:
-		.byte 	$DB
 		lda 	#1 							; open the source file.
 		jsr 	AXCallAPI
 		sta 	AXFileHandle 				; save handle
@@ -330,6 +330,10 @@ _AXMainLoop:
 		;
 		jsr 	AXReadLine 					; read the next line
 		bcs 	_AXAFError 					; exit if problem (e.g. too long/eof)
+
+		.byte 	$DB
+		lda 	AXBuffer
+
 		jsr 	AXAssembleLine 				; assemble it.
 		bcs 	_AXAFError 					; exit if problem there.
 
@@ -397,17 +401,122 @@ AXCallAPI:
 
 ; ************************************************************************************************
 ;
-;									Assemble file, YX is file name/NULL
+;								Read line from file into buffer
 ;
 ; ************************************************************************************************
 
 AXReadLine:
+		stz 	AXInQuotes 					; ' " flag reset
+		ldx 	#0 							; read from line start
+		jsr 	AXReadCharacter 			; try to read one.
+		bcs		_AXRLExit 					; failed
+		;
+		;		Read a character successfully
+		;
+_AXRLLoop:
+		cmp 	#13 						; read EOL ? then exit.
+		beq 	_AXRLEndLine
+		;
+		;		Have character, decide what to do with it - CR,capitalise, quoted, length check etc.
+		;
+		ldy 	AXInQuotes 					; are we in quote mode
+		bne 	_AXInQuotes
+		;
+		cmp 	#";"						; no, exit if reached comment
+		beq 	_AXRLConsumeLine
+		jsr 	AXConvertUpper 				; capitalise it.
+		cmp 	#'"'						; check entering quotes
+		beq 	_AXEnterQuotes
+		cmp 	#"'"
+		bne 	_AXOutChar 					; write otherwise
+		;
+		;		Found ' " entering quotes
+		;
+_AXEnterQuotes:
+		sta 	AXInQuotes 					; entering quotes
+		bra 	_AXOutChar
+		;
+		;		Consume the rest of the line to CR/EOF
+		;
+_AXRLConsumeLine:
+		jsr 	AXReadCharacter
+		bcs 	_AXRLEndLine
+		cmp 	#13
+		bne 	_AXRLConsumeLine
+		bra 	_AXRLEndLine
+		;
+		;		In quotes, exit if matching found.
+		;
+_AXInQuotes:
+		cmp 	AXInQuotes 					; leaving quotes, e.g. matching '" found.
+		bne 	_AXOutChar 					; no, just output normally.
+		stz 	AXInQuotes 					; reset the in quotes flag.
+_AXOutChar:
+		sta 	AXBuffer,x
+		inx
+		jsr 	AXReadCharacter 			; read next
+		bcc 	_AXRLLoop	 				; loop back if not EOF
+		;
+		;		End of line make ASCIIZ
+		;
+_AXRLEndLine:
+		stz 	AXBuffer,x 					; make buffer ASCIIZ.
 		clc
+_AXRLExit:
+		rts
+
+
+; ************************************************************************************************
+;
+;						Read next character, CS on error. Always returns CR for EOL.
+;
+; ************************************************************************************************
+
+AXReadCharacter:
+		phx
+		phy
+		lda 	AXLastCharacter 			; is last character $FF, this means EOF
+		cmp 	#$FF
+		beq 	_AXREOF
+		;
+_AXNext:
+		lda 	#3 							; read char using API
+		ldx 	AXFileHandle
+		jsr 	AXCallAPI
+		bcs 	_AXREOF
+		;
+		cmp 	#9 							; convert TAB to space
+		bne 	_AXRNotSpace
+		lda 	#' '
+_AXRNotSpace:
+		cmp 	#10 						; if not LF, exit successfully.
+		bne 	_AXRExit
+		ldx 	AXLastCharacter 			; check last char was CR
+		cpx 	#13
+		beq 	_AXNext 					; if so its CR/LF so we ignore the LF.
+		lda 	#13 						; return CR.
+_AXRExit:
+		sta 	AXLastCharacter
+		clc
+		ply
+		plx
+		rts
+
+_AXREOF:
+		lda 	#$FF
+		sta 	AXLastCharacter
+		sec
+		ply
+		plx
 		rts
 
 
 		.send as16code
 
+		.section as16storage
+AXInQuotes:
+		.fill 	1
+		.send as16storage
 
 ; ************************************************************************************************
 ;
@@ -891,7 +1000,7 @@ AXExpressionAtA:
 
 _AXEExpressionLoop:
 		jsr 	AXGet 						; get next non space.
-		x
+
 		; ========================================================================================
 		;
 		;							Identify the binary operator, if any.
@@ -1033,7 +1142,6 @@ AXOperatorPos:								; operator offset in buffer.
 ;		==== 			=====
 ;
 ; ************************************************************************************************
-
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;

@@ -19,7 +19,6 @@
 ; ************************************************************************************************
 
 AXAssembleFile:
-		.byte 	$DB
 		lda 	#1 							; open the source file.
 		jsr 	AXCallAPI 
 		sta 	AXFileHandle 				; save handle
@@ -43,6 +42,10 @@ _AXMainLoop:
 		;
 		jsr 	AXReadLine 					; read the next line
 		bcs 	_AXAFError 					; exit if problem (e.g. too long/eof)
+
+		.byte 	$DB
+		lda 	AXBuffer
+
 		jsr 	AXAssembleLine 				; assemble it.
 		bcs 	_AXAFError 					; exit if problem there.		
 

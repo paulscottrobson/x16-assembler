@@ -1,6 +1,6 @@
-;
+    ;
 ;		Input line
 ;
 
-demo1 	lda #42 "Quoted string"	; more comments
+demo1 	lda #42 "Quoted string" abc	; more comments
 

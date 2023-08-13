@@ -1,10 +1,9 @@
 TODO:
 
-	Read line.
 	Assemble line with predefined state, capitalised, no comments etc (Output system)
 
 	Error system
-	Listing system
+	Listing system (first ?)
 	Pseudo operations
 	Macros
 	Includes.	
