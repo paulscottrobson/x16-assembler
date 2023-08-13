@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		00main.asm
-;		Purpose:	Entry point.
-;		Created:	12th August 2023
+;		Name:		list.asm
+;		Purpose:	Output listing for current pass
+;		Created:	13th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -14,35 +14,74 @@
 
 ; ************************************************************************************************
 ;
-;									Assemble code : API at YX
+;									Output listing current line.
 ;
 ; ************************************************************************************************
 
-AXAssemble:
-		stx 	AXAPI 						; save the API.
-		sty 	AXAPI+1
-		jsr 	AXIReset 					; reset the identifier system.
-		lda 	#1
-		jsr 	AXAssemblerPass
+AXListLine:
+		lda 	AXProgramCounterStart+2 	; Page
+		jsr 	AXLOutHex
+		lda 	#58
+		jsr 	AXListOut
+		lda 	AXProgramCounterStart+1 	; Address
+		jsr 	AXLOutHex
+		lda 	AXProgramCounterStart+0 	
+		jsr 	AXLOutHex
+
+
+		jsr 	AXLSpace
+		ldx 	#0 							; output the line.
+_AXOutLine:
+		lda 	AXBuffer,x
+		beq 	_AXEnd
+		jsr 	AXConvertUpper
+		jsr 	AXListOut
+		inx
+		bra 	_AXOutLine
+_AXEnd:		
+		lda 	#13 						; CR/LF
+		jsr 	AXListOut
 		rts
-		
+
 ; ************************************************************************************************
 ;
-;											Do Pass A
+;											Output A in Hex
 ;
 ; ************************************************************************************************
 
+AXLOutHex: 								
+		pha 								; do upper nibble
+		lsr 	a
+		lsr 	a
+		lsr 	a
+		lsr 	a
+		jsr 	_AXLOutNibble
+		pla 								; do lower nibble
+_AXLOutNibble:	
+		and 	#15
+		cmp 	#10
+		bcc 	_AXLNotHex
+		adc 	#6
+_AXLNotHex:
+		adc 	#48
+		jmp 	AXListOut				
 
-AXAssemblerPass:
-		sta 	AXPass 						; set the pass
+; ************************************************************************************************
+;
+;										Call the API function
+;
+; ************************************************************************************************
 
-		stz 	AXProgramCounter 			; zero the program counter + bank
-		stz 	AXProgramCounter+1
-		stz 	AXProgramCounter+2
-
-		ldx 	#0 							; assemble the default file.
-		ldy 	#0
-		jsr 	AXAssembleFile
+AXLSpace:
+		lda 	#32
+AXListOut:
+		phx 								; preserve XY and call API List function.
+		phy	
+		tax
+		lda 	#6
+		jsr 	AXCallAPI
+		ply
+		plx
 		rts
 
 		.send as16code

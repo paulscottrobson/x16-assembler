@@ -11,3 +11,5 @@ Cmd: (in A)
 	3 		Read next character from source X => A. Returns CS if end of file *before* the read, e.g. it failed.
 			After EOF it should continue to return CS on subsequent calls.
 
+
+	6 		Write to listing output A

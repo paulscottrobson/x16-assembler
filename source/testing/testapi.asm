@@ -17,6 +17,8 @@ TestAPIHandler:
 		beq 	_TAOpen
 		cmp 	#3
 		beq	 	_TARead
+		cmp 	#6
+		beq 	_TAList
 		rts
 		;
 		;		Open file
@@ -41,6 +43,12 @@ _TARead:
 		inc 	codeTemp+1
 _TARExit:		
 		rts
+		;
+		;		Listing output
+		;
+_TAList:
+		txa
+		jmp 	$FFD2
 		;
 		;		ASCII code ending with a NULL, multiple lines seperated by CR , LF or CR/LF.
 		;

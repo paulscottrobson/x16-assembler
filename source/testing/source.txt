@@ -1,6 +1,5 @@
-    ;
-;		Input line
-;
-
-demo1 	lda #42 "Quoted string" abc	; more comments
+* = $9000
+demo1 	= 42
+demo2 = 32766
+lda #42 "Hello World"
 

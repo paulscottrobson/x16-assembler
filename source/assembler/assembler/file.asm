@@ -43,12 +43,11 @@ _AXMainLoop:
 		jsr 	AXReadLine 					; read the next line
 		bcs 	_AXAFError 					; exit if problem (e.g. too long/eof)
 
-		.byte 	$DB
-		lda 	AXBuffer
-
 		jsr 	AXAssembleLine 				; assemble it.
 		bcs 	_AXAFError 					; exit if problem there.		
 
+		jsr 	AXListLine 					; list the line.
+		
 		inc 	AXLineNumber 				; bump line number
 		bne 	_AXMainLoop
 		inc 	AXLineNumber+1

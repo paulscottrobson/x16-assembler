@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		00main.asm
-;		Purpose:	Entry point.
-;		Created:	12th August 2023
+;		Name:		input.asm
+;		Purpose:	Read a character from the input
+;		Created:	13th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -14,39 +14,49 @@
 
 ; ************************************************************************************************
 ;
-;									Assemble code : API at YX
+;						Read next character, CS on error. Always returns CR for EOL.
 ;
 ; ************************************************************************************************
 
-AXAssemble:
-		stx 	AXAPI 						; save the API.
-		sty 	AXAPI+1
-		jsr 	AXIReset 					; reset the identifier system.
-		lda 	#1
-		jsr 	AXAssemblerPass
+AXReadCharacter:
+		phx
+		phy
+		lda 	AXLastCharacter 			; is last character $FF, this means EOF
+		cmp 	#$FF
+		beq 	_AXREOF
+		;
+_AXNext:		
+		lda 	#3 							; read char using API
+		ldx 	AXFileHandle
+		jsr 	AXCallAPI
+		bcs 	_AXREOF
+		;
+		cmp 	#9 							; convert TAB to space
+		bne 	_AXRNotSpace
+		lda 	#' '
+_AXRNotSpace:
+		cmp 	#10 						; if not LF, exit successfully.
+		bne 	_AXRExit 					
+		ldx 	AXLastCharacter 			; check last char was CR
+		cpx 	#13
+		beq 	_AXNext 					; if so its CR/LF so we ignore the LF.
+		lda 	#13 						; return CR.
+_AXRExit:
+		sta 	AXLastCharacter
+		clc
+		ply
+		plx
 		rts
-		
-; ************************************************************************************************
-;
-;											Do Pass A
-;
-; ************************************************************************************************
 
-
-AXAssemblerPass:
-		sta 	AXPass 						; set the pass
-
-		stz 	AXProgramCounter 			; zero the program counter + bank
-		stz 	AXProgramCounter+1
-		stz 	AXProgramCounter+2
-
-		ldx 	#0 							; assemble the default file.
-		ldy 	#0
-		jsr 	AXAssembleFile
+_AXREOF:
+		lda 	#$FF
+		sta 	AXLastCharacter
+		sec
+		ply
+		plx
 		rts
 
 		.send as16code
-
 
 ; ************************************************************************************************
 ;

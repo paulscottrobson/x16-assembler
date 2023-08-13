@@ -1,14 +1,18 @@
 TODO:
-
+	
 	Assemble line with predefined state, capitalised, no comments etc (Output system)
 
-	Error system
-	Listing system (first ?)
-	Pseudo operations
-	Macros
-	Includes.	
+		* = <expr>			(set PC)
+		Label[:] [= <expr>]	(set identifier)
+		Group 4 opcodes
+			Output system
+			Listing system (complete)
 
-	Check collision of stack / identifiers.
-	
+		Error system
+		Pseudo operations
+		Macros
+		Includes.	
+
+	Check collision of stack / identifiers.	
 	Pass 2 - throw out undefined values.
-	Pass 1 - only assign when expression is defined.
+	Pass 1 - assignments must be defined, values not.
