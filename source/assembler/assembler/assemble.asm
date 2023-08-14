@@ -36,19 +36,32 @@ _AXAContinue:
 		;
 		jsr 	AXExtractIdentifier 		; get an identifier	
 		bcs 	_AXSyntax 					; if none found, report it as a syntax error.
-		;
-		; 	TODO: Check it's an assembler mnemonic
-		;
 
+		; ========================================================================================
+		;
+		;							Check if it's a mnemonic
+		;
+		; ========================================================================================
+
+		phx 								; look in system dictionary (opcodes, pseudo ops etc).
+		ldx 	#SystemDictionary & $FF
+		ldy 	#SystemDictionary >> 8
+		jsr 	AXIFind
+		plx
+		bcs 	_AXALabel 					; not found, label check.
+		.byte 	$DB
+		jmp 	$FFFF
+		
 		; ========================================================================================
 		;
 		;					Not a mnemonic, so it's a label of some sort.
 		;
 		; ========================================================================================
 
+_AXALabel:
 		phx
-		ldx 	#AXLabelBuffer & $FF		; create or find the value.
-		ldy 	#AXLabelBuffer >> 8
+		ldy 	AXIBase 					; start scanning.
+		ldx 	#0
 		jsr 	AXICreateFind 				; find it, or create it if necessary.
 		plx
 
@@ -89,13 +102,13 @@ _AXExit:
 ;
 ; ************************************************************************************************
 
-AXProcessLabel:
+AXProcessLabel:		
 		jsr 	AXGet 						; what is next
 		beq 	_AXLabelPC 					; nothing, it's a program counter label
 		cmp 	#':'						; if label: then it's a program counter label.
 		beq 	_AXPCTR 					; (we have to consume the :)
 		jsr 	AXIsIdentifierHead 			; some identifier follows.
-		bcc 	_AXPCTR 					; then it's a program counter label.
+		bcc 	_AXLabelPC 					; then it's a program counter label.
 		;
 		inx 								; consume it anyway.
 		cmp 	#'=' 						; must be '=' something

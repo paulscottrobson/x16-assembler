@@ -293,8 +293,8 @@ AXEvaluateLabel:
 
 		phx 								; save current position
 
-		ldx 	#AXLabelBuffer & $FF		; create or find the value.
-		ldy 	#AXLabelBuffer >> 8
+		ldx 	#0							; create or find the value.
+		ldy 	AXIBase
 		jsr 	AXICreateFind 		
 		;
 		ldy 	#AXID_DataLow 				; copy data

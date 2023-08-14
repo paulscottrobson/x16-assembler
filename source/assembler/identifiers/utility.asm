@@ -25,22 +25,12 @@ AXICompareCurrent:
 		cmp 	AXIHash
 		bne 	_AXICCFail 					; they don't, fail.
 		;
-		ldy 	#0 							; compare offset 6.
+		ldy 	#AXID_Identifier 			; compare identifier
 _AXICCLoop:
-		phy
-		lda 	(AXTemp1),y 				; character from buffer
-		pha 								; save it.
-		tya 								; point into equivalent place in record +6
-		clc
-		adc 	#AXID_Identifier
-		tay		
-		pla 								; get character back
-		eor 	(AXTemp0),y 				; compare against record entry.
-		ply 								; restore Y 
-		cmp 	#0 							; if the compare failed then exit
+		lda 	AXLabelBuffer-AXID_Identifier,y 	; get buffer entry
+		cmp 	(AXTemp0),y 				; compare against record entry.
 		bne 	_AXICCFail  				
 		;
-		lda 	(AXTemp1),y  				; get the buffer character
 		iny 								; consume it
 		asl 	a 							; if it's bit 7 was clear, go back.
 		bcc 	_AXICCLoop
@@ -62,7 +52,7 @@ AXICalculateHash:
 		ldy 	#0
 _AXICHLoop:
 		clc 								; add character, saving it
-		lda 	(AXTemp1),y
+		lda 	AXLabelBuffer,y
 		iny
 		pha
 		adc 	AXIHash

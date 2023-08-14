@@ -14,7 +14,7 @@
 
 ; ************************************************************************************************
 ;
-;									Create/Find an identifier YX
+;									Create/Find an identifier in YX
 ; 									  CC = Found, CS = Created
 ;
 ; ************************************************************************************************
@@ -29,19 +29,16 @@ _AXFound:
 
 ; ************************************************************************************************
 ;
-;									   Find an identifier YX
+;									   Find an identifier in YX
 ; 				CC = Found, AXTemp0 points to it CS = Not Found, AXTemp0 points to end
 ;
 ; ************************************************************************************************
 
 AXIFind:
-		stx 	AXTemp1 					; save address at zTemp1
-		sty 	AXTemp1+1
+		stx 	AXTemp0 					; save address at zTemp0
+		sty 	AXTemp0+1
 		jsr 	AXICalculateHash 			; calculate hash
 		;
-		lda 	AXIBase 					; start scanning.
-		sta 	AXTemp0+1
-		stz 	AXTemp0
 		jsr 	AXIOpen 					; start.
 		;
 		;		Find the end, checking for duplicates as we go.
@@ -88,13 +85,7 @@ _AXIFill:									; fill +2,3,4,5 with zeros.
 		cpy 	#AXID_Identifier
 		bne 	_AXIFill
 _AXICopy:
-		phy
-		tya 								; access equivalent character in name.
-		sec
-		sbc 	#AXID_Identifier
-		tay
-		lda 	(AXTemp1),y 				; get character and write it out.
-		ply
+		lda 	AXLabelBuffer-AXID_Identifier,y 	; copy name in from buffer.
 		sta 	(AXTemp0),y
 		iny 								; next character
 		asl 	a 							; keep going till bit 7 set.

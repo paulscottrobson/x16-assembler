@@ -287,9 +287,21 @@ _AXAContinue:
 		;
 		jsr 	AXExtractIdentifier 		; get an identifier
 		bcs 	_AXSyntax 					; if none found, report it as a syntax error.
+
+		; ========================================================================================
 		;
-		; 	TODO: Check it's an assembler mnemonic
+		;							Check if it's a mnemonic
 		;
+		; ========================================================================================
+
+		phx 								; look in system dictionary (opcodes, pseudo ops etc).
+		ldx 	#SystemDictionary & $FF
+		ldy 	#SystemDictionary >> 8
+		jsr 	AXIFind
+		plx
+		bcs 	_AXALabel 					; not found, label check.
+		.byte 	$DB
+		jmp 	$FFFF
 
 		; ========================================================================================
 		;
@@ -297,9 +309,10 @@ _AXAContinue:
 		;
 		; ========================================================================================
 
+_AXALabel:
 		phx
-		ldx 	#AXLabelBuffer & $FF		; create or find the value.
-		ldy 	#AXLabelBuffer >> 8
+		ldy 	AXIBase 					; start scanning.
+		ldx 	#0
 		jsr 	AXICreateFind 				; find it, or create it if necessary.
 		plx
 
@@ -346,7 +359,7 @@ AXProcessLabel:
 		cmp 	#':'						; if label: then it's a program counter label.
 		beq 	_AXPCTR 					; (we have to consume the :)
 		jsr 	AXIsIdentifierHead 			; some identifier follows.
-		bcc 	_AXPCTR 					; then it's a program counter label.
+		bcc 	_AXLabelPC 					; then it's a program counter label.
 		;
 		inx 								; consume it anyway.
 		cmp 	#'=' 						; must be '=' something
@@ -1570,8 +1583,8 @@ AXEvaluateLabel:
 
 		phx 								; save current position
 
-		ldx 	#AXLabelBuffer & $FF		; create or find the value.
-		ldy 	#AXLabelBuffer >> 8
+		ldx 	#0							; create or find the value.
+		ldy 	AXIBase
 		jsr 	AXICreateFind
 		;
 		ldy 	#AXID_DataLow 				; copy data
@@ -2287,7 +2300,7 @@ AXIClose:
 
 ; ************************************************************************************************
 ;
-;									Create/Find an identifier YX
+;									Create/Find an identifier in YX
 ; 									  CC = Found, CS = Created
 ;
 ; ************************************************************************************************
@@ -2302,19 +2315,16 @@ _AXFound:
 
 ; ************************************************************************************************
 ;
-;									   Find an identifier YX
+;									   Find an identifier in YX
 ; 				CC = Found, AXTemp0 points to it CS = Not Found, AXTemp0 points to end
 ;
 ; ************************************************************************************************
 
 AXIFind:
-		stx 	AXTemp1 					; save address at zTemp1
-		sty 	AXTemp1+1
+		stx 	AXTemp0 					; save address at zTemp0
+		sty 	AXTemp0+1
 		jsr 	AXICalculateHash 			; calculate hash
 		;
-		lda 	AXIBase 					; start scanning.
-		sta 	AXTemp0+1
-		stz 	AXTemp0
 		jsr 	AXIOpen 					; start.
 		;
 		;		Find the end, checking for duplicates as we go.
@@ -2361,13 +2371,7 @@ _AXIFill:									; fill +2,3,4,5 with zeros.
 		cpy 	#AXID_Identifier
 		bne 	_AXIFill
 _AXICopy:
-		phy
-		tya 								; access equivalent character in name.
-		sec
-		sbc 	#AXID_Identifier
-		tay
-		lda 	(AXTemp1),y 				; get character and write it out.
-		ply
+		lda 	AXLabelBuffer-AXID_Identifier,y 	; copy name in from buffer.
 		sta 	(AXTemp0),y
 		iny 								; next character
 		asl 	a 							; keep going till bit 7 set.
@@ -2617,22 +2621,12 @@ AXICompareCurrent:
 		cmp 	AXIHash
 		bne 	_AXICCFail 					; they don't, fail.
 		;
-		ldy 	#0 							; compare offset 6.
+		ldy 	#AXID_Identifier 			; compare identifier
 _AXICCLoop:
-		phy
-		lda 	(AXTemp1),y 				; character from buffer
-		pha 								; save it.
-		tya 								; point into equivalent place in record +6
-		clc
-		adc 	#AXID_Identifier
-		tay
-		pla 								; get character back
-		eor 	(AXTemp0),y 				; compare against record entry.
-		ply 								; restore Y
-		cmp 	#0 							; if the compare failed then exit
+		lda 	AXLabelBuffer-AXID_Identifier,y 	; get buffer entry
+		cmp 	(AXTemp0),y 				; compare against record entry.
 		bne 	_AXICCFail
 		;
-		lda 	(AXTemp1),y  				; get the buffer character
 		iny 								; consume it
 		asl 	a 							; if it's bit 7 was clear, go back.
 		bcc 	_AXICCLoop
@@ -2654,7 +2648,7 @@ AXICalculateHash:
 		ldy 	#0
 _AXICHLoop:
 		clc 								; add character, saving it
-		lda 	(AXTemp1),y
+		lda 	AXLabelBuffer,y
 		iny
 		pha
 		adc 	AXIHash
