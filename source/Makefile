@@ -48,6 +48,7 @@ assemble: prelim
 
 prelim:
 	$(PYTHON) scripts$(S)exprtable.py
+	$(PYTHON) scripts$(S)makeasmtable.py
 	$(PYTHON) scripts$(S)makelib.py >build$(S)libassembler.asm
 	$(CCOPY)  build$(S)libassembler.asm $(BINDIR)
 	
