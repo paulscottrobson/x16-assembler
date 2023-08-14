@@ -47,7 +47,13 @@ Start:
 		ldx 	#TestAPIHandler & $FF
 		ldy 	#TestAPIHandler >> 8
 		jsr 	AXAssemble
-		rts
+		bcs 	_Error
+		jmp 	$FFFF
+_Error:	ldx 	#$EE
+		ldy 	#$EE
+		.byte 	$DB
+		bra 	_Error
+
 		.endif
 
 		;jmp 	$FFFF

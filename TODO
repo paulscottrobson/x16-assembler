@@ -2,11 +2,9 @@ TODO:
 	
 	Assemble line with predefined state, capitalised, no comments etc (Output system)
 
-		* = <expr>			(set PC)
-		Label[:] [= <expr>]	(set identifier)
 		Group 4 opcodes
 			Output system
-			Listing system (complete)
+			Listing system (complete it)
 
 		Error system
 		Pseudo operations

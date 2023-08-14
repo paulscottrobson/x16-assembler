@@ -22,7 +22,7 @@ AXReadLine:
 		stz 	AXInQuotes 					; ' " flag reset
 		ldx 	#0 							; read from line start
 		jsr 	AXReadCharacter 			; try to read one.
-		bcs		_AXRLExit 					; failed		
+		bcs		_AXRLEOFExit 				; failed		
 		;
 		;		Read a character successfully
 		;
@@ -77,6 +77,12 @@ _AXRLEndLine:
 		clc
 _AXRLExit:		
 		rts		
+
+_AXRLEOFExit:
+		stz 	AXBuffer 					; clear buffer
+		lda 	#AXERREOF 					; return EOF error, which is complete :)
+		sec
+		rts
 
 		.send as16code
 

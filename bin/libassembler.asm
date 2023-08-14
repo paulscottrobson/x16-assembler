@@ -132,6 +132,8 @@ AXERRIdentifier = $02 						; bad identifier, missing/too long.
 AXERRDivZero = $03 							; divide by zero.
 AXERRRedefine = $04 						; value of an identifier has changed.
 AXERRNotFound = $05 						; source file not found.
+AXERRUndefined = $06 						; undefined identifier.
+
 		.send as16code
 
 ; ************************************************************************************************
@@ -263,14 +265,141 @@ AXAssemblerPass:
 
 ; ************************************************************************************************
 ;
-;									Assemble file, YX is file name/NULL
+;				Assemble line in buffer. Returns CS on error, error code in A.
 ;
 ; ************************************************************************************************
 
 AXAssembleLine:
-		clc
+		ldx 	#0 							; start of line
+_AXAContinue:
+		jsr 	AXGet 						; get first character
+		clc 								; if 0, empty line, exit with carry clear
+		beq 	_AXExit
+
+		; ========================================================================================
+		;
+		;				Two options , it's * = <xxxx> or a label/instruction
+		;
+		; ========================================================================================
+
+		cmp 	#'*' 						; is it * (for * = )
+		beq 	_AXSetPC
+		;
+		jsr 	AXExtractIdentifier 		; get an identifier
+		bcs 	_AXSyntax 					; if none found, report it as a syntax error.
+		;
+		; 	TODO: Check it's an assembler mnemonic
+		;
+
+		; ========================================================================================
+		;
+		;					Not a mnemonic, so it's a label of some sort.
+		;
+		; ========================================================================================
+
+		phx
+		ldx 	#AXLabelBuffer & $FF		; create or find the value.
+		ldy 	#AXLabelBuffer >> 8
+		jsr 	AXICreateFind 				; find it, or create it if necessary.
+		plx
+
+		jsr 	AXProcessLabel 				; process the label.
+		bcc 	_AXAContinue 				; if okay, try the line again.
+		rts 								; return with error.
+
+		; ========================================================================================
+		;
+		;								Set the PC (* = <expr>)
+		;
+		; ========================================================================================
+_AXSetPC:
+		inx 	 							; get next.
+		jsr 	AXGet
+		cmp 	#'=' 						; must be equals.
+		bne 	_AXSyntax
+		inx
+		jsr 	AXExpressionDefined 		; get an expression, must be defined.
+		bcs 	_AXExit 					; error of some sort.
+
+		lda 	AXLeft 						; copy result to current PC
+		sta 	AXProgramCounter
+		lda 	AXLeft+1
+		sta 	AXProgramCounter+1
+		clc 								; and done successfully.
 		rts
 
+_AXSyntax:
+		lda 	#AXERRSyntax
+		sec
+_AXExit:
+		rts
+
+; ************************************************************************************************
+;
+;			Label (e.g. unknown identifier) in buffer. Decide what to do with it
+;
+; ************************************************************************************************
+
+AXProcessLabel:
+		jsr 	AXGet 						; what is next
+		beq 	_AXLabelPC 					; nothing, it's a program counter label
+		cmp 	#':'						; if label: then it's a program counter label.
+		beq 	_AXPCTR 					; (we have to consume the :)
+		jsr 	AXIsIdentifierHead 			; some identifier follows.
+		bcc 	_AXPCTR 					; then it's a program counter label.
+		;
+		inx 								; consume it anyway.
+		cmp 	#'=' 						; must be '=' something
+		beq 	_AXAssignValue 				; yes, assign value
+		;
+		lda 	#AXERRSyntax 				; otherwise syntax error
+		sec
+_AXPExit:
+		rts
+
+		; ========================================================================================
+		;
+		;				It's a label PC e.g. <label> <command> or <label>:
+		;
+		; ========================================================================================
+
+_AXPCTR:
+		inx 								; consume :
+_AXLabelPC:
+		phx 								; save position
+		ldx 	AXProgramCounter
+		ldy 	AXProgramCounter+1
+		jsr 	AXIPutData 					; write it.
+		plx 								; restore position
+		rts 								; return with that error code.
+
+		; ========================================================================================
+		;
+		;							It's label = <expression>
+		;
+		; ========================================================================================
+
+_AXAssignValue:
+		lda 	AXCurrent 					; save current identifier
+		pha
+		lda 	AXCurrent+1
+		pha
+
+		jsr 	AXExpressionDefined 		; evaluate expression
+
+		pla 								; restore current identifier.
+		sta 	AXCurrent+1
+		pla
+		sta 	AXCurrent
+
+		bcs 	_AXPExit 					; exit on error.
+
+		phx
+		ldx 	AXLeft 						; set to the result
+		ldy 	AXLeft+1 					; preserving X
+		jsr 	AXIPutData
+		plx
+		rts
 
 		.send as16code
 
@@ -408,7 +537,7 @@ AXReadLine:
 		stz 	AXInQuotes 					; ' " flag reset
 		ldx 	#0 							; read from line start
 		jsr 	AXReadCharacter 			; try to read one.
-		bcs		_AXRLExit 					; failed
+		bcs		_AXRLEOFExit 				; failed
 		;
 		;		Read a character successfully
 		;
@@ -462,6 +591,12 @@ _AXRLEndLine:
 		stz 	AXBuffer,x 					; make buffer ASCIIZ.
 		clc
 _AXRLExit:
+		rts
+
+_AXRLEOFExit:
+		stz 	AXBuffer 					; clear buffer
+		lda 	#AXERREOF 					; return EOF error, which is complete :)
+		sec
 		rts
 
 		.send as16code
@@ -919,7 +1054,7 @@ AXNot:
 ;
 ;		Name:		expression.asm
 ;		Purpose:	Evaluate expression.
-;		Created:	19th August 2023
+;		Created:	11th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -1084,6 +1219,51 @@ _AXExitPop:
 AXOperatorPos:								; operator offset in buffer.
 		.fill 	1
 		.send as16storage
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		helper.asm
+;		Purpose:	Expression helpers
+;		Created:	14th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;				Evaluate expression at Buffer,X. Undefined identifiers => error.
+;
+;		  Return CS on error, A is error code. CC if successful. Result goes into AXLeft
+;
+; ************************************************************************************************
+
+AXExpressionDefined:
+		jsr 	AXExpression 				; evaluate
+		bcs 	_AXDExit 					; some other error.
+		lda 	AXLeft+2 					; check defined.
+		bpl 	_AXDExit 					; okay.
+
+		sec 								; return undefined error
+		lda 	#AXERRUndefined
+_AXDExit:
+		rts
+
+		.send as16code
 
 ; ************************************************************************************************
 ;

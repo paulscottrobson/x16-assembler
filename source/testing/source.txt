@@ -1,5 +1,10 @@
+* = $921A
 * = $9000
-demo1 	= 42
-demo2 = 32766
-lda #42 "Hello World"
+;
+;
+value = $3072
+label
+lbl2:
+v2 = value+4096
 
+!

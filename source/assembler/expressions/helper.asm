@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		errors.inc
-;		Purpose:	Error codes
-;		Created:	9th August 2023
+;		Name:		helper.asm
+;		Purpose:	Expression helpers
+;		Created:	14th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -14,18 +14,23 @@
 
 ; ************************************************************************************************
 ;
-;										Error codes
+;				Evaluate expression at Buffer,X. Undefined identifiers => error.
+;
+;		  Return CS on error, A is error code. CC if successful. Result goes into AXLeft
 ;
 ; ************************************************************************************************
 
-AXERREOF = $00 								; end of file, not assembler error.
-AXERRSyntax = $01 							; general syntax error.
-AXERRIdentifier = $02 						; bad identifier, missing/too long.
-AXERRDivZero = $03 							; divide by zero.
-AXERRRedefine = $04 						; value of an identifier has changed.
-AXERRNotFound = $05 						; source file not found.
-AXERRUndefined = $06 						; undefined identifier.
+AXExpressionDefined:
+		jsr 	AXExpression 				; evaluate
+		bcs 	_AXDExit 					; some other error.
+		lda 	AXLeft+2 					; check defined.
+		bpl 	_AXDExit 					; okay.
 
+		sec 								; return undefined error
+		lda 	#AXERRUndefined
+_AXDExit:
+		rts
+				
 		.send as16code
 
 ; ************************************************************************************************
@@ -38,4 +43,3 @@ AXERRUndefined = $06 						; undefined identifier.
 ;		==== 			=====
 ;
 ; ************************************************************************************************
-
