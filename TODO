@@ -2,11 +2,11 @@ TODO:
 	
 	Assemble line with predefined state, capitalised, no comments etc (Output system)
 
-		Dispatch opcodes accordingly.
 		Group 4 opcodes
 			Output system
 			Listing system (complete it)
-
+		Group 3 opcodes ?
+		
 		Error system
 		Pseudo operations
 		Macros

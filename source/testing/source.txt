@@ -10,4 +10,4 @@ x1 = 22000
 x2 = 7
 x3 = x1/x2
 x4 = *+1
-wxyz nop
+wxyz ror $42

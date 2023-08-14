@@ -39,7 +39,7 @@ _AXAContinue:
 
 		; ========================================================================================
 		;
-		;							Check if it's a mnemonic
+		;					Check if it's a system word, if so, process that.
 		;
 		; ========================================================================================
 
@@ -49,9 +49,25 @@ _AXAContinue:
 		jsr 	AXIFind
 		plx
 		bcs 	_AXALabel 					; not found, label check.
-		.byte 	$DB
-		jmp 	$FFFF
-		
+		;
+		phx
+		ldy 	#AXID_Type 					; get the type
+		jsr 	AXIGet
+		plx
+		;
+		cmp 	#AXIT_Opcode 				; different code for opcode, macro, pseudo-op.
+		beq 	_AXAOpcode
+		cmp 	#AXIT_Macro
+		beq 	_AXAMacro
+		cmp 	#AXIT_PsuedoOp
+		bne 	_AXSyntax
+		;
+		jmp 	$FFFF 						; load the address and jump to it.
+_AXAMacro:
+		jmp 	AXPAssembleMacro
+_AXAOpcode:
+		jmp 	AXPAssembleOpcode	
+
 		; ========================================================================================
 		;
 		;					Not a mnemonic, so it's a label of some sort.

@@ -18,10 +18,8 @@
 
 		.section as16zeropage
 
-AXTemp0:
-		.fill 	2
-AXTemp1:
-		.fill 	2
+AXTemp0: 									; 3 bytes as it is used for the API output function.
+		.fill 	3
 
 		.send 	as16zeropage
 

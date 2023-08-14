@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		ident.inc
-;		Purpose:	Identifier offsets
-;		Created:	11th August 2023
+;		Name:		opcode.asm
+;		Purpose:	Assemble an opcode
+;		Created:	14th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -12,22 +12,45 @@
 
 		.section as16code
 
+; ************************************************************************************************
+;
+;									Assemble an opcode
+;
+; ************************************************************************************************
 
-AXIT_Unused = 		0
-AXIT_Label = 		1
-AXIT_PsuedoOp = 	2
-AXIT_Macro =  		3
-AXIT_Opcode = 		4
+AXPAssembleOpcode:
+		;
+		phx
+		ldy 	#AXID_DataHigh 				; get the base opcode.
+		jsr 	AXIGet
+		sta 	AXBaseOpcode
+		;
+		ldy 	#AXID_DataAux 				; get the aux data (selectors for Group 2
+		jsr 	AXIGet
+		sta 	AXSelector
+		;
+		ldy 	#AXID_DataLow 				; get the group number
+		jsr 	AXIGet
+		plx
+		;
+		cmp 	#4 							; and dispatch.
+		beq 	_AXPGo4
+		.byte 	$DB
 
-AXID_Hash = 		1
-AXID_Type = 		2
-AXID_Flags = 		3
-AXID_DataLow = 		4
-AXID_DataHigh = 	5
-AXID_DataAux = 		6
-AXID_Identifier = 	7
+
+
+_AXPGo4:
+		jmp 	AXGroup4
 
 		.send as16code
+
+		.section as16storage
+AXBaseOpcode:
+		.fill 	1		
+AXSelector:
+		.fill 	1
+		.send as16storage	
+
 
 ; ************************************************************************************************
 ;
@@ -39,3 +62,4 @@ AXID_Identifier = 	7
 ;		==== 			=====
 ;
 ; ************************************************************************************************
+
