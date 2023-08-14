@@ -6,5 +6,7 @@ value = $3072
 label
 lbl2:
 v2 = value+4096
-
-!
+x1 = 22000
+x2 = 7
+x3 = x1/x2
+x4 = *+1

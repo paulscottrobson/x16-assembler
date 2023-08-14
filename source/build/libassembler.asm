@@ -1745,6 +1745,21 @@ AXIClose:
 ; ************************************************************************************************
 
 AXICreateFind:
+		jsr 	AXIFind 					; find it ?
+		bcc 	_AXFound 					; found so do nothing
+		jsr 	AXICreate 					; create new record
+		sec
+_AXFound:
+		rts
+
+; ************************************************************************************************
+;
+;									   Find an identifier YX
+; 				CC = Found, AXTemp0 points to it CS = Not Found, AXTemp0 points to end
+;
+; ************************************************************************************************
+
+AXIFind:
 		stx 	AXTemp1 					; save address at zTemp1
 		sty 	AXTemp1+1
 		jsr 	AXICalculateHash 			; calculate hash
@@ -1758,9 +1773,10 @@ AXICreateFind:
 		;
 _AXIFindEnd:								; go to the end checking for duplicates.
 		lda 	(AXTemp0)
-		beq 	_AXIFoundEnd
+		sec
+		beq 	_AXIFindExit
 		jsr 	AXICompareCurrent 			; compare AXTemp1 ident vs AXTemp0 record
-		bcc 	_AXICFound 					; it's been found.
+		bcc 	_AXIFoundExit 				; it's been found.
 		;
 		clc 								; go to next
 		lda 	(AXTemp0)
@@ -1769,10 +1785,25 @@ _AXIFindEnd:								; go to the end checking for duplicates.
 		bcc 	_AXIFindEnd
 		inc 	AXTemp0+1
 		bra 	_AXIFindEnd
-		;
-		;		AXTemp0 now points at the end (the zero link)
-		;
-_AXIFoundEnd:
+
+_AXIFoundExit:
+		jsr 	AXISetCurrent
+		clc
+
+_AXIFindExit:
+		php
+		jsr 	AXIClose
+		plp
+		rts
+
+; ************************************************************************************************
+;
+;								Create identifier if not found
+;
+; ************************************************************************************************
+
+AXICreate:
+		jsr 	AXIOpen 					; start.
 		ldy 	#0
 		;
 _AXIFill:									; fill +2,3,4,5 with zeros.
@@ -1811,12 +1842,16 @@ _AXICopy:
 		;
 _AXICFound:
 		php 								; save carry
+		jsr 	AXISetCurrent
+		jsr 	AXIClose 					; close access
+		plp 								; restore carry.
+		rts
+
+AXISetCurrent:
 		lda 	AXTemp0 					; save as current record
 		sta 	AXCurrent
 		lda 	AXTemp0+1
 		sta 	AXCurrent+1
-		jsr 	AXIClose 					; close access
-		plp 								; restore carry.
 		rts
 
 		.send as16code

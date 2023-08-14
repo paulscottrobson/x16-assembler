@@ -8,7 +8,7 @@ Identifier Structure
 			01 		Identifier or Label.
 			02 		Pseudo Operation.
 			03 		Macro
-			F1..9 	Group 1 to 9 (if used)
+			04 		Instruction
 
 +3 		Flags
 			bit 7 	Set if undefined.
@@ -21,3 +21,4 @@ Identifier Structure
 +7 		Identifier (name in upper case, bit 7 of last character set.)
 
 +n 		Any supplemental data (e.g. Macro Body)
+
