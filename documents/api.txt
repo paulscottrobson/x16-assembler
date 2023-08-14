@@ -11,5 +11,7 @@ Cmd: (in A)
 	3 		Read next character from source X => A. Returns CS if end of file *before* the read, e.g. it failed.
 			After EOF it should continue to return CS on subsequent calls.
 
-
+	4 		Write value Y to ($00,X) -> address $00+x constains address.low, address.high and page in 3 consecutive
+			locations. 
+			
 	6 		Write to listing output A

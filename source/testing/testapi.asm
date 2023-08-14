@@ -17,6 +17,8 @@ TestAPIHandler:
 		beq 	_TAOpen
 		cmp 	#3
 		beq	 	_TARead
+		cmp 	#4
+		beq 	_TAWrite
 		cmp 	#6
 		beq 	_TAList
 		rts
@@ -49,6 +51,29 @@ _TARExit:
 _TAList:
 		txa
 		jmp 	$FFD2
+		;
+		;		Write a byte 
+		;
+_TAWrite:
+		phy
+		lda 	#'@'
+		jsr 	AXListOut
+		lda 	$02,x
+		jsr 	AXLOutHex
+		lda 	#'.'
+		jsr 	AXListOut
+		lda 	$01,x
+		jsr 	AXLOutHex
+		lda 	$00,x
+		jsr 	AXLOutHex
+		lda 	#"="
+		jsr 	AXListOut
+		pla
+		jsr 	AXLOutHex
+		lda 	#13
+		jsr 	AXListOut
+		rts
+
 		;
 		;		ASCII code ending with a NULL, multiple lines seperated by CR , LF or CR/LF.
 		;

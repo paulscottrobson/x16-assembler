@@ -1,16 +1,16 @@
 TODO:
 	
 	Assemble line with predefined state, capitalised, no comments etc (Output system)
-
-		Group 4 opcodes
-			Output system
 			Listing system (complete it)
+
 		Group 3 opcodes ?
-		
-		Error system
-		Pseudo operations
-		Macros
-		Includes.	
+		Group 1 opcodes (analyse default type)
+		Group 2 opcodes and specials.
+
+	Error system
+	Pseudo operations
+	Includes.	
+	Macros
 
 	Check collision of stack / identifiers.	
 	Pass 2 - throw out undefined values.

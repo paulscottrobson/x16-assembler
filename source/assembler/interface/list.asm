@@ -19,6 +19,10 @@
 ; ************************************************************************************************
 
 AXListLine:
+		lda 	AXPass 						; only on pass 2
+		cmp 	#2
+		bne 	_AXLLExit
+
 		lda 	AXProgramCounterStart+2 	; Page
 		jsr 	AXLOutHex
 		lda 	#58
@@ -27,7 +31,6 @@ AXListLine:
 		jsr 	AXLOutHex
 		lda 	AXProgramCounterStart+0 	
 		jsr 	AXLOutHex
-
 
 		jsr 	AXLSpace
 		ldx 	#0 							; output the line.
@@ -41,6 +44,7 @@ _AXOutLine:
 _AXEnd:		
 		lda 	#13 						; CR/LF
 		jsr 	AXListOut
+_AXLLExit:		
 		rts
 
 ; ************************************************************************************************

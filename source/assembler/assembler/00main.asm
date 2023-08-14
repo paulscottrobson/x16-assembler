@@ -22,7 +22,8 @@ AXAssemble:
 		stx 	AXAPI 						; save the API.
 		sty 	AXAPI+1
 		jsr 	AXIReset 					; reset the identifier system.
-		lda 	#1
+		
+		lda 	#2
 		jsr 	AXAssemblerPass
 		rts
 		

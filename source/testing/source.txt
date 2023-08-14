@@ -10,4 +10,6 @@ x1 = 22000
 x2 = 7
 x3 = x1/x2
 x4 = *+1
-wxyz ror $42
+wxyz pla
+plx
+nop

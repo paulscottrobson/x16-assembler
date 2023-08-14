@@ -48,10 +48,8 @@ Start:
 		ldy 	#TestAPIHandler >> 8
 		jsr 	AXAssemble
 		bcs 	_Error
-		jmp 	$FFFF
 _Error:	ldx 	#$EE
 		ldy 	#$EE
-		.byte 	$DB
 		bra 	_Error
 
 		.endif
