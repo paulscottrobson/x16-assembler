@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
-; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -D "ASMDATA=\$9800" -D "ASMDATAEND=\$9C00" -D ASMDATACTL=0 -Wall -L build/asm.lst -o build/asm.prg -D TESTING=2 main.asm
-; Mon Aug 14 17:49:07 2023
+; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -D "ASMDATA=\$9800" -D "ASMDATAEND=\$9C00" -D ASMDATACTL=0 -Wall -L build/asm.lst -o build/asm.prg -D TESTING=0 main.asm
+; Tue Aug 15 20:46:04 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -12,7 +12,7 @@
 =$9800					ASMDATA=$9800
 =$9c00					ASMDATAEND=$9C00
 =0					ASMDATACTL=0
-=2					TESTING=2
+=0					TESTING=0
 
 ;******  Processing input file: main.asm
 
@@ -1713,102 +1713,7 @@
 ;******  Return to file: main.asm
 
 .1aa0					Start:
-.1aa0	a2 b2		ldx #$b2			ldx 	#TestAPIHandler & $FF
-.1aa2	a0 1a		ldy #$1a			ldy 	#TestAPIHandler >> 8
-.1aa4	20 03 10	jsr $1003			jsr 	AXAssemble
-.1aa7	b0 00		bcs $1aa9			bcs 	_Error
-.1aa9	a2 ee		ldx #$ee	_Error:	ldx 	#$EE
-.1aab	a0 ee		ldy #$ee			ldy 	#$EE
-.1aad	80 fa		bra $1aa9			bra 	_Error
->1aaf	db						.byte 	$DB
-.1ab0	80 fe		bra $1ab0	h1:		bra 	h1
-
-;******  Processing file: testing/testapi.asm
-
-.1ab2					TestAPIHandler:
-.1ab2	c9 01		cmp #$01			cmp 	#1
-.1ab4	f0 0d		beq $1ac3			beq 	_TAOpen
-.1ab6	c9 03		cmp #$03			cmp 	#3
-.1ab8	f0 13		beq $1acd			beq	 	_TARead
-.1aba	c9 04		cmp #$04			cmp 	#4
-.1abc	f0 20		beq $1ade			beq 	_TAWrite
-.1abe	c9 06		cmp #$06			cmp 	#6
-.1ac0	f0 18		beq $1ada			beq 	_TAList
-.1ac2	60		rts				rts
-.1ac3					_TAOpen:
-.1ac3	a9 07		lda #$07			lda 	#TAHSourceCode & $FF
-.1ac5	85 33		sta $33				sta 	codeTemp
-.1ac7	a9 1b		lda #$1b			lda 	#TAHSourceCode >> 8
-.1ac9	85 34		sta $34				sta 	codeTemp+1
-.1acb	18		clc				clc
-.1acc	60		rts				rts
-.1acd					_TARead:
-.1acd	b2 33		lda ($33)			lda 	(codeTemp)
-.1acf	38		sec				sec
-.1ad0	f0 07		beq $1ad9			beq 	_TARExit
-.1ad2	18		clc				clc
-.1ad3	e6 33		inc $33				inc 	codeTemp
-.1ad5	d0 02		bne $1ad9			bne 	_TARExit
-.1ad7	e6 34		inc $34				inc 	codeTemp+1
-.1ad9					_TARExit:
-.1ad9	60		rts				rts
-.1ada					_TAList:
-.1ada	8a		txa				txa
-.1adb	4c d2 ff	jmp $ffd2			jmp 	$FFD2
-.1ade					_TAWrite:
-.1ade	5a		phy				phy
-.1adf	a9 40		lda #$40			lda 	#'@'
-.1ae1	20 fb 19	jsr $19fb			jsr 	AXListOut
-.1ae4	b5 02		lda $02,x			lda 	$02,x
-.1ae6	20 e3 19	jsr $19e3			jsr 	AXLOutHex
-.1ae9	a9 2e		lda #$2e			lda 	#'.'
-.1aeb	20 fb 19	jsr $19fb			jsr 	AXListOut
-.1aee	b5 01		lda $01,x			lda 	$01,x
-.1af0	20 e3 19	jsr $19e3			jsr 	AXLOutHex
-.1af3	b5 00		lda $00,x			lda 	$00,x
-.1af5	20 e3 19	jsr $19e3			jsr 	AXLOutHex
-.1af8	a9 3d		lda #$3d			lda 	#"="
-.1afa	20 fb 19	jsr $19fb			jsr 	AXListOut
-.1afd	68		pla				pla
-.1afe	20 e3 19	jsr $19e3			jsr 	AXLOutHex
-.1b01	a9 0d		lda #$0d			lda 	#13
-.1b03	20 fb 19	jsr $19fb			jsr 	AXListOut
-.1b06	60		rts				rts
-.1b07					TAHSourceCode:
-
-;******  Processing file: testing/../assembler/generated/sourcebytes.dat
-
->1b07	2a 20 3d 20 24 39 32 31			.byte 42,32,61,32,36,57,50,49,65,13,10
->1b0f	41 0d 0a
->1b12	2a 20 3d 20 24 39 30 30			.byte 42,32,61,32,36,57,48,48,48,13,10
->1b1a	30 0d 0a
->1b1d	3b 0d 0a				.byte 59,13,10
->1b20	3b 0d 0a				.byte 59,13,10
->1b23	76 61 6c 75 65 20 3d 20			.byte 118,97,108,117,101,32,61,32,36,51,48,55,50,13,10
->1b2b	24 33 30 37 32 0d 0a
->1b32	6c 61 62 65 6c 0d 0a			.byte 108,97,98,101,108,13,10
->1b39	6c 62 6c 32 3a 0d 0a			.byte 108,98,108,50,58,13,10
->1b40	76 32 20 3d 20 76 61 6c			.byte 118,50,32,61,32,118,97,108,117,101,43,52,48,57,54,13,10
->1b48	75 65 2b 34 30 39 36 0d 0a
->1b51	78 31 20 3d 20 32 32 30			.byte 120,49,32,61,32,50,50,48,48,48,13,10
->1b59	30 30 0d 0a
->1b5d	78 32 20 3d 20 37 0d 0a			.byte 120,50,32,61,32,55,13,10
->1b65	78 33 20 3d 20 78 31 2f			.byte 120,51,32,61,32,120,49,47,120,50,13,10
->1b6d	78 32 0d 0a
->1b71	78 34 20 3d 20 2a 2b 31			.byte 120,52,32,61,32,42,43,49,13,10
->1b79	0d 0a
->1b7b	77 78 79 7a 20 70 6c 61			.byte 119,120,121,122,32,112,108,97,13,10
->1b83	0d 0a
->1b85	70 6c 78 0d 0a				.byte 112,108,120,13,10
->1b8a	6e 6f 70 0d 0a				.byte 110,111,112,13,10
->1b8f	00					.byte 0
-
-;******  Return to file: testing/testapi.asm
-
-.0033					codeTemp:
->0033							.fill 	2
-
-;******  Return to file: main.asm
-
+>1aa0	db						.byte 	$DB
+.1aa1	80 fe		bra $1aa1	h1:		bra 	h1
 
 ;******  End of listing
