@@ -4,6 +4,58 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		modes.inc
+;		Purpose:	Address modes
+;		Created:	17th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;										Address modes.
+;
+;	Bits 0..5 represent 4 steps in bytes from 00.07 for Group2 . Group 1 is slightly different.
+;	Bit 7 set if zero page address required.
+;
+; ************************************************************************************************
+
+AXMRequireZero = $80
+
+AXMImmediate = 			$00 + AXMRequireZero 	; lda #$2A
+AXMZero = 				$01 + AXMRequireZero 	; lda $2A
+AXMAccumulator =		$02 + AXMRequireZero 	; inc OR inc A
+AXMAbsolute = 			$03 					; lda $2ABC
+AXMIndirectY =			$04 + AXMRequireZero 	; lda ($2A),y
+AXMZeroX =				$05 + AXMRequireZero 	; lda $2A,x
+AXMAbsoluteY = 			$06 					; lda $2ABC,y
+AXMAbsoluteX = 			$07 					; lda $2ABC,x
+AXMIndirect =			$08 + AXMRequireZero 	; lda ($2A)
+AXMZeroY =				$09 + AXMRequireZero 	; lda $2A,y
+AXMAbsoluteIndirect = 	$0A 					; jmp ($2ABC)
+AXMAbsoluteIndirectX = 	$0B 					; jmp ($2ABC,x)
+AXMRelative = 			$0C 					; bra $2A (not used)
+AXMIndirectX = 			$0D + AXMRequireZero 	; lda ($2A,x)
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		data.inc
 ;		Purpose:	Assembler main data
 ;		Created:	9th August 2023
@@ -37,6 +89,7 @@ AXTemp0: 									; 3 bytes as it is used for the API output function.
 
 AXMaxLineSize = 80
 AXMaxIdentSize = 16
+AXListByteCount = 4
 
 ; ************************************************************************************************
 ;
@@ -88,6 +141,11 @@ AXProgramCounterStart: 						; PCTR at instruction start.
 
 AXBuffer:	 								; current line, ASCIIZ.
 		.fill 	AXMaxLineSize+1
+
+AXListCount: 								; byte count in list buffer
+		.fill 	1
+AXListBytes: 								; those bytes
+		.fill 	AXListByteCount
 
 AXEndFrame:
 
@@ -190,6 +248,49 @@ AXID_Identifier = 	7
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		addressmode.asm
+;		Purpose:	Identify the address mode.
+;		Created:	17th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;					Work out the address mode from X , store in AXAddrMode
+;						   CC if okay, CS if error with error in A.
+;						     Expressions evaluated as per pass 2.
+;
+; ************************************************************************************************
+
+AXIdentifyAddressMode:
+		.byte 	$DB
+
+		.send as16code
+
+		.section as16storage
+AXAddrMode:
+		.fill 	1
+		.send as16storage
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		00main.asm
 ;		Purpose:	Entry point.
 ;		Created:	12th August 2023
@@ -270,6 +371,7 @@ AXAssemblerPass:
 ; ************************************************************************************************
 
 AXAssembleLine:
+		stz 	AXListCount					; clear the listing bytes.
 		ldx 	#0 							; start of line
 _AXAContinue:
 		jsr 	AXGet 						; get first character
@@ -295,8 +397,8 @@ _AXAContinue:
 		; ========================================================================================
 
 		phx 								; look in system dictionary (opcodes, pseudo ops etc).
-		ldx 	#SystemDictionary & $FF
-		ldy 	#SystemDictionary >> 8
+		ldx 	#AXSystemDictionary & $FF
+		ldy 	#AXSystemDictionary >> 8
 		jsr 	AXIFind
 		plx
 		bcs 	_AXALabel 					; not found, label check.
@@ -545,6 +647,64 @@ AXCallAPI:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		group1.asm
+;		Purpose:	Assemble group 1 (lda,sta,adc,cmp,sbc,and,eor,ora)
+;		Created:	17th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;								Assemble group 1 instruction
+;
+; ************************************************************************************************
+
+AXGroup1:
+		.byte 	$DB
+		jsr 	AXIdentifyAddressMode 		; get the address mode
+		bcs 	_AXG1Exit 		 			; syntax error.
+		jsr 	AXGroup1Assemble 			; assemble group 1 with ZP/# mods.
+		bcc 	_AXG1Exit 					; it worked.
+		jsr 	AXPromoteMode 				; promote mode.
+		bcs 	_AXG1Exit 					; failed
+		jsr 	AXGroup1Assemble 			; try it with absolute mode.
+_AXG1Exit:
+		rts
+
+; ************************************************************************************************
+;
+;		Try to assemble with current mode. If ZP check range. CS if failed, CC if succeeded.
+;								(should return error on STA #)
+;
+;		Note, the initial 8 modes are slightly different for the Group 1 set, see spreadsheet.
+;
+; ************************************************************************************************
+
+AXGroup1Assemble:
+		sec
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		group3.asm
 ;		Purpose:	Assemble group 3 instruction (relative branches)
 ;		Created:	17th August 2023
@@ -566,9 +726,6 @@ AXGroup3:
 		lda 	AXBaseOpcode 				; assemble the base opcode.
 		jsr 	AXWriteByte
 		;
-
-		.byte 	$DB
-
 		jsr 	AXPass2Expression 			; get expression defined on pass 2.
 		bcs 	_AXG3Exit
 		;
@@ -731,6 +888,8 @@ AXPAssembleOpcode:
 		jsr 	AXIGet
 		plx
 		;
+		cmp 	#1
+		beq 	_AXPGo1
 		cmp 	#3
 		beq 	_AXPGo3
 		cmp 	#4 							; and dispatch.
@@ -738,6 +897,8 @@ AXPAssembleOpcode:
 		.byte 	$DB
 
 
+_AXPGo1:
+		jmp 	AXGroup1
 _AXPGo3:
 		jmp 	AXGroup3
 _AXPGo4:
@@ -1900,7 +2061,7 @@ AXBase: 									; temporary for base.
 ;
 ;	This file is automatically generated.
 ;
-SystemDictionary:
+AXSystemDictionary:
 	.byte	10
 	.byte	$62
 	.byte	4
@@ -2433,7 +2594,7 @@ SystemDictionary:
 ;
 ;	This file is automatically generated.
 ;
-OpcodeFixupTable:
+AXGroup2OpcodeFixupTable:
 	.byte	$60,7,			$9e ; STZ ABS,X
 	.byte	$60,3,			$9c ; STZ ABS
 	.byte	$20,0,			$89 ; BIT #
@@ -3048,7 +3209,23 @@ AXListLine:
 		lda 	AXProgramCounterStart+0
 		jsr 	AXLOutHex
 
+		ldx 	#0 							; output listing bytes
+_AXLHex:
+		jsr 	AXLSpace 					; space
+		cpx 	AXListCount 				; compare against done.
+		bcs 	_AXLSpace 					; if <= done then output spaces.
+		lda 	AXListBytes,x
+		jsr 	AXLOutHex 					; output hex
+		bra 	_AXLLLoop
+_AXLSpace:
 		jsr 	AXLSpace
+		jsr 	AXLSpace
+_AXLLLoop:
+		inx
+		cpx	 	#AXListByteCount 			; done all of them
+		bne 	_AXLHex
+		;
+		jsr 	AXLSpace 					; another space.
 		ldx 	#0 							; output the line.
 _AXOutLine:
 		lda 	AXBuffer,x
@@ -3061,6 +3238,22 @@ _AXEnd:
 		lda 	#13 						; CR/LF
 		jsr 	AXListOut
 _AXLLExit:
+		rts
+
+; ************************************************************************************************
+;
+;				Store first listing bytes for display (first 4 at present)
+;
+; ************************************************************************************************
+
+AXAddListingByte:
+		ldx 	AXListCount 				; already max listable
+		cpx 	#AXListByteCount
+		beq 	_AXAExit
+		sta 	AXListBytes,x 				; store the byte
+		inc 	AXListCount 				; bump count
+
+_AXAExit:
 		rts
 
 ; ************************************************************************************************
@@ -3147,13 +3340,16 @@ AXWriteByte:
 		cpx 	#2
 		bne 	_AXWBBumpPC
 
+		pha 								; add to listing
+		jsr 	AXAddListingByte
+
 		ldx 	AXProgramCounter 			; copy location
 		stx 	AXTemp0
 		ldx 	AXProgramCounter+1
 		stx 	AXTemp0+1
 		ldx 	AXProgramCounter+2
 		stx 	AXTemp0+2
-		tay									; char to Y.
+		ply									; char to Y.
 		ldx 	#AXTemp0 					; ($00,X) is the address
 		lda 	#4 							; API function 4
 		jsr 	AXCallAPI
@@ -3166,6 +3362,43 @@ _AXWBSkip:
 		ply
 		plx
 		pla
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		promote.asm
+;		Purpose:	Promotes current address mode to absolute.
+;		Created:	17th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;		Promote current address mode to absolute from zero page, return CS if not possibl
+;
+; ************************************************************************************************
+
+AXPromoteMode:
+		sec
 		rts
 
 		.send as16code

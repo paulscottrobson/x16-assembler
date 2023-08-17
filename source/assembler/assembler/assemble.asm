@@ -19,6 +19,7 @@
 ; ************************************************************************************************
 
 AXAssembleLine:
+		stz 	AXListCount					; clear the listing bytes.
 		ldx 	#0 							; start of line
 _AXAContinue:		
 		jsr 	AXGet 						; get first character
@@ -44,8 +45,8 @@ _AXAContinue:
 		; ========================================================================================
 
 		phx 								; look in system dictionary (opcodes, pseudo ops etc).
-		ldx 	#SystemDictionary & $FF
-		ldy 	#SystemDictionary >> 8
+		ldx 	#AXSystemDictionary & $FF
+		ldy 	#AXSystemDictionary >> 8
 		jsr 	AXIFind
 		plx
 		bcs 	_AXALabel 					; not found, label check.

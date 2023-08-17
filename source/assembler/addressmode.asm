@@ -1,8 +1,8 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		group3.asm
-;		Purpose:	Assemble group 3 instruction (relative branches)
+;		Name:		addressmode.asm
+;		Purpose:	Identify the address mode.
 ;		Created:	17th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -14,54 +14,22 @@
 
 ; ************************************************************************************************
 ;
-;								Assemble group 3 instruction
+;					Work out the address mode from X , store in AXAddrMode
+;						   CC if okay, CS if error with error in A.
+;						     Expressions evaluated as per pass 2.
 ;
 ; ************************************************************************************************
 
-AXGroup3:
-		lda 	AXBaseOpcode 				; assemble the base opcode.
-		jsr 	AXWriteByte
-		;
-		jsr 	AXPass2Expression 			; get expression defined on pass 2.
-		bcs 	_AXG3Exit
-		;
-		lda 	AXPass 						; pass 1, don't care.
-		cmp 	#1
-		beq 	_AXG3Exit
-
-		sec  								; calculate relative branch
-		lda 	AXLeft
-		sbc 	AXProgramCounter
-		tax
-		lda 	AXLeft+1
-		sbc 	AXProgramCounter+1
-		tay
-
-		inx 								; one short as we haven't assembled the relative branch yet.
-		bne 	_AXNoCarry
-		iny
-_AXNoCarry:
+AXIdentifyAddressMode:
+		.byte 	$DB
 		
-		cpx 	#0 							; for 00-7F Y should be 0, for 80-FF it should be $FF
-		bpl 	_AXNotBack 					; if we bump Y if X is -ve, then if zero it's a fail.
-		iny 			
-_AXNotBack:		
-		cpy 	#0 							; so check it
-		beq 	_AXOutputOffset
-		;
-		sec  								; if it's not out of range
-		lda 	#AXERRRelative
-		bra 	_AXG3Exit
-		;
-_AXOutputOffset:
-		txa
-		jsr 	AXWriteByte 				; output the offset
-		clc
-_AXG3Exit:		
-		rts
-
 		.send as16code
 		
+		.section as16storage
+AXAddrMode:
+		.fill 	1
+		.send as16storage
+
 ; ************************************************************************************************
 ;
 ;									Changes and Updates

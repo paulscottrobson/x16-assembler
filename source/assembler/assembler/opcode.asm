@@ -33,6 +33,8 @@ AXPAssembleOpcode:
 		jsr 	AXIGet
 		plx
 		;
+		cmp 	#1
+		beq 	_AXPGo1
 		cmp 	#3
 		beq 	_AXPGo3
 		cmp 	#4 							; and dispatch.
@@ -40,6 +42,8 @@ AXPAssembleOpcode:
 		.byte 	$DB
 
 		
+_AXPGo1:
+		jmp 	AXGroup1
 _AXPGo3:
 		jmp 	AXGroup3
 _AXPGo4:

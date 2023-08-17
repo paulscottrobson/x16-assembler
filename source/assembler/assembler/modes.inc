@@ -1,8 +1,8 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		group3.asm
-;		Purpose:	Assemble group 3 instruction (relative branches)
+;		Name:		modes.inc
+;		Purpose:	Address modes
 ;		Created:	17th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -14,51 +14,29 @@
 
 ; ************************************************************************************************
 ;
-;								Assemble group 3 instruction
+;										Address modes.
+;
+;	Bits 0..5 represent 4 steps in bytes from 00.07 for Group2 . Group 1 is slightly different.
+;	Bit 7 set if zero page address required.
 ;
 ; ************************************************************************************************
 
-AXGroup3:
-		lda 	AXBaseOpcode 				; assemble the base opcode.
-		jsr 	AXWriteByte
-		;
-		jsr 	AXPass2Expression 			; get expression defined on pass 2.
-		bcs 	_AXG3Exit
-		;
-		lda 	AXPass 						; pass 1, don't care.
-		cmp 	#1
-		beq 	_AXG3Exit
+AXMRequireZero = $80
 
-		sec  								; calculate relative branch
-		lda 	AXLeft
-		sbc 	AXProgramCounter
-		tax
-		lda 	AXLeft+1
-		sbc 	AXProgramCounter+1
-		tay
-
-		inx 								; one short as we haven't assembled the relative branch yet.
-		bne 	_AXNoCarry
-		iny
-_AXNoCarry:
-		
-		cpx 	#0 							; for 00-7F Y should be 0, for 80-FF it should be $FF
-		bpl 	_AXNotBack 					; if we bump Y if X is -ve, then if zero it's a fail.
-		iny 			
-_AXNotBack:		
-		cpy 	#0 							; so check it
-		beq 	_AXOutputOffset
-		;
-		sec  								; if it's not out of range
-		lda 	#AXERRRelative
-		bra 	_AXG3Exit
-		;
-_AXOutputOffset:
-		txa
-		jsr 	AXWriteByte 				; output the offset
-		clc
-_AXG3Exit:		
-		rts
+AXMImmediate = 			$00 + AXMRequireZero 	; lda #$2A
+AXMZero = 				$01 + AXMRequireZero 	; lda $2A
+AXMAccumulator =		$02 + AXMRequireZero 	; inc OR inc A
+AXMAbsolute = 			$03 					; lda $2ABC
+AXMIndirectY =			$04 + AXMRequireZero 	; lda ($2A),y
+AXMZeroX =				$05 + AXMRequireZero 	; lda $2A,x
+AXMAbsoluteY = 			$06 					; lda $2ABC,y
+AXMAbsoluteX = 			$07 					; lda $2ABC,x
+AXMIndirect =			$08 + AXMRequireZero 	; lda ($2A)
+AXMZeroY =				$09 + AXMRequireZero 	; lda $2A,y
+AXMAbsoluteIndirect = 	$0A 					; jmp ($2ABC)
+AXMAbsoluteIndirectX = 	$0B 					; jmp ($2ABC,x)
+AXMRelative = 			$0C 					; bra $2A (not used)
+AXMIndirectX = 			$0D + AXMRequireZero 	; lda ($2A,x)
 
 		.send as16code
 		
@@ -72,4 +50,3 @@ _AXG3Exit:
 ;		==== 			=====
 ;
 ; ************************************************************************************************
-

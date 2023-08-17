@@ -1,10 +1,13 @@
 TODO:
 	
 	Assemble line with predefined state, capitalised, no comments etc (Output system)
-			Listing system (complete it)
 
-		Group 3 opcodes ?
 		Group 1 opcodes (analyse default type)
+			- work out address mode (lowest type)
+			- assemble without upfix.
+			- assemble with upfix
+			- check STA # fails.
+
 		Group 2 opcodes and specials.
 
 	Error system

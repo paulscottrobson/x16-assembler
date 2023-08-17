@@ -34,6 +34,7 @@ AXTemp0: 									; 3 bytes as it is used for the API output function.
 
 AXMaxLineSize = 80
 AXMaxIdentSize = 16
+AXListByteCount = 4
 
 ; ************************************************************************************************
 ;
@@ -85,6 +86,11 @@ AXProgramCounterStart: 						; PCTR at instruction start.
 
 AXBuffer:	 								; current line, ASCIIZ.
 		.fill 	AXMaxLineSize+1 						
+
+AXListCount: 								; byte count in list buffer
+		.fill 	1
+AXListBytes: 								; those bytes
+		.fill 	AXListByteCount
 
 AXEndFrame:
 

@@ -32,7 +32,23 @@ AXListLine:
 		lda 	AXProgramCounterStart+0 	
 		jsr 	AXLOutHex
 
+		ldx 	#0 							; output listing bytes
+_AXLHex:
+		jsr 	AXLSpace 					; space
+		cpx 	AXListCount 				; compare against done.
+		bcs 	_AXLSpace 					; if <= done then output spaces.
+		lda 	AXListBytes,x 	
+		jsr 	AXLOutHex 					; output hex 
+		bra 	_AXLLLoop
+_AXLSpace:
 		jsr 	AXLSpace
+		jsr 	AXLSpace
+_AXLLLoop:		
+		inx
+		cpx	 	#AXListByteCount 			; done all of them
+		bne 	_AXLHex
+		;
+		jsr 	AXLSpace 					; another space.
 		ldx 	#0 							; output the line.
 _AXOutLine:
 		lda 	AXBuffer,x
@@ -45,6 +61,22 @@ _AXEnd:
 		lda 	#13 						; CR/LF
 		jsr 	AXListOut
 _AXLLExit:		
+		rts
+
+; ************************************************************************************************
+;
+;				Store first listing bytes for display (first 4 at present)
+;
+; ************************************************************************************************
+
+AXAddListingByte:
+		ldx 	AXListCount 				; already max listable
+		cpx 	#AXListByteCount
+		beq 	_AXAExit
+		sta 	AXListBytes,x 				; store the byte
+		inc 	AXListCount 				; bump count
+
+_AXAExit:		
 		rts
 
 ; ************************************************************************************************

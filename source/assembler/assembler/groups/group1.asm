@@ -1,8 +1,8 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		group3.asm
-;		Purpose:	Assemble group 3 instruction (relative branches)
+;		Name:		group1.asm
+;		Purpose:	Assemble group 1 (lda,sta,adc,cmp,sbc,and,eor,ora)
 ;		Created:	17th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -14,50 +14,33 @@
 
 ; ************************************************************************************************
 ;
-;								Assemble group 3 instruction
+;								Assemble group 1 instruction
 ;
 ; ************************************************************************************************
 
-AXGroup3:
-		lda 	AXBaseOpcode 				; assemble the base opcode.
-		jsr 	AXWriteByte
-		;
-		jsr 	AXPass2Expression 			; get expression defined on pass 2.
-		bcs 	_AXG3Exit
-		;
-		lda 	AXPass 						; pass 1, don't care.
-		cmp 	#1
-		beq 	_AXG3Exit
+AXGroup1:
+		.byte 	$DB
+		jsr 	AXIdentifyAddressMode 		; get the address mode
+		bcs 	_AXG1Exit 		 			; syntax error.
+		jsr 	AXGroup1Assemble 			; assemble group 1 with ZP/# mods.
+		bcc 	_AXG1Exit 					; it worked.
+		jsr 	AXPromoteMode 				; promote mode.
+		bcs 	_AXG1Exit 					; failed
+		jsr 	AXGroup1Assemble 			; try it with absolute mode.
+_AXG1Exit:		
+		rts
 
-		sec  								; calculate relative branch
-		lda 	AXLeft
-		sbc 	AXProgramCounter
-		tax
-		lda 	AXLeft+1
-		sbc 	AXProgramCounter+1
-		tay
+; ************************************************************************************************
+;
+;		Try to assemble with current mode. If ZP check range. CS if failed, CC if succeeded.
+;								(should return error on STA #)
+;
+;		Note, the initial 8 modes are slightly different for the Group 1 set, see spreadsheet.
+;
+; ************************************************************************************************
 
-		inx 								; one short as we haven't assembled the relative branch yet.
-		bne 	_AXNoCarry
-		iny
-_AXNoCarry:
-		
-		cpx 	#0 							; for 00-7F Y should be 0, for 80-FF it should be $FF
-		bpl 	_AXNotBack 					; if we bump Y if X is -ve, then if zero it's a fail.
-		iny 			
-_AXNotBack:		
-		cpy 	#0 							; so check it
-		beq 	_AXOutputOffset
-		;
-		sec  								; if it's not out of range
-		lda 	#AXERRRelative
-		bra 	_AXG3Exit
-		;
-_AXOutputOffset:
-		txa
-		jsr 	AXWriteByte 				; output the offset
-		clc
-_AXG3Exit:		
+AXGroup1Assemble:
+		sec
 		rts
 
 		.send as16code
