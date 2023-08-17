@@ -2,7 +2,7 @@
 ; ************************************************************************************************
 ;
 ;		Name:		group4.asm
-;		Purpose:	Assemble group 4 instruction
+;		Purpose:	Assemble group 4 instruction (without operands)
 ;		Created:	14th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)

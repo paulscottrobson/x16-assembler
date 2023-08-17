@@ -2,6 +2,7 @@
 * = $9000
 ;
 ;
+bra *+2
 value = $3072
 label
 lbl2:

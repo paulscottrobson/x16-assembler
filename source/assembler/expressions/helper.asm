@@ -30,6 +30,35 @@ AXExpressionDefined:
 		lda 	#AXERRUndefined
 _AXDExit:
 		rts
+
+; ************************************************************************************************
+;
+;			Evaluate expression at Buffer,X. Undefined identifiers => error on pass2 
+;
+;		  Return CS on error, A is error code. CC if successful. Result goes into AXLeft
+;							On error, the default value is set to $FFFF
+;
+; ************************************************************************************************
+
+AXPass2Expression:
+		jsr 	AXExpression 				; evaluate
+		bcs 	_AXDExit 					; some other error.
+		lda 	AXLeft+2 					; check defined.
+		bpl 	_AXDExit 					; okay.
+
+		lda 	AXPass 						; if pass 1, that's okay even if undefined.
+		cmp 	#1
+		clc
+		beq 	_AXDExit
+
+		lda 	#$FF 						; set the default value to $FFFF
+		sta 	AXLeft
+		sta 	AXLeft+1
+
+		sec 								; return undefined error
+		lda 	#AXERRUndefined
+_AXDExit:
+		rts
 				
 		.send as16code
 

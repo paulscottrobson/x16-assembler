@@ -25,6 +25,7 @@ AXERRDivZero = $03 							; divide by zero.
 AXERRRedefine = $04 						; value of an identifier has changed.
 AXERRNotFound = $05 						; source file not found.
 AXERRUndefined = $06 						; undefined identifier.
+AXERRRelative = $07 						; relative branch range.
 
 		.send as16code
 

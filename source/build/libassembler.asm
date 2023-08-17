@@ -131,6 +131,7 @@ AXERRDivZero = $03 							; divide by zero.
 AXERRRedefine = $04 						; value of an identifier has changed.
 AXERRNotFound = $05 						; source file not found.
 AXERRUndefined = $06 						; undefined identifier.
+AXERRRelative = $07 						; relative branch range.
 
 		.send as16code
 
@@ -544,8 +545,86 @@ AXCallAPI:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		group3.asm
+;		Purpose:	Assemble group 3 instruction (relative branches)
+;		Created:	17th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;								Assemble group 3 instruction
+;
+; ************************************************************************************************
+
+AXGroup3:
+		lda 	AXBaseOpcode 				; assemble the base opcode.
+		jsr 	AXWriteByte
+		;
+
+		.byte 	$DB
+
+		jsr 	AXPass2Expression 			; get expression defined on pass 2.
+		bcs 	_AXG3Exit
+		;
+		lda 	AXPass 						; pass 1, don't care.
+		cmp 	#1
+		beq 	_AXG3Exit
+
+		sec  								; calculate relative branch
+		lda 	AXLeft
+		sbc 	AXProgramCounter
+		tax
+		lda 	AXLeft+1
+		sbc 	AXProgramCounter+1
+		tay
+
+		inx 								; one short as we haven't assembled the relative branch yet.
+		bne 	_AXNoCarry
+		iny
+_AXNoCarry:
+
+		cpx 	#0 							; for 00-7F Y should be 0, for 80-FF it should be $FF
+		bpl 	_AXNotBack 					; if we bump Y if X is -ve, then if zero it's a fail.
+		iny
+_AXNotBack:
+		cpy 	#0 							; so check it
+		beq 	_AXOutputOffset
+		;
+		sec  								; if it's not out of range
+		lda 	#AXERRRelative
+		bra 	_AXG3Exit
+		;
+_AXOutputOffset:
+		txa
+		jsr 	AXWriteByte 				; output the offset
+		clc
+_AXG3Exit:
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		group4.asm
-;		Purpose:	Assemble group 4 instruction
+;		Purpose:	Assemble group 4 instruction (without operands)
 ;		Created:	14th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -652,12 +731,15 @@ AXPAssembleOpcode:
 		jsr 	AXIGet
 		plx
 		;
+		cmp 	#3
+		beq 	_AXPGo3
 		cmp 	#4 							; and dispatch.
 		beq 	_AXPGo4
 		.byte 	$DB
 
 
-
+_AXPGo3:
+		jmp 	AXGroup3
 _AXPGo4:
 		jmp 	AXGroup4
 
@@ -1426,6 +1508,35 @@ AXExpressionDefined:
 		bcs 	_AXDExit 					; some other error.
 		lda 	AXLeft+2 					; check defined.
 		bpl 	_AXDExit 					; okay.
+
+		sec 								; return undefined error
+		lda 	#AXERRUndefined
+_AXDExit:
+		rts
+
+; ************************************************************************************************
+;
+;			Evaluate expression at Buffer,X. Undefined identifiers => error on pass2
+;
+;		  Return CS on error, A is error code. CC if successful. Result goes into AXLeft
+;							On error, the default value is set to $FFFF
+;
+; ************************************************************************************************
+
+AXPass2Expression:
+		jsr 	AXExpression 				; evaluate
+		bcs 	_AXDExit 					; some other error.
+		lda 	AXLeft+2 					; check defined.
+		bpl 	_AXDExit 					; okay.
+
+		lda 	AXPass 						; if pass 1, that's okay even if undefined.
+		cmp 	#1
+		clc
+		beq 	_AXDExit
+
+		lda 	#$FF 						; set the default value to $FFFF
+		sta 	AXLeft
+		sta 	AXLeft+1
 
 		sec 								; return undefined error
 		lda 	#AXERRUndefined

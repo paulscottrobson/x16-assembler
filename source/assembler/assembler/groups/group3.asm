@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		opcode.asm
-;		Purpose:	Assemble an opcode
-;		Created:	14th August 2023
+;		Name:		group3.asm
+;		Purpose:	Assemble group 3 instruction (relative branches)
+;		Created:	17th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -14,47 +14,57 @@
 
 ; ************************************************************************************************
 ;
-;									Assemble an opcode
+;								Assemble group 3 instruction
 ;
 ; ************************************************************************************************
 
-AXPAssembleOpcode:
+AXGroup3:
+		lda 	AXBaseOpcode 				; assemble the base opcode.
+		jsr 	AXWriteByte
 		;
-		phx
-		ldy 	#AXID_DataHigh 				; get the base opcode.
-		jsr 	AXIGet
-		sta 	AXBaseOpcode
-		;
-		ldy 	#AXID_DataAux 				; get the aux data (selectors for Group 2
-		jsr 	AXIGet
-		sta 	AXSelector
-		;
-		ldy 	#AXID_DataLow 				; get the group number
-		jsr 	AXIGet
-		plx
-		;
-		cmp 	#3
-		beq 	_AXPGo3
-		cmp 	#4 							; and dispatch.
-		beq 	_AXPGo4
+
 		.byte 	$DB
 
+		jsr 	AXPass2Expression 			; get expression defined on pass 2.
+		bcs 	_AXG3Exit
+		;
+		lda 	AXPass 						; pass 1, don't care.
+		cmp 	#1
+		beq 	_AXG3Exit
+
+		sec  								; calculate relative branch
+		lda 	AXLeft
+		sbc 	AXProgramCounter
+		tax
+		lda 	AXLeft+1
+		sbc 	AXProgramCounter+1
+		tay
+
+		inx 								; one short as we haven't assembled the relative branch yet.
+		bne 	_AXNoCarry
+		iny
+_AXNoCarry:
 		
-_AXPGo3:
-		jmp 	AXGroup3
-_AXPGo4:
-		jmp 	AXGroup4
+		cpx 	#0 							; for 00-7F Y should be 0, for 80-FF it should be $FF
+		bpl 	_AXNotBack 					; if we bump Y if X is -ve, then if zero it's a fail.
+		iny 			
+_AXNotBack:		
+		cpy 	#0 							; so check it
+		beq 	_AXOutputOffset
+		;
+		sec  								; if it's not out of range
+		lda 	#AXERRRelative
+		bra 	_AXG3Exit
+		;
+_AXOutputOffset:
+		txa
+		jsr 	AXWriteByte 				; output the offset
+		clc
+_AXG3Exit:		
+		rts
 
 		.send as16code
-
-		.section as16storage
-AXBaseOpcode:
-		.fill 	1		
-AXSelector:
-		.fill 	1
-		.send as16storage	
-
-
+		
 ; ************************************************************************************************
 ;
 ;									Changes and Updates
