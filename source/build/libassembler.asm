@@ -28,7 +28,7 @@ AXMRequireZero = $80
 
 AXMImmediate = 			$00 + AXMRequireZero 	; lda #$2A
 AXMZero = 				$01 + AXMRequireZero 	; lda $2A
-AXMAccumulator =		$02 + AXMRequireZero 	; inc OR inc A
+AXMAccumulator =		$02  					; inc OR inc A
 AXMAbsolute = 			$03 					; lda $2ABC
 AXMIndirectY =			$04 + AXMRequireZero 	; lda ($2A),y
 AXMZeroX =				$05 + AXMRequireZero 	; lda $2A,x
@@ -271,8 +271,12 @@ AXAssemble:
 		sty 	AXAPI+1
 		jsr 	AXIReset 					; reset the identifier system.
 
+		lda 	#1
+		jsr 	AXAssemblerPass
+		bcs 	_AXAExit
 		lda 	#2
 		jsr 	AXAssemblerPass
+_AXAExit:
 		rts
 
 ; ************************************************************************************************
@@ -882,7 +886,7 @@ _AXGAddOpcode:
 		cmp 	#$89 						; cannot sta #
 		beq 	_AXG1Fail
 		jsr 	AXWriteByte 				; write out the opcode.
-		jsr 	AXWriteOperand 				; write the operand appropriatel,
+		jsr 	AXWriteOperand 				; write the operand appropriately
 		clc
 		rts
 
@@ -898,6 +902,10 @@ _AXG1Fail:
 ; ************************************************************************************************
 
 AXWriteOperand:
+		lda 	AXAddrMode 					; if Accumulator mode exit
+		cmp 	#AXMAccumulator
+		beq 	_AXWIs2Byte
+
 		lda 	AXLeft 						; output LSB
 		jsr 	AXWriteByte
 		lda 	AXAddrMode
@@ -905,6 +913,124 @@ AXWriteOperand:
 		lda 	AXLeft+1 					; output MSB if wanted.
 		jsr 	AXWriteByte
 _AXWIs2Byte:
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		group2.asm
+;		Purpose:	Assemble group 2 (ldx, asl and similar)
+;		Created:	17th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;								Assemble group 2 instruction
+;
+; ************************************************************************************************
+
+AXGroup2:
+		jsr 	AXIdentifyAddressMode 		; get the address mode
+		bcs 	_AXG2Exit 		 			; syntax error.
+
+		jsr 	AXGroup2Assemble 			; assemble group2
+		bcc 	_AXG2Exit 					; it worked.
+		jsr 	AXPromoteMode 				; promote mode.
+		bcs 	_AXG2Exit 					; failed to promote.
+		jsr 	AXGroup2Assemble 			; try it with absolute mode.
+
+_AXG2Exit:
+		rts
+
+; ************************************************************************************************
+;
+;		Try to assemble with current mode. If ZP check range. CS if failed, CC if succeeded.
+;								(should return error on STA #)
+;
+;		Also test against the Fixup table which contains all the oddities.
+;
+; ************************************************************************************************
+
+AXGroup2Assemble:
+		lda 	AXAddrMode 					; get the address mode
+		and 	#$1F 						; if >= 8 will be in the oddballs table
+		cmp 	#8
+		bcs 	_AX2CheckFixupList
+		tax
+		lda 	AXSelector					; bit pattern showing what is supported, what isn't.
+_AXG2CheckSelector: 						; shift the mode enabled bit into the carry
+		asl 	a
+		dex
+		bpl 	_AXG2CheckSelector
+		bcc 	_AX2CheckFixupList 			; not supported.
+		;
+		lda 	AXAddrMode 					; if it is not zero page, then it's okay.
+		bpl 	_AX2IsOkay
+		lda 	AXLeft+1 					; okay if zero page, and < 256
+		bne 	_AX2Fail
+_AX2IsOkay:
+		lda 	AXAddrMode 					; mode x 4
+		and 	#$1F
+		asl 	a
+		asl 	a
+		adc 	AXBaseOpcode
+		jsr 	AXWriteByte 				; write out the opcode.
+		jsr 	AXWriteOperand 				; write the operand appropriately,
+		clc
+		rts
+		;
+		;		Didn't work. Let's try this mode and base opcode against ehf dix up list.
+		;
+_AX2CheckFixupList:
+		lda 	AXAddrMode 					; fail if zero page address mode and non-zp operand.
+		bpl 	_AX2CheckFixup
+		lda 	AXLeft+1
+		bne 	_AX2Fail
+_AX2CheckFixup:
+		ldx 	#0
+_AX2FixupLoop:
+		lda 	AXGroup2OpcodeFixupTable,x 	; base opcode
+		beq 	_AX2Fail
+		cmp 	AXBaseOpcode 				; if opcodes dont match go to next.
+		bne 	_AX2Next
+		lda 	AXGroup2OpcodeFixupTable+1,x; address mode
+		cmp 	AXAddrMode
+		beq 	_AX2Found 					; found a match
+_AX2Next:
+		inx 								; next table entry
+		inx
+		inx
+		bra 	_AX2FixupLoop
+		;
+_AX2Found:
+		lda 	AXGroup2OpcodeFixupTable+2,x ; get actual opcode
+		jsr 	AXWriteByte
+		jsr 	AXWriteOperand 				; write the operand appropriately,
+		clc
+		rts
+
+_AX2Fail:
+		lda 	#AXERRMode 					; bad mode error.
+		sec
 		rts
 
 		.send as16code
@@ -949,7 +1075,7 @@ AXGroup3:
 		;
 		lda 	AXPass 						; pass 1, don't care.
 		cmp 	#1
-		beq 	_AXG3Exit
+		beq 	_AXOutputOffset
 
 		sec  								; calculate relative branch
 		lda 	AXLeft
@@ -1106,17 +1232,21 @@ AXPAssembleOpcode:
 		jsr 	AXIGet
 		plx
 		;
-		cmp 	#1
+		cmp 	#1 							; and dispatch.
 		beq 	_AXPGo1
+		cmp 	#2
+		beq 	_AXPGo2
 		cmp 	#3
 		beq 	_AXPGo3
-		cmp 	#4 							; and dispatch.
+		cmp 	#4
 		beq 	_AXPGo4
-		.byte 	$DB
+		.byte 	$DB 					 	; this should not happen !
 
 
 _AXPGo1:
 		jmp 	AXGroup1
+_AXPGo2:
+		jmp 	AXGroup2
 _AXPGo3:
 		jmp 	AXGroup3
 _AXPGo4:
@@ -2868,14 +2998,14 @@ AXSystemDictionary:
 AXGroup2OpcodeFixupTable:
 	.byte	$60,7,			$9e ; STZ ABS,X
 	.byte	$60,3,			$9c ; STZ ABS
-	.byte	$20,0,			$89 ; BIT #
+	.byte	$20,128,			$89 ; BIT #
 	.byte	$c2,2,			$3a ; DEC ACC
 	.byte	$e2,2,			$1a ; INC ACC
-	.byte	$82,9,			$96 ; STX ZP,Y
-	.byte	$a2,9,			$b6 ; LDX ZP,Y
+	.byte	$82,137,			$96 ; STX ZP,Y
+	.byte	$a2,137,			$b6 ; LDX ZP,Y
 	.byte	$a2,6,			$be ; LDX ABS,Y
-	.byte	$40,17,			$7c ; JMP (ABS,X)
-	.byte	$40,16,			$6c ; JMP (ABS)
+	.byte	$40,11,			$7c ; JMP (ABS,X)
+	.byte	$40,10,			$6c ; JMP (ABS)
 	.byte	0
 ;
 ;	This file is automatically generated.
@@ -3607,12 +3737,13 @@ AXWriteByte:
 		phx
 		phy
 
+		pha 								; add to listing
+		jsr 	AXAddListingByte
+		pla
+
 		ldx 	AXPass 						; output pass#2 only.
 		cpx 	#2
 		bne 	_AXWBBumpPC
-
-		pha 								; add to listing
-		jsr 	AXAddListingByte
 
 		ldx 	AXProgramCounter 			; copy location
 		stx 	AXTemp0
@@ -3620,7 +3751,8 @@ AXWriteByte:
 		stx 	AXTemp0+1
 		ldx 	AXProgramCounter+2
 		stx 	AXTemp0+2
-		ply									; char to Y.
+
+		tay									; char to Y.
 		ldx 	#AXTemp0 					; ($00,X) is the address
 		lda 	#4 							; API function 4
 		jsr 	AXCallAPI

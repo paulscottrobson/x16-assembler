@@ -23,12 +23,13 @@ AXWriteByte:
 		phx
 		phy
 
+		pha 								; add to listing
+		jsr 	AXAddListingByte
+		pla
+
 		ldx 	AXPass 						; output pass#2 only.
 		cpx 	#2
 		bne 	_AXWBBumpPC
-
-		pha 								; add to listing
-		jsr 	AXAddListingByte
 
 		ldx 	AXProgramCounter 			; copy location
 		stx 	AXTemp0
@@ -36,7 +37,8 @@ AXWriteByte:
 		stx 	AXTemp0+1
 		ldx 	AXProgramCounter+2
 		stx 	AXTemp0+2
-		ply									; char to Y.
+
+		tay									; char to Y.
 		ldx 	#AXTemp0 					; ($00,X) is the address
 		lda 	#4 							; API function 4
 		jsr 	AXCallAPI

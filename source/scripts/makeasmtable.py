@@ -66,10 +66,10 @@ class AssemblerDictionary(object):
 				assert m is not None,"Bad entry '"+s+"'"
 				groupID = int(m.group(3))
 				if groupID == 5:
-					m2 = re.match("\\s*(\\d+)\\s*(.*)",m.group(4))
+					m2 = re.match("\\s*(\\*?)(\\d+)\\s*(.*)",m.group(4))
 					assert m2 is not None,"Bad table "+m.group(4)
 					arec = self.objects[m.group(2)]
-					newFix = [m.group(2),arec.opcode,int(m.group(1),16),int(m2.group(1),16),m2.group(2).strip()]
+					newFix = [m.group(2),arec.opcode,int(m.group(1),16),int(m2.group(2),10)+(128 if m2.group(1)=='*' else 0),m2.group(3).strip()]
 					self.fixes.insert(0,newFix)
 				else:
 					if groupID == 2:

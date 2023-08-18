@@ -1,8 +1,5 @@
 TODO:
-	
-	Assemble line with predefined state, capitalised, no comments etc (Output system)
-
-		Group 2 opcodes and specials.
+	Open/Close/Initial parameters from API
 
 	Error system
 	Pseudo operations
@@ -12,3 +9,4 @@ TODO:
 	Check collision of stack / identifiers.	
 	Pass 2 - throw out undefined values.
 	Pass 1 - assignments must be defined, values not.
+

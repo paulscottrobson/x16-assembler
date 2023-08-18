@@ -27,7 +27,7 @@ AXGroup3:
 		;
 		lda 	AXPass 						; pass 1, don't care.
 		cmp 	#1
-		beq 	_AXG3Exit
+		beq 	_AXOutputOffset
 
 		sec  								; calculate relative branch
 		lda 	AXLeft

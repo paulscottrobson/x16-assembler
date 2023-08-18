@@ -33,17 +33,21 @@ AXPAssembleOpcode:
 		jsr 	AXIGet
 		plx
 		;
-		cmp 	#1
+		cmp 	#1 							; and dispatch.
 		beq 	_AXPGo1
+		cmp 	#2
+		beq 	_AXPGo2
 		cmp 	#3
 		beq 	_AXPGo3
-		cmp 	#4 							; and dispatch.
+		cmp 	#4 							
 		beq 	_AXPGo4
-		.byte 	$DB
+		.byte 	$DB 					 	; this should not happen !
 
 		
 _AXPGo1:
 		jmp 	AXGroup1
+_AXPGo2:
+		jmp 	AXGroup2
 _AXPGo3:
 		jmp 	AXGroup3
 _AXPGo4:

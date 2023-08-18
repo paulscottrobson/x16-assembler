@@ -86,7 +86,7 @@ _AXGAddOpcode:
 		cmp 	#$89 						; cannot sta #
 		beq 	_AXG1Fail
 		jsr 	AXWriteByte 				; write out the opcode.
-		jsr 	AXWriteOperand 				; write the operand appropriatel,
+		jsr 	AXWriteOperand 				; write the operand appropriately
 		clc
 		rts
 
@@ -102,6 +102,10 @@ _AXG1Fail:
 ; ************************************************************************************************
 
 AXWriteOperand:
+		lda 	AXAddrMode 					; if Accumulator mode exit
+		cmp 	#AXMAccumulator
+		beq 	_AXWIs2Byte
+				
 		lda 	AXLeft 						; output LSB
 		jsr 	AXWriteByte
 		lda 	AXAddrMode

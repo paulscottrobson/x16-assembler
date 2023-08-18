@@ -25,7 +25,7 @@ AXMRequireZero = $80
 
 AXMImmediate = 			$00 + AXMRequireZero 	; lda #$2A
 AXMZero = 				$01 + AXMRequireZero 	; lda $2A
-AXMAccumulator =		$02 + AXMRequireZero 	; inc OR inc A
+AXMAccumulator =		$02  					; inc OR inc A
 AXMAbsolute = 			$03 					; lda $2ABC
 AXMIndirectY =			$04 + AXMRequireZero 	; lda ($2A),y
 AXMZeroX =				$05 + AXMRequireZero 	; lda $2A,x

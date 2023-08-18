@@ -4,12 +4,12 @@
 AXGroup2OpcodeFixupTable:
 	.byte	$60,7,			$9e ; STZ ABS,X
 	.byte	$60,3,			$9c ; STZ ABS
-	.byte	$20,0,			$89 ; BIT #
+	.byte	$20,128,			$89 ; BIT #
 	.byte	$c2,2,			$3a ; DEC ACC
 	.byte	$e2,2,			$1a ; INC ACC
-	.byte	$82,9,			$96 ; STX ZP,Y
-	.byte	$a2,9,			$b6 ; LDX ZP,Y
+	.byte	$82,137,			$96 ; STX ZP,Y
+	.byte	$a2,137,			$b6 ; LDX ZP,Y
 	.byte	$a2,6,			$be ; LDX ABS,Y
-	.byte	$40,17,			$7c ; JMP (ABS,X)
-	.byte	$40,16,			$6c ; JMP (ABS)
+	.byte	$40,11,			$7c ; JMP (ABS,X)
+	.byte	$40,10,			$6c ; JMP (ABS)
 	.byte	0
