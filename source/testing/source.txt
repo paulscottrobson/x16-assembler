@@ -1,6 +1,14 @@
 * = $921A
 * = $9000
+zreg = $42	
 ;
 ;
-bra *+2
-lda $abcd,y
+start:
+	lda (zreg)
+	lda (zreg),y
+	lda (zreg,x)
+	lda zreg,x
+	lda #zreg
+	lda zreg
+	bra start
+

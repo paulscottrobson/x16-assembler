@@ -2,7 +2,7 @@
 ; ************************************************************************************************
 ;
 ;		Name:		addressmode.asm
-;		Purpose:	Identify the address mode.
+;		Purpose:	Identify the address mode/operand for the post opcode part of the instruction.
 ;		Created:	17th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -21,7 +21,7 @@
 ; ************************************************************************************************
 
 AXIdentifyAddressMode:
-		.byte 	$DB
+
 		; ----------------------------------------------------------------------------------------
 		;
 		;							First check for ASL/ASL A
@@ -39,6 +39,7 @@ AXIdentifyAddressMode:
 		bcs 	_AXCheckImmediate
 _AXIsAccumulator:
 		lda 	#AXMAccumulator		
+		sta 	AXAddrMode
 _AXIsOkay:		
 		clc
 _AXExit:		
@@ -86,6 +87,7 @@ _AXSyntax:
 _AXIsDirect:
 		lda 	#AXMZero 
 _AXExitOkay:		
+		sta 	AXAddrMode
 		clc
 		rts
 
@@ -101,6 +103,7 @@ _AXIsImmediate:
 		bcs 	_AXExit 					; bad operand
 
 		lda 	#AXMImmediate 				; return immediate
+		sta 	AXAddrMode
 		clc
 		rts
 
@@ -136,11 +139,13 @@ _AXIsIndirect:
 		bne 	_AXSyntax
 		;
 		lda 	#AXMIndirectY 				; indirect Y
+		sta 	AXAddrMode
 		clc
 		rts
 
 _AXIndirect: 								; indirect
 		lda 	#AXMIndirect
+		sta 	AXAddrMode
 		clc
 		rts		
 
@@ -163,9 +168,10 @@ _AXIndirectX:
 		bne 	_AXSyntax
 
 		lda 	#AXMIndirectX 				; it's indirect X
+		sta 	AXAddrMode
 		clc
 		rts
-		
+
 		.send as16code
 		
 		.section as16storage

@@ -3,8 +3,6 @@ TODO:
 	Assemble line with predefined state, capitalised, no comments etc (Output system)
 
 		Group 1 opcodes (analyse default type)
-			- work out address mode (lowest type)
-			- assemble without upfix.
 			- assemble with upfix
 			- check STA # fails.
 

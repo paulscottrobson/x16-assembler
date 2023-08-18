@@ -311,7 +311,7 @@ AXAssemblerPass:
 ; ************************************************************************************************
 ;
 ;		Name:		addressmode.asm
-;		Purpose:	Identify the address mode.
+;		Purpose:	Identify the address mode/operand for the post opcode part of the instruction.
 ;		Created:	17th August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -330,7 +330,7 @@ AXAssemblerPass:
 ; ************************************************************************************************
 
 AXIdentifyAddressMode:
-		.byte 	$DB
+
 		; ----------------------------------------------------------------------------------------
 		;
 		;							First check for ASL/ASL A
@@ -348,6 +348,7 @@ AXIdentifyAddressMode:
 		bcs 	_AXCheckImmediate
 _AXIsAccumulator:
 		lda 	#AXMAccumulator
+		sta 	AXAddrMode
 _AXIsOkay:
 		clc
 _AXExit:
@@ -395,6 +396,7 @@ _AXSyntax:
 _AXIsDirect:
 		lda 	#AXMZero
 _AXExitOkay:
+		sta 	AXAddrMode
 		clc
 		rts
 
@@ -410,6 +412,7 @@ _AXIsImmediate:
 		bcs 	_AXExit 					; bad operand
 
 		lda 	#AXMImmediate 				; return immediate
+		sta 	AXAddrMode
 		clc
 		rts
 
@@ -445,11 +448,13 @@ _AXIsIndirect:
 		bne 	_AXSyntax
 		;
 		lda 	#AXMIndirectY 				; indirect Y
+		sta 	AXAddrMode
 		clc
 		rts
 
 _AXIndirect: 								; indirect
 		lda 	#AXMIndirect
+		sta 	AXAddrMode
 		clc
 		rts
 
@@ -472,6 +477,7 @@ _AXIndirectX:
 		bne 	_AXSyntax
 
 		lda 	#AXMIndirectX 				; it's indirect X
+		sta 	AXAddrMode
 		clc
 		rts
 
@@ -828,7 +834,71 @@ _AXG1Exit:
 ; ************************************************************************************************
 
 AXGroup1Assemble:
+		lda 	AXAddrMode 					; get address mode
+		cmp	 	#AXMIndirectX 				; we support indirect X
+		beq 	_AXG1ModeOk
+		cmp 	#AXMIndirect 				; and indirect
+		beq 	_AXG1ModeOk
+		;
+		cmp 	#AXMAccumulator 			; A is not supported.
+		beq 	_AXG1Fail 					; other than that, just 0-7.
+		and 	#$1F
+		cmp 	#8
+		bcs 	_AXG1Fail
+		;
+_AXG1ModeOk:
+		lda 	AXAddrMode 					; does the mode support 3 byte.
+		bpl 	_AXGOperandOk 				; if so, we can't reject for being ZP.
+
+		lda 	AXLeft+1 					; fail if not a zero page instruction.
+		bne 	_AXG1Fail
+_AXGOperandOk:
+
+		lda 	AXAddrMode 					; map (nn,x) onto 0 and # onto 2 because
+		tax 								; group 1 is structured slightly differently.
+		cpx 	#AXMImmediate
+		bne 	_AXGNotImmediate
+		lda 	#2
+_AXGNotImmediate:
+		cpx 	#AXMIndirectX
+		bne 	_AXGNotIX
+		lda 	#0
+_AXGNotIX:
+		cpx 	#AXMIndirect
+		bne 	_AXGNotIndirect
+		clc 								; indirect, add $11 to opcode
+		lda 	#$11
+		bra 	_AXGAddOpcode
+
+_AXGNotIndirect:
+		and 	#$1F 						; now a 0-7 address mode, x 4 and add the base opcode
+		asl 	a
+		asl 	a
+_AXGAddOpcode:
+		adc 	AXBaseOpcode
+		jsr 	AXWriteByte 				; write out the opcode.
+		jsr 	AXWriteOperand 				; write the operand appropriatel,
+		clc
+		rts
+
+_AXG1Fail:
 		sec
+		rts
+
+; ************************************************************************************************
+;
+;						Write operand in AXLeft according to AXAddrMode
+;
+; ************************************************************************************************
+
+AXWriteOperand:
+		lda 	AXLeft 						; output LSB
+		jsr 	AXWriteByte
+		lda 	AXAddrMode
+		bmi 	_AXWIs2Byte
+		lda 	AXLeft+1 					; output MSB if wanted.
+		jsr 	AXWriteByte
+_AXWIs2Byte:
 		rts
 
 		.send as16code
