@@ -3,8 +3,12 @@ Assembler API
 
 Cmd: (in A)	
 
+	0 		Retrieve lower and upper high bytes of memory area to use in A Y. must be on page boundaries.
+			Can be paged, as memory is locked/unlocked on access to the stack or the user identifier store.
+
 	1		Open character source YX where YX is an ASCIIZ string (external source) or NULL (default source)
-	 			Returns CC (okay) CS (failed) and a reference handle in A.
+ 			Returns CC (okay) CS (failed) and a reference handle in A.
+ 			Note files will be 'stacked', so if a file is opened it will be closed before any other file is accessed.
 
 	2	 	Close character source, reference handle in X.
 
@@ -12,6 +16,14 @@ Cmd: (in A)
 			After EOF it should continue to return CS on subsequent calls.
 
 	4 		Write value Y to ($00,X) -> address $00+x constains address.low, address.high and page in 3 consecutive
-			locations. 
+			locations.  Pass 2 only.
 			
-	6 		Write to listing output A
+	5 		Report error.
+
+	6 		Write to listing output A, pass 2 only. Characters are U/C. Do what you want with this, including simply
+			ignoring it.
+
+	7 		Lock the storage area e.g. page bank in or whatever. Memory used for storage must be accessible at this point.
+
+	8 		Unlock the storage area
+

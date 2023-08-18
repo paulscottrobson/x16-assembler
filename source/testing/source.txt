@@ -1,5 +1,6 @@
 * = $9000
 sbcrt:
+	lda sbcrt
 	sbc $abcd
 	zreg = $42	
 	sbc $abcd,x
@@ -10,8 +11,11 @@ sbcrt:
 	sbc zreg,x
 	sbc #zreg
 	sbc zreg
+	ldx sbcrt
 	bra sbcrt
-
+	bra h1 				; forward
+h1:
+	bra  h1
 
 	asl 	
 	asl a

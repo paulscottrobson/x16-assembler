@@ -19,9 +19,17 @@
 ; ************************************************************************************************
 
 AXIOpen:
+		pha 	
+		lda 	#7
+		jsr 	AXCallAPI
+		pla
 		rts
 
 AXIClose:
+		pha 	
+		lda 	#8
+		jsr 	AXCallAPI
+		pla
 		rts
 
 		.send as16code

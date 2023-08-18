@@ -19,16 +19,22 @@
 ; ************************************************************************************************
 
 AXIReset:
-		jsr 	AXIOpen 					; access id store
-		lda 	#ASMDATA >> 8 				; save actual pages of storage
+		lda 	#0 							; get the start & end
+		jsr 	AXCallAPI 
 		sta 	AXIBase
-		lda 	#ASMDATAEND >> 8
-		sta 	AXIEnd
+		sty 	AXIEnd
 		;
-		sta 	AXIStack+1 					; reset stack
+		sty 	AXIStack+1 					; reset stack
 		stz 	AXIStack
 		;
-		stz 	ASMDATA 					; make the first link zero, erase identifiers.
+		jsr 	AXIOpen 					; access id store
+		;
+		lda 	AXIBase 					; erase the user definitions.
+		sta 	AXTemp0+1
+		stz 	AXTemp0
+		lda 	#0
+		sta 	(AXTemp0)
+		;
 		jsr 	AXIClose 					; release ID store.
 		rts
 

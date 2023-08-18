@@ -24,22 +24,10 @@ STORAGE = \$$400
 
 MEMORYMAP = -D ZEROPAGE=$(ZEROPAGE) -D STORAGE=$(STORAGE)
 
-# *******************************************************************************************
-#							  Identifier store and stack space
-# *******************************************************************************************
-
-ASMDATA = \$$9800
-ASMDATAEND = \$$9C00
-ASMDATACTL = 0
-
-ASMDATADESC = -D ASMDATA=$(ASMDATA) -D ASMDATAEND=$(ASMDATAEND) -D ASMDATACTL=$(ASMDATACTL)
-
-# *******************************************************************************************
-
 BINDIR = $(ROOTDIR)bin$(S)
 BINFILE = build$(S)asm.prg
 EMULATOR = $(BINDIR)x16emu$(APPSTEM) -prg $(BINFILE),1000 -run -debug -scale 2 -dump R
-ASSEMBLER = 64tass -c -C $(MEMORYMAP) $(ASMDATADESC) -Wall main.asm -L build$(S)asm.lst -o $(BINFILE) 
+ASSEMBLER = 64tass -c -C $(MEMORYMAP) -Wall main.asm -L build$(S)asm.lst -o $(BINFILE) 
 
 all: assemble
 

@@ -29,18 +29,13 @@ AXGroup3:
 		cmp 	#1
 		beq 	_AXOutputOffset
 
-		sec  								; calculate relative branch
-		lda 	AXLeft
-		sbc 	AXProgramCounter
+		clc  								; calculate relative branch
+		lda 	AXLeft 						; we have one too many because of the opcode
+		sbc 	AXProgramCounter 			; so we clc here to borrow one.
 		tax
 		lda 	AXLeft+1
 		sbc 	AXProgramCounter+1
 		tay
-
-		inx 								; one short as we haven't assembled the relative branch yet.
-		bne 	_AXNoCarry
-		iny
-_AXNoCarry:
 		
 		cpx 	#0 							; for 00-7F Y should be 0, for 80-FF it should be $FF
 		bpl 	_AXNotBack 					; if we bump Y if X is -ve, then if zero it's a fail.

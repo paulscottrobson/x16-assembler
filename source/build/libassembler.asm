@@ -135,6 +135,8 @@ AXLastCharacter:							; last character read.
 
 AXLineNumber: 								; line number.
 		.fill 	2
+AXLineNumberDecimal: 						; line number in decimal.
+		.fill 	2
 
 AXProgramCounterStart: 						; PCTR at instruction start.
 		.fill 	3
@@ -730,7 +732,9 @@ AXAssembleFile:
 		stz 	AXLastCharacter 			; no last character
 		lda 	#1 							; set line number to 1
 		sta 	AXLineNumber
+		sta 	AXLineNumberDecimal
 		stz 	AXLineNumber+1
+		stz 	AXLineNumberDecimal+1
 		;
 		;		The main assembler loop.
 		;
@@ -750,7 +754,17 @@ _AXMainLoop:
 
 		jsr 	AXListLine 					; list the line.
 
-		inc 	AXLineNumber 				; bump line number
+		sed 								; increment the BCD line number.
+		clc
+		lda 	AXLineNumberDecimal
+		adc 	#1
+		sta 	AXLineNumberDecimal
+		lda 	AXLineNumberDecimal+1
+		adc 	#1
+		sta 	AXLineNumberDecimal+1
+		cld
+
+		inc 	AXLineNumber 				; bump line number (integer)
 		bne 	_AXMainLoop
 		inc 	AXLineNumber+1
 		bra 	_AXMainLoop
@@ -1077,18 +1091,13 @@ AXGroup3:
 		cmp 	#1
 		beq 	_AXOutputOffset
 
-		sec  								; calculate relative branch
-		lda 	AXLeft
-		sbc 	AXProgramCounter
+		clc  								; calculate relative branch
+		lda 	AXLeft 						; we have one too many because of the opcode
+		sbc 	AXProgramCounter 			; so we clc here to borrow one.
 		tax
 		lda 	AXLeft+1
 		sbc 	AXProgramCounter+1
 		tay
-
-		inx 								; one short as we haven't assembled the relative branch yet.
-		bne 	_AXNoCarry
-		iny
-_AXNoCarry:
 
 		cpx 	#0 							; for 00-7F Y should be 0, for 80-FF it should be $FF
 		bpl 	_AXNotBack 					; if we bump Y if X is -ve, then if zero it's a fail.
@@ -3095,9 +3104,17 @@ AXBinaryVectors:
 ; ************************************************************************************************
 
 AXIOpen:
+		pha
+		lda 	#7
+		jsr 	AXCallAPI
+		pla
 		rts
 
 AXIClose:
+		pha
+		lda 	#8
+		jsr 	AXCallAPI
+		pla
 		rts
 
 		.send as16code
@@ -3370,62 +3387,6 @@ _AXIPutError:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		initialise.asm
-;		Purpose:	Initialise the identifier store
-;		Created:	11th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;							Initialise the identifier store and stack
-;
-; ************************************************************************************************
-
-AXIReset:
-		jsr 	AXIOpen 					; access id store
-		lda 	#ASMDATA >> 8 				; save actual pages of storage
-		sta 	AXIBase
-		lda 	#ASMDATAEND >> 8
-		sta 	AXIEnd
-		;
-		sta 	AXIStack+1 					; reset stack
-		stz 	AXIStack
-		;
-		stz 	ASMDATA 					; make the first link zero, erase identifiers.
-		jsr 	AXIClose 					; release ID store.
-		rts
-
-		.send as16code
-
-		.section as16storage
-AXIBase:									; MSB of identifier base area
-		.fill 	1
-AXIEnd: 									; MSB of identifier end area
-		.fill 	1
-AXIStack: 									; Frame stack pointe.
-		.fill 	2
-		.send as16storage
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
 ;		Name:		utility.asm
 ;		Purpose:	Identifier utility functions
 ;		Created:	11th August 2023
@@ -3493,6 +3454,68 @@ _AXICHLoop:
 AXIHash:
 		.fill 	1
 		.endsection
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		initialise.asm
+;		Purpose:	Initialise the identifier store
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;							Initialise the identifier store and stack
+;
+; ************************************************************************************************
+
+AXIReset:
+		lda 	#0 							; get the start & end
+		jsr 	AXCallAPI
+		sta 	AXIBase
+		sty 	AXIEnd
+		;
+		sty 	AXIStack+1 					; reset stack
+		stz 	AXIStack
+		;
+		jsr 	AXIOpen 					; access id store
+		;
+		lda 	AXIBase 					; erase the user definitions.
+		sta 	AXTemp0+1
+		stz 	AXTemp0
+		lda 	#0
+		sta 	(AXTemp0)
+		;
+		jsr 	AXIClose 					; release ID store.
+		rts
+
+		.send as16code
+
+		.section as16storage
+AXIBase:									; MSB of identifier base area
+		.fill 	1
+AXIEnd: 									; MSB of identifier end area
+		.fill 	1
+AXIStack: 									; Frame stack pointe.
+		.fill 	2
+		.send as16storage
 
 ; ************************************************************************************************
 ;
@@ -3609,7 +3632,7 @@ AXListLine:
 		jsr 	AXLOutHex
 		lda 	AXProgramCounterStart+0
 		jsr 	AXLOutHex
-
+		jsr 	AXLSpace
 		ldx 	#0 							; output listing bytes
 _AXLHex:
 		jsr 	AXLSpace 					; space

@@ -31,7 +31,7 @@ AXListLine:
 		jsr 	AXLOutHex
 		lda 	AXProgramCounterStart+0 	
 		jsr 	AXLOutHex
-
+		jsr 	AXLSpace
 		ldx 	#0 							; output listing bytes
 _AXLHex:
 		jsr 	AXLSpace 					; space

@@ -27,8 +27,10 @@ AXAssembleFile:
 		;
 		stz 	AXLastCharacter 			; no last character
 		lda 	#1 							; set line number to 1
-		sta 	AXLineNumber 		
+		sta 	AXLineNumber 	
+		sta 	AXLineNumberDecimal	
 		stz 	AXLineNumber+1 
+		stz 	AXLineNumberDecimal+1
 		;
 		;		The main assembler loop.
 		;
@@ -48,7 +50,17 @@ _AXMainLoop:
 
 		jsr 	AXListLine 					; list the line.
 		
-		inc 	AXLineNumber 				; bump line number
+		sed 								; increment the BCD line number.
+		clc
+		lda 	AXLineNumberDecimal
+		adc 	#1
+		sta 	AXLineNumberDecimal
+		lda 	AXLineNumberDecimal+1
+		adc 	#1
+		sta 	AXLineNumberDecimal+1
+		cld
+
+		inc 	AXLineNumber 				; bump line number (integer)
 		bne 	_AXMainLoop
 		inc 	AXLineNumber+1
 		bra 	_AXMainLoop

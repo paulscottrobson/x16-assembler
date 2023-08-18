@@ -13,6 +13,8 @@
 		.section as16code
 
 TestAPIHandler:
+		cmp 	#0
+		beq 	_TAMemInfo
 		cmp 	#1
 		beq 	_TAOpen
 		cmp 	#3
@@ -22,6 +24,14 @@ TestAPIHandler:
 		cmp 	#6
 		beq 	_TAList
 		rts
+		;
+		;		Memory information
+		;
+_TAMemInfo:
+		lda 	#$94
+		ldy 	#$9F
+		clc
+		rts		
 		;
 		;		Open file
 		;
@@ -55,6 +65,9 @@ _TAList:
 		;		Write a byte 
 		;
 _TAWrite:
+		tya
+		sta 	($00,x)
+		rts
 		phy
 		lda 	#'@'
 		jsr 	AXListOut

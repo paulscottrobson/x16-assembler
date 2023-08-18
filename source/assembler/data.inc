@@ -80,6 +80,8 @@ AXLastCharacter:							; last character read.
 
 AXLineNumber: 								; line number.
 		.fill 	2				
+AXLineNumberDecimal: 						; line number in decimal.
+		.fill 	2
 
 AXProgramCounterStart: 						; PCTR at instruction start.
 		.fill 	3
