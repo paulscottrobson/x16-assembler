@@ -19,7 +19,6 @@
 ; ************************************************************************************************
 
 AXGroup1:
-		.byte 	$DB
 		jsr 	AXIdentifyAddressMode 		; get the address mode
 		bcs 	_AXG1Exit 		 			; syntax error.
 		jsr 	AXGroup1Assemble 			; assemble group 1 with ZP/# mods.

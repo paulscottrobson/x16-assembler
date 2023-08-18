@@ -36,7 +36,7 @@ _AXDExit:
 ;			Evaluate expression at Buffer,X. Undefined identifiers => error on pass2 
 ;
 ;		  Return CS on error, A is error code. CC if successful. Result goes into AXLeft
-;							On error, the default value is set to $FFFF
+;							On error, the default value is set to $EEEE
 ;
 ; ************************************************************************************************
 
@@ -51,7 +51,7 @@ AXPass2Expression:
 		clc
 		beq 	_AXDExit
 
-		lda 	#$FF 						; set the default value to $FFFF
+		lda 	#$EE 						; set the default value to $EEEE
 		sta 	AXLeft
 		sta 	AXLeft+1
 

@@ -248,49 +248,6 @@ AXID_Identifier = 	7
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		addressmode.asm
-;		Purpose:	Identify the address mode.
-;		Created:	17th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;					Work out the address mode from X , store in AXAddrMode
-;						   CC if okay, CS if error with error in A.
-;						     Expressions evaluated as per pass 2.
-;
-; ************************************************************************************************
-
-AXIdentifyAddressMode:
-		.byte 	$DB
-
-		.send as16code
-
-		.section as16storage
-AXAddrMode:
-		.fill 	1
-		.send as16storage
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
 ;		Name:		00main.asm
 ;		Purpose:	Entry point.
 ;		Created:	12th August 2023
@@ -338,6 +295,192 @@ AXAssemblerPass:
 
 		.send as16code
 
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		addressmode.asm
+;		Purpose:	Identify the address mode.
+;		Created:	17th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;					Work out the address mode from X , store in AXAddrMode
+;						   CC if okay, CS if error with error in A.
+;						     Expressions evaluated as per pass 2.
+;
+; ************************************************************************************************
+
+AXIdentifyAddressMode:
+		.byte 	$DB
+		; ----------------------------------------------------------------------------------------
+		;
+		;							First check for ASL/ASL A
+		;
+		; ----------------------------------------------------------------------------------------
+
+		jsr 	AXGet 						; has two formats, ASL and ASL A
+		cmp 	#0
+		beq 	_AXIsAccumulator
+		cmp 	#'A'
+		bne 	_AXCheckImmediate
+
+		lda 	AXBuffer+1,x 				; is the A followed by space/eol
+		cmp 	#' '+1
+		bcs 	_AXCheckImmediate
+_AXIsAccumulator:
+		lda 	#AXMAccumulator
+_AXIsOkay:
+		clc
+_AXExit:
+		rts
+
+		; ----------------------------------------------------------------------------------------
+		;
+		;							Check for Immediate and Indirect
+		;
+		; ----------------------------------------------------------------------------------------
+
+_AXCheckImmediate:
+		cmp 	#'#' 						; immediate
+		beq 	_AXIsImmediate
+		cmp	 	#'('						; indirect
+		beq 	_AXIsIndirect
+		;
+		; ----------------------------------------------------------------------------------------
+		;
+		;								nnnn nnnn,x or nnnn,y
+		;
+		; ----------------------------------------------------------------------------------------
+
+		jsr 	AXPass2Expression 			; evaluate base address
+		bcs 	_AXExit 					; error in that.
+		jsr 	AXGet 						; what follows
+		beq 	_AXIsDirect 				; nothing, nnnn
+		cmp 	#',' 						; if not needs to be ,X ,Y
+		bne 	_AXSyntax
+		inx
+		jsr 	AXGet 						; what follows should be X or Y
+		tay
+		lda 	#AXMZeroX 					; check for ,X ,Y
+		cpy 	#"X"
+		beq 	_AXExitOkay
+		lda 	#AXMZeroY
+		cpy 	#"Y"
+		beq 	_AXExitOkay
+		;
+_AXSyntax:
+		lda 	#AXERRSyntax
+		sec
+		rts
+
+_AXIsDirect:
+		lda 	#AXMZero
+_AXExitOkay:
+		clc
+		rts
+
+		; ----------------------------------------------------------------------------------------
+		;
+		;											Immediate
+		;
+		; ----------------------------------------------------------------------------------------
+
+_AXIsImmediate:
+		inx 								; consume the #
+		jsr 	AXPass2Expression 			; get operand
+		bcs 	_AXExit 					; bad operand
+
+		lda 	#AXMImmediate 				; return immediate
+		clc
+		rts
+
+		; ----------------------------------------------------------------------------------------
+		;
+		; 							indirect (nnnn) (nnnn,x) or (nnnn),y
+		;
+		; ----------------------------------------------------------------------------------------
+
+_AXIsIndirect:
+		inx
+		jsr 	AXPass2Expression 			; the address to indirect through
+		jsr 	AXGet 						; what follows.
+		cmp 	#"," 						; if , then check for indirect X
+		beq 	_AXIndirectX
+		cmp 	#")" 						; otherwise must be closing bracket
+		bne 	_AXSyntax
+		inx 								; consume )
+
+		; ----------------------------------------------------------------------------------------
+		;
+		;						indirect (nnnn) or indirect y (nnnn),y
+		;
+		; ----------------------------------------------------------------------------------------
+
+		jsr 	AXGet 						; if nothing follows it is (xxx)
+		beq 	_AXIndirect
+		cmp 	#","						; otherwise must be ,Y
+		bne 	_AXSyntax
+		inx
+		jsr 	AXGet
+		cmp 	#"Y"
+		bne 	_AXSyntax
+		;
+		lda 	#AXMIndirectY 				; indirect Y
+		clc
+		rts
+
+_AXIndirect: 								; indirect
+		lda 	#AXMIndirect
+		clc
+		rts
+
+		; ----------------------------------------------------------------------------------------
+		;
+		;								Indirect X (nnnn,x)
+		;
+		; ----------------------------------------------------------------------------------------
+
+_AXIndirectX:
+		inx 								; consume comma
+
+		jsr 	AXGet 						; check x
+		cmp 	#"X"
+		bne 	_AXSyntax
+
+		inx
+		jsr 	AXGet 						; check )
+		cmp 	#")"
+		bne 	_AXSyntax
+
+		lda 	#AXMIndirectX 				; it's indirect X
+		clc
+		rts
+
+		.send as16code
+
+		.section as16storage
+AXAddrMode:
+		.fill 	1
+		.send as16storage
 
 ; ************************************************************************************************
 ;
@@ -665,7 +808,6 @@ AXCallAPI:
 ; ************************************************************************************************
 
 AXGroup1:
-		.byte 	$DB
 		jsr 	AXIdentifyAddressMode 		; get the address mode
 		bcs 	_AXG1Exit 		 			; syntax error.
 		jsr 	AXGroup1Assemble 			; assemble group 1 with ZP/# mods.
@@ -1680,7 +1822,7 @@ _AXDExit:
 ;			Evaluate expression at Buffer,X. Undefined identifiers => error on pass2
 ;
 ;		  Return CS on error, A is error code. CC if successful. Result goes into AXLeft
-;							On error, the default value is set to $FFFF
+;							On error, the default value is set to $EEEE
 ;
 ; ************************************************************************************************
 
@@ -1695,7 +1837,7 @@ AXPass2Expression:
 		clc
 		beq 	_AXDExit
 
-		lda 	#$FF 						; set the default value to $FFFF
+		lda 	#$EE 						; set the default value to $EEEE
 		sta 	AXLeft
 		sta 	AXLeft+1
 
