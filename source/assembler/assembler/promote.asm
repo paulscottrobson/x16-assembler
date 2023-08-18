@@ -18,8 +18,24 @@
 ;
 ; ************************************************************************************************
 
+axpromote .macro
+		ldx 	#\2
+		cmp 	#\1
+		beq 	AXDoPromote
+		.endm
+
 AXPromoteMode:
+		lda 	AXAddrMode
+		.axpromote 	AXMZero,AXMAbsolute
+		.axpromote 	AXMZeroX,AXMAbsoluteX
+		.axpromote 	AXMZeroY,AXMAbsoluteY
+		.axpromote 	AXMIndirect,AXMAbsoluteIndirect
+		.axpromote 	AXMIndirectX,AXMAbsoluteIndirectX
 		sec
+		rts
+AXDoPromote:
+		stx 	AXAddrMode		
+		clc
 		rts
 
 		.send as16code

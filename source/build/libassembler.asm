@@ -190,6 +190,7 @@ AXERRRedefine = $04 						; value of an identifier has changed.
 AXERRNotFound = $05 						; source file not found.
 AXERRUndefined = $06 						; undefined identifier.
 AXERRRelative = $07 						; relative branch range.
+AXERRMode = $08 							; address mode not supported in 65C02
 
 		.send as16code
 
@@ -816,11 +817,13 @@ AXCallAPI:
 AXGroup1:
 		jsr 	AXIdentifyAddressMode 		; get the address mode
 		bcs 	_AXG1Exit 		 			; syntax error.
+
 		jsr 	AXGroup1Assemble 			; assemble group 1 with ZP/# mods.
 		bcc 	_AXG1Exit 					; it worked.
 		jsr 	AXPromoteMode 				; promote mode.
-		bcs 	_AXG1Exit 					; failed
+		bcs 	_AXG1Exit 					; failed to promote.
 		jsr 	AXGroup1Assemble 			; try it with absolute mode.
+
 _AXG1Exit:
 		rts
 
@@ -876,12 +879,15 @@ _AXGNotIndirect:
 		asl 	a
 _AXGAddOpcode:
 		adc 	AXBaseOpcode
+		cmp 	#$89 						; cannot sta #
+		beq 	_AXG1Fail
 		jsr 	AXWriteByte 				; write out the opcode.
 		jsr 	AXWriteOperand 				; write the operand appropriatel,
 		clc
 		rts
 
 _AXG1Fail:
+		lda 	#AXERRMode 					; bad mode error.
 		sec
 		rts
 
@@ -1125,6 +1131,59 @@ AXSelector:
 		.fill 	1
 		.send as16storage
 
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		promote.asm
+;		Purpose:	Promotes current address mode to absolute.
+;		Created:	17th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;		Promote current address mode to absolute from zero page, return CS if not possibl
+;
+; ************************************************************************************************
+
+axpromote .macro
+		ldx 	#\2
+		cmp 	#\1
+		beq 	AXDoPromote
+		.endm
+
+AXPromoteMode:
+		lda 	AXAddrMode
+		.axpromote 	AXMZero,AXMAbsolute
+		.axpromote 	AXMZeroX,AXMAbsoluteX
+		.axpromote 	AXMZeroY,AXMAbsoluteY
+		.axpromote 	AXMIndirect,AXMAbsoluteIndirect
+		.axpromote 	AXMIndirectX,AXMAbsoluteIndirectX
+		sec
+		rts
+AXDoPromote:
+		stx 	AXAddrMode
+		clc
+		rts
+
+		.send as16code
 
 ; ************************************************************************************************
 ;
@@ -3574,43 +3633,6 @@ _AXWBSkip:
 		ply
 		plx
 		pla
-		rts
-
-		.send as16code
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
-;		Name:		promote.asm
-;		Purpose:	Promotes current address mode to absolute.
-;		Created:	17th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;		Promote current address mode to absolute from zero page, return CS if not possibl
-;
-; ************************************************************************************************
-
-AXPromoteMode:
-		sec
 		rts
 
 		.send as16code

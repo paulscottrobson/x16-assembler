@@ -2,10 +2,6 @@ TODO:
 	
 	Assemble line with predefined state, capitalised, no comments etc (Output system)
 
-		Group 1 opcodes (analyse default type)
-			- assemble with upfix
-			- check STA # fails.
-
 		Group 2 opcodes and specials.
 
 	Error system

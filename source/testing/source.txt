@@ -3,12 +3,15 @@
 zreg = $42	
 ;
 ;
-start:
-	lda (zreg)
-	lda (zreg),y
-	lda (zreg,x)
-	lda zreg,x
-	lda #zreg
-	lda zreg
-	bra start
+sbcrt:
+	sbc $abcd
+	sbc $abcd,x
+	sbc $abcd,y
+	sbc (zreg)
+	sbc (zreg),y
+	sbc (zreg,x)
+	sbc zreg,x
+	sbc #zreg
+	sbc zreg
+	bra sbcrt
 

@@ -21,11 +21,13 @@
 AXGroup1:
 		jsr 	AXIdentifyAddressMode 		; get the address mode
 		bcs 	_AXG1Exit 		 			; syntax error.
+
 		jsr 	AXGroup1Assemble 			; assemble group 1 with ZP/# mods.
 		bcc 	_AXG1Exit 					; it worked.
 		jsr 	AXPromoteMode 				; promote mode.
-		bcs 	_AXG1Exit 					; failed
+		bcs 	_AXG1Exit 					; failed to promote.
 		jsr 	AXGroup1Assemble 			; try it with absolute mode.
+
 _AXG1Exit:		
 		rts
 
@@ -81,12 +83,15 @@ _AXGNotIndirect:
 		asl 	a
 _AXGAddOpcode:		
 		adc 	AXBaseOpcode
+		cmp 	#$89 						; cannot sta #
+		beq 	_AXG1Fail
 		jsr 	AXWriteByte 				; write out the opcode.
 		jsr 	AXWriteOperand 				; write the operand appropriatel,
 		clc
 		rts
 
 _AXG1Fail:
+		lda 	#AXERRMode 					; bad mode error.
 		sec
 		rts
 
