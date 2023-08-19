@@ -17,6 +17,8 @@ TestAPIHandler:
 		beq 	_TAMemInfo
 		cmp 	#1
 		beq 	_TAOpen
+		cmp 	#2
+		beq 	_TAClose
 		cmp 	#3
 		beq	 	_TARead
 		cmp 	#4
@@ -36,24 +38,49 @@ _TAMemInfo:
 		;		Open file
 		;
 _TAOpen:
-		lda 	#TAHSourceCode & $FF
-		sta 	codeTemp
-		lda 	#TAHSourceCode >> 8
-		sta 	codeTemp+1
-		clc
+		lda 	#_FileNameEnd-_FileName
+		ldx 	#<_FileName
+		ldy 	#>_FileName
+		jsr 	$FFBD 						; SETNAM
+
+		lda 	#15
+		ldx 	#8
+		ldy 	#0
+		jsr 	$FFBA 						; set LFS
+
+		jsr 	$FFC0 						; OPEN, returns CS on failure.
+_TAOExit:		
 		rts
+
+_FileName:
+		.text 	'CODE.ASM'
+_FileNameEnd:
+		;
+		;		Close file
+		;
+_TAClose:
+		lda 	#15 							; CLOSE
+		jsr 	$FFC3
+		clc
+		rts		
 		;
 		;		Read byte.
 		;
 _TARead:
-		lda 	(codeTemp)
-		sec
-		beq 	_TARExit
+		ldx 	#15							; CHKIN
+		jsr 	$FFC6 
+		jsr 	$FFCF 						; CHRIN
+		pha
+		jsr 	$FFB7 						; READST
+		and 	#64
 		clc
-		inc 	codeTemp
-		bne 	_TARExit
-		inc 	codeTemp+1
+		beq 	_TARExit
+		sec
 _TARExit:		
+		php
+		jsr 	$FFCC  						; CLRCHN
+		plp	
+		pla
 		rts
 		;
 		;		Listing output
@@ -86,12 +113,6 @@ _TAWrite:
 		lda 	#13
 		jsr 	AXListOut
 		rts
-
-		;
-		;		ASCII code ending with a NULL, multiple lines seperated by CR , LF or CR/LF.
-		;
-TAHSourceCode:
-		.include "../assembler/generated/sourcebytes.dat"
 
 		.send as16code
 
