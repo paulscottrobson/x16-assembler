@@ -39,8 +39,19 @@
 Start:	
 
 		.if 	TESTING==1
+		ldx 	#<DummyAPI 			; set up dummy so reset works.
+		ldy 	#>DummyAPI
+		stx 	AXAPI 						
+		sty 	AXAPI+1
 		jsr 	AXIReset
 		jsr 	TestExpressions
+
+DummyAPI:		
+		lda 	#$94
+		ldy 	#$9F
+		clc
+		rts		
+
 		.endif
 
 		.if 	TESTING==2
@@ -49,7 +60,8 @@ Start:
 		jsr 	AXAssemble
 		bcs 	_Error
 		rts
-		
+
+
 _Error:	ldx 	#$EE
 		ldy 	#$EE
 		.byte 	$DB
