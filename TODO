@@ -1,11 +1,38 @@
 TODO:
-	Error system
-	Expand file I/O
-	Pseudo operations
-	Includes.	
-	Macros
 
-	Check collision of stack / identifiers.	
+	Method for adding pseudo operations
+
+	Expression in pseudo ops
+		- evaluate by scanning the source buffer as normal.
+		- can return ASCIIZ string in a buffer or number (usual definition limits)
+			(buffer is not in frame)
+
+	.byte, .word, .text 	variations on a theme
+	.db .dw 				synonyms
+	.fill 					simply advances the pointer 
+
+	2nd level file I/O, involving rejigging of test API, which needs a general 
+	rewrite.
+
+	Push/Pull Frame on stack.
+
+	.include and .binary are fairly similar - get a file name, push frame,
+	open file and assemble it (AXAssembleFile) or just read it straight into 
+	memory with a Read/WriteByte loop.
+
+	Macro storage - if xxxx .macro is found, the type is .macro, keep reading lines
+	using AXReadLine and appending to the macro definition until full or .endm
+	found. Make the ident lister list them.
+	At the end, pop the frame.
+
+	Macro execution - divide the parameters by offset/length in the frame, push the
+	frame on stack. 
+	Find the macro, read each and expand it as you go using the parameters in the 
+	frame.
+
+	Error system, some errors are fatal, some can be continued. 
+
+	Check collision of stack / identifiers when expanding, out of memory error.
 	Pass 2 - throw out undefined values.
 	Pass 1 - assignments must be defined, values not.
 
