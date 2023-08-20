@@ -23,7 +23,6 @@ AXTemp0: 									; 3 bytes as it is used for the API output function.
 
 		.send 	as16zeropage
 
-
 ; ************************************************************************************************
 ;
 ;										Constants

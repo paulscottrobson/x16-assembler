@@ -1,6 +1,7 @@
 * = $9000
 sbcrt:
 	lda sbcrt
+	.fill 4
 	sbc $abcd
 	zreg = $42	
 	sbc $abcd,x

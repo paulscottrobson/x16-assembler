@@ -530,4 +530,20 @@ AXSystemDictionary:
 	.byte	$00
 	.byte	$50,$4c,$d8              ; PLX
 
+	.byte	12
+	.byte	$d5
+	.byte	2
+	.byte	0
+	.word	AXFillCmd
+	.byte	0
+	.byte	$2e,$46,$49,$4c,$cc      ; .FILL
+
+	.byte	10
+	.byte	$45
+	.byte	2
+	.byte	0
+	.word	AXFillCmd2
+	.byte	0
+	.byte	$2e,$44,$d3              ; .DS
+
 	.byte	0

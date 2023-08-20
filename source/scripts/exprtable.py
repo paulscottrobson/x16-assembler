@@ -57,7 +57,7 @@ class BinaryOperatorCollection(object):
 		for root,dirs,files in os.walk("assembler"):			
 			for f in [x for x in files if x.endswith(".asm")]:	
 				for s in open(root+os.sep+f).readlines():
-					if s.find(";;") > 0:		
+					if s.find(";;") > 0 and s.find("[") > 0:		
 						m = re.match("^(.*?)\\:\\s*\\;\\;\\s*\\[(.*?)\\]",s)
 						assert m is not None,"Bad line "+s
 						op = m.group(2).strip()

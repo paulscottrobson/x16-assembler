@@ -102,8 +102,28 @@ class AssemblerDictionary(object):
 			h.write("\t.byte\t${0:02x}\n".format(r.getAuxData()))				# data aux (select bits for group 2)
 			h.write("\t.byte\t{0:24} ; {1}\n".format(",".join(["${0:02x}".format(x) for x in nameBytes]),r.mnemonic))
 			h.write("\n")
+		self.createPsuedoOperations(h)			
 		h.write("\t.byte\t0\n")
 		h.close()
+
+	def createPsuedoOperations(self,h):
+		for root,dirs,files in os.walk("assembler"):			
+			for f in [x for x in files if x.endswith(".asm")]:	
+				for s in open(root+os.sep+f).readlines():
+					if s.find(";;") > 0 and s.find("{") > 0:		
+						m = re.match("^(.*?)\\:\\s*\\;\\;\\s*\\{(.*?)\\}",s)
+						assert m is not None,"Bad line "+s
+						name = m.group(2).upper()
+						nameBytes = [ord(x) for x in name.upper()]
+						nameBytes[-1] |= 0x80
+						h.write("\t.byte\t{0}\n".format(len(name)+7))						# offset
+						h.write("\t.byte\t${0:02x}\n".format(sum(nameBytes) & 0xFF))  		# hash
+						h.write("\t.byte\t2\n") 											# type.
+						h.write("\t.byte\t0\n")												# flags
+						h.write("\t.word\t{0}\n".format(m.group(1)))						# address
+						h.write("\t.byte\t0\n")												# data aux (select bits for group 2)
+						h.write("\t.byte\t{0:24} ; {1}\n".format(",".join(["${0:02x}".format(x) for x in nameBytes]),name))
+						h.write("\n")
 
 ad = AssemblerDictionary()
 ad.dumpFixupTable()

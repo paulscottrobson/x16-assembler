@@ -63,6 +63,22 @@ _AXAContinue:
 		cmp 	#AXIT_PsuedoOp
 		bne 	_AXSyntax
 		;
+		; ========================================================================================
+		;
+		;								Handle pseudo-operations
+		;
+		; ========================================================================================
+
+		stx 	AXOperandPos 				; save the operand position.
+		ldy 	#AXID_DataLow 				; get the code address and jump there.
+		jsr 	AXIGet
+		sta 	AXVector
+		ldy 	#AXID_DataHigh
+		jsr 	AXIGet
+		sta 	AXVector+1
+		jmp 	(AXVector)
+
+		;
 		jmp 	$FFFF 						; load the address and jump to it.
 _AXAMacro:
 		jmp 	AXPAssembleMacro
@@ -182,7 +198,13 @@ _AXAssignValue:
 
 		.send as16code
 
-
+		.section as16storage
+AXOperandPos: 								; data in buffer starts here.
+		.fill 	1		
+AXVector: 									; for calling psuedo op code
+		.fill 	2
+		.send as16storage
+		
 ; ************************************************************************************************
 ;
 ;									Changes and Updates

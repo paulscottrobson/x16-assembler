@@ -1,7 +1,5 @@
 TODO:
 
-	Method for adding pseudo operations
-
 	Expression in pseudo ops
 		- evaluate by scanning the source buffer as normal.
 		- can return ASCIIZ string in a buffer or number (usual definition limits)
@@ -9,7 +7,6 @@ TODO:
 
 	.byte, .word, .text 	variations on a theme
 	.db .dw 				synonyms
-	.fill 					simply advances the pointer 
 
 	2nd level file I/O, involving rejigging of test API, which needs a general 
 	rewrite.
