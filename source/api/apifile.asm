@@ -24,14 +24,15 @@ TAOpen:
 		ldy 	#>_FileName
 		jsr 	$FFBD 						; SETNAM
 
-		lda 	#15
+		lda 	#8
+		pha
 		ldx 	#8
 		ldy 	#0
 		jsr 	$FFBA 						; set LFS
 
 		jsr 	$FFC0 						; OPEN, returns CS on failure.
-		lda 	#15
-_TAOExit:		
+		pla
+_TAOExit:			
 		rts
 
 _FileName:
@@ -45,7 +46,7 @@ _FileNameEnd:
 ; ************************************************************************************************
 
 TAClose:
-		txa							; CLOSE
+		txa
 		jsr 	$FFC3
 		clc
 		rts		
@@ -58,7 +59,6 @@ TAClose:
 
 TAReadChar:
 		jsr 	$FFC6  						; CHKIN
-		jsr 	$FFC6 
 		jsr 	$FFCF 						; CHRIN
 		pha
 		jsr 	$FFB7 						; READST

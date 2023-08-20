@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
 ; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=2 main.asm
-; Sun Aug 20 09:37:10 2023
+; Sun Aug 20 09:44:05 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -2178,9 +2178,9 @@
 .1da6					_TAOpen:
 .1da6	4c e6 1d	jmp $1de6			jmp 	TAOpen
 .1da9					_TAClose:
-.1da9	4c 04 1e	jmp $1e04			jmp 	TAClose
+.1da9	4c 06 1e	jmp $1e06			jmp 	TAClose
 .1dac					_TAReadChar:
-.1dac	4c 0b 1e	jmp $1e0b			jmp  	TAReadChar
+.1dac	4c 0c 1e	jmp $1e0c			jmp  	TAReadChar
 .1daf					_TAWriteByte
 .1daf	4c b9 1d	jmp $1db9			jmp 	TAWriteByte
 .1db2					_TAListChar:
@@ -2227,40 +2227,41 @@
 
 .1de6					TAOpen:
 .1de6	a9 08		lda #$08			lda 	#_FileNameEnd-_FileName
-.1de8	a2 fc		ldx #$fc			ldx 	#<_FileName
+.1de8	a2 fe		ldx #$fe			ldx 	#<_FileName
 .1dea	a0 1d		ldy #$1d			ldy 	#>_FileName
 .1dec	20 bd ff	jsr $ffbd			jsr 	$FFBD 						; SETNAM
-.1def	a9 0f		lda #$0f			lda 	#15
-.1df1	a2 08		ldx #$08			ldx 	#8
-.1df3	a0 00		ldy #$00			ldy 	#0
-.1df5	20 ba ff	jsr $ffba			jsr 	$FFBA 						; set LFS
-.1df8	20 c0 ff	jsr $ffc0			jsr 	$FFC0 						; OPEN, returns CS on failure.
-.1dfb					_TAOExit:
-.1dfb	60		rts				rts
-.1dfc					_FileName:
->1dfc	43 4f 44 45 2e 41 53 4d				.text 	'CODE.ASM'
-.1e04					_FileNameEnd:
-.1e04					TAClose:
-.1e04	a9 0f		lda #$0f			lda 	#15 							; CLOSE
-.1e06	20 c3 ff	jsr $ffc3			jsr 	$FFC3
-.1e09	18		clc				clc
-.1e0a	60		rts				rts
-.1e0b					TAReadChar:
-.1e0b	a2 0f		ldx #$0f			ldx 	#15							; CHKIN
-.1e0d	20 c6 ff	jsr $ffc6			jsr 	$FFC6
-.1e10	20 cf ff	jsr $ffcf			jsr 	$FFCF 						; CHRIN
-.1e13	48		pha				pha
-.1e14	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
-.1e17	29 40		and #$40			and 	#64
-.1e19	18		clc				clc
-.1e1a	f0 01		beq $1e1d			beq 	_TARExit
-.1e1c	38		sec				sec
-.1e1d					_TARExit:
-.1e1d	08		php				php
-.1e1e	20 cc ff	jsr $ffcc			jsr 	$FFCC  						; CLRCHN
-.1e21	28		plp				plp
-.1e22	68		pla				pla
-.1e23	60		rts				rts
+.1def	a9 08		lda #$08			lda 	#8
+.1df1	48		pha				pha
+.1df2	a2 08		ldx #$08			ldx 	#8
+.1df4	a0 08		ldy #$08			ldy 	#8
+.1df6	20 ba ff	jsr $ffba			jsr 	$FFBA 						; set LFS
+.1df9	20 c0 ff	jsr $ffc0			jsr 	$FFC0 						; OPEN, returns CS on failure.
+.1dfc	68		pla				pla
+.1dfd					_TAOExit:
+.1dfd	60		rts				rts
+.1dfe					_FileName:
+>1dfe	43 4f 44 45 2e 41 53 4d				.text 	'CODE.ASM'
+.1e06					_FileNameEnd:
+.1e06					TAClose:
+.1e06	8a		txa				txa
+.1e07	20 c3 ff	jsr $ffc3			jsr 	$FFC3
+.1e0a	18		clc				clc
+.1e0b	60		rts				rts
+.1e0c					TAReadChar:
+.1e0c	20 c6 ff	jsr $ffc6			jsr 	$FFC6  						; CHKIN
+.1e0f	20 cf ff	jsr $ffcf			jsr 	$FFCF 						; CHRIN
+.1e12	48		pha				pha
+.1e13	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
+.1e16	29 40		and #$40			and 	#64
+.1e18	18		clc				clc
+.1e19	f0 01		beq $1e1c			beq 	_TARExit
+.1e1b	38		sec				sec
+.1e1c					_TARExit:
+.1e1c	08		php				php
+.1e1d	20 cc ff	jsr $ffcc			jsr 	$FFCC  						; CLRCHN
+.1e20	28		plp				plp
+.1e21	68		pla				pla
+.1e22	60		rts				rts
 
 ;******  Return to file: api/testapi.asm
 
