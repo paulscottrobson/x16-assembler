@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name : 		testapi.asm
-;		Purpose :	API Test
-;		Date :		12th August 2023
+;		Name : 		apilist.asm
+;		Purpose :	API List Handler
+;		Date :		29th August 2023
 ; 		Reviewed :	No
 ;		Author : 	Paul Robson (paul@robsons.org.uk)
 ;
@@ -12,54 +12,18 @@
 
 		.section as16code
 
-TestAPIHandler:
-		cmp 	#0
-		beq 	_TAMemInfo
-		cmp 	#1
-		beq 	_TAOpen
-		cmp 	#2
-		beq 	_TAClose
-		cmp 	#3
-		beq	 	_TAReadChar
-		cmp 	#4
-		beq 	_TAWriteByte
-		cmp 	#6
-		beq 	_TAListChar
-		rts
-
 ; ************************************************************************************************
 ;
-;							Memory information and initialisation
+;								Handle listing, character in X
 ;
 ; ************************************************************************************************
 
-_TAMemInfo:
-		lda 	#$94
-		ldy 	#$9F
-		clc
-		rts		
-
-_TAOpen:
-		jmp 	TAOpen
-_TAClose:
-		jmp 	TAClose
-_TAReadChar:
-		jmp  	TAReadChar
-_TAWriteByte
-		jmp 	TAWriteByte
-_TAListChar:
-		jmp 	TAListChar
-
-		.include "apilist.asm"
-		.include "apiwrite.asm"
-		.include "apifile.asm"
+TAListChar:
+		txa
+		jmp 	$FFD2
 
 		.send as16code
 
-		.section as16zeropage
-codeTemp:	
-		.fill 	2
-		.send as16zeropage
 
 ; ************************************************************************************************
 ;

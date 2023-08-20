@@ -5,7 +5,8 @@ Cmd: (in A)
 
 	0 		Retrieve lower and upper high bytes of memory area to use in A Y. must be on page boundaries.
 			Can be paged, as memory is locked/unlocked on access to the stack or the user identifier store.
-
+			Any initialisation code goes here.
+			
 	1		Open character source YX where YX is an ASCIIZ string (external source) or NULL (default source)
  			Returns CC (okay) CS (failed) and a reference handle in A.
  			Note files will be 'stacked', so if a file is opened it will be closed before any other file is accessed.

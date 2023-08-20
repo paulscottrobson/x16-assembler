@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name : 		testapi.asm
-;		Purpose :	API Test
-;		Date :		12th August 2023
+;		Name : 		apiwrite.asm
+;		Purpose :	Write assembled byte 
+;		Date :		20th August 2023
 ; 		Reviewed :	No
 ;		Author : 	Paul Robson (paul@robsons.org.uk)
 ;
@@ -12,54 +12,37 @@
 
 		.section as16code
 
-TestAPIHandler:
-		cmp 	#0
-		beq 	_TAMemInfo
-		cmp 	#1
-		beq 	_TAOpen
-		cmp 	#2
-		beq 	_TAClose
-		cmp 	#3
-		beq	 	_TAReadChar
-		cmp 	#4
-		beq 	_TAWriteByte
-		cmp 	#6
-		beq 	_TAListChar
+; ************************************************************************************************
+;
+;								Handle byte assembly/save/storage.
+;
+; ************************************************************************************************
+
+TAWriteByte:
+		tya
+		sta 	($00,x)
 		rts
 
-; ************************************************************************************************
-;
-;							Memory information and initialisation
-;
-; ************************************************************************************************
-
-_TAMemInfo:
-		lda 	#$94
-		ldy 	#$9F
-		clc
-		rts		
-
-_TAOpen:
-		jmp 	TAOpen
-_TAClose:
-		jmp 	TAClose
-_TAReadChar:
-		jmp  	TAReadChar
-_TAWriteByte
-		jmp 	TAWriteByte
-_TAListChar:
-		jmp 	TAListChar
-
-		.include "apilist.asm"
-		.include "apiwrite.asm"
-		.include "apifile.asm"
+		phy
+		lda 	#'@'
+		jsr 	AXListOut
+		lda 	$02,x
+		jsr 	AXLOutHex
+		lda 	#'.'
+		jsr 	AXListOut
+		lda 	$01,x
+		jsr 	AXLOutHex
+		lda 	$00,x
+		jsr 	AXLOutHex
+		lda 	#"="
+		jsr 	AXListOut
+		pla
+		jsr 	AXLOutHex
+		lda 	#13
+		jsr 	AXListOut
+		rts
 
 		.send as16code
-
-		.section as16zeropage
-codeTemp:	
-		.fill 	2
-		.send as16zeropage
 
 ; ************************************************************************************************
 ;

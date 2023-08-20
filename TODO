@@ -29,7 +29,7 @@ TODO:
 
 	Error system, some errors are fatal, some can be continued. 
 
-	Check collision of stack / identifiers when expanding, out of memory error.
+	Check collision of stack / identifiers at instruction end, out of memory error. fatal.
 	Pass 2 - throw out undefined values.
 	Pass 1 - assignments must be defined, values not.
 
