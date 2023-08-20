@@ -30,6 +30,7 @@ TAOpen:
 		jsr 	$FFBA 						; set LFS
 
 		jsr 	$FFC0 						; OPEN, returns CS on failure.
+		lda 	#15
 _TAOExit:		
 		rts
 
@@ -44,7 +45,7 @@ _FileNameEnd:
 ; ************************************************************************************************
 
 TAClose:
-		lda 	#15 							; CLOSE
+		txa							; CLOSE
 		jsr 	$FFC3
 		clc
 		rts		
@@ -56,7 +57,7 @@ TAClose:
 ; ************************************************************************************************
 
 TAReadChar:
-		ldx 	#15							; CHKIN
+		jsr 	$FFC6  						; CHKIN
 		jsr 	$FFC6 
 		jsr 	$FFCF 						; CHRIN
 		pha
