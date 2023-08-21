@@ -18,13 +18,30 @@
 ;
 ; ************************************************************************************************
 
-TAOpen:
-		lda 	#_FileNameEnd-_FileName
-		ldx 	#<_FileName
+TAOpen:	
+		cpx 	#0 							; check default name ?
+		bne 	_TAHaveName
+		cpy 	#0
+		bne 	_TAHaveName
+
+		ldx 	#<_FileName 				; use default.
 		ldy 	#>_FileName
+		lda 	#7 							; reset handle tracker
+		sta 	TAHandleTracker
+_TAHaveName:
+		stx 	TATemp0 					; get length
+		sty 	TATemp0+1
+		ldy 	#255
+_TAGetLen:
+		iny
+		lda 	(TATemp0),y
+		bne 	_TAGetLen
+		tya 								; A = size, XY = filename
+		ldy 	TATemp0+1
 		jsr 	$FFBD 						; SETNAM
 
-		lda 	#8
+		inc 	TAHandleTracker
+		lda 	TAHandleTracker
 		pha
 		ldx 	#8
 		ldy 	#0
@@ -36,8 +53,7 @@ _TAOExit:
 		rts
 
 _FileName:
-		.text 	'CODE.ASM'
-_FileNameEnd:
+		.text 	'CODE.ASM',0
 
 ; ************************************************************************************************
 ;
@@ -48,6 +64,7 @@ _FileNameEnd:
 TAClose:
 		txa
 		jsr 	$FFC3
+		dec 	TAHandleTracker
 		clc
 		rts		
 
@@ -74,6 +91,11 @@ _TARExit:
 		rts
 
 		.send as16code
+
+		.section as16zeropage
+TATemp0:
+		.fill 	2
+		.send as16zeropage
 
 ; ************************************************************************************************
 ;

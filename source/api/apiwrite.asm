@@ -21,7 +21,7 @@
 TAWriteByte:
 		tya
 		sta 	($00,x)
-		rts
+;		rts
 
 		phy
 		lda 	#'@'

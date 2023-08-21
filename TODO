@@ -1,12 +1,6 @@
 TODO:
 
-	Expression in pseudo ops
-		- evaluate by scanning the source buffer as normal.
-		- can return ASCIIZ string in a buffer or number (usual definition limits)
-			(buffer is not in frame)
-
-	.byte, .word, .text 	variations on a theme
-	.db .dw 				synonyms
+	.text 					variations on a theme
 
 	2nd level file I/O, involving rejigging of test API, which needs a general 
 	rewrite.

@@ -531,6 +531,22 @@ AXSystemDictionary:
 	.byte	$50,$4c,$d8              ; PLX
 
 	.byte	12
+	.byte	$e2
+	.byte	2
+	.byte	0
+	.word	AXByteCmd
+	.byte	0
+	.byte	$2e,$42,$59,$54,$c5      ; .BYTE
+
+	.byte	10
+	.byte	$34
+	.byte	2
+	.byte	0
+	.word	AXByteCmd2
+	.byte	0
+	.byte	$2e,$44,$c2              ; .DB
+
+	.byte	12
 	.byte	$d5
 	.byte	2
 	.byte	0
@@ -545,5 +561,21 @@ AXSystemDictionary:
 	.word	AXFillCmd2
 	.byte	0
 	.byte	$2e,$44,$d3              ; .DS
+
+	.byte	12
+	.byte	$ea
+	.byte	2
+	.byte	0
+	.word	AXWordCmd
+	.byte	0
+	.byte	$2e,$57,$4f,$52,$c4      ; .WORD
+
+	.byte	10
+	.byte	$49
+	.byte	2
+	.byte	0
+	.word	AXWordCmd2
+	.byte	0
+	.byte	$2e,$44,$d7              ; .DW
 
 	.byte	0

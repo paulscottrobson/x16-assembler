@@ -194,6 +194,7 @@ AXERRNotFound = $85 						; source file not found.
 AXERRUndefined = $06 						; undefined identifier.
 AXERRRelative = $07 						; relative branch range.
 AXERRMode = $08 							; address mode not supported in 65C02
+AXERRSize = $09 							; bad expression size.
 
 		.send as16code
 
@@ -3024,6 +3025,22 @@ AXSystemDictionary:
 	.byte	$50,$4c,$d8              ; PLX
 
 	.byte	12
+	.byte	$e2
+	.byte	2
+	.byte	0
+	.word	AXByteCmd
+	.byte	0
+	.byte	$2e,$42,$59,$54,$c5      ; .BYTE
+
+	.byte	10
+	.byte	$34
+	.byte	2
+	.byte	0
+	.word	AXByteCmd2
+	.byte	0
+	.byte	$2e,$44,$c2              ; .DB
+
+	.byte	12
 	.byte	$d5
 	.byte	2
 	.byte	0
@@ -3038,6 +3055,22 @@ AXSystemDictionary:
 	.word	AXFillCmd2
 	.byte	0
 	.byte	$2e,$44,$d3              ; .DS
+
+	.byte	12
+	.byte	$ea
+	.byte	2
+	.byte	0
+	.word	AXWordCmd
+	.byte	0
+	.byte	$2e,$57,$4f,$52,$c4      ; .WORD
+
+	.byte	10
+	.byte	$49
+	.byte	2
+	.byte	0
+	.word	AXWordCmd2
+	.byte	0
+	.byte	$2e,$44,$d7              ; .DW
 
 	.byte	0
 ;
@@ -3845,6 +3878,77 @@ _AXWBSkip:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		byte.asm
+;		Purpose:	.byte command
+;		Created:	21st August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;								Assemble .byte command
+;
+; ************************************************************************************************
+
+AXByteCmd:	;; {.byte}
+AXByteCmd2:	;; {.db}
+		ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
+
+_AXBLoop:
+		jsr 	AXPass2Expression 			; get value
+		bcs 	_AXBExit
+
+		lda 	AXPass 						; only check size on pass 2
+		cmp 	#2
+		bne 	_AXBNoCheck
+
+		lda 	AXLeft+1
+		beq 	_AXBNoCheck
+
+		lda 	#AXERRSize 					; not a byte.
+		sec
+		rts
+
+_AXBNoCheck:
+		lda 	AXLeft 						; output the byte.
+		jsr 	AXWriteByte
+
+		jsr 	AXGet 						; get next
+		inx
+		cmp 	#","
+		beq 	_AXBLoop
+		cmp 	#0
+		bne 	_AXBSyntax
+		clc
+		rts
+_AXBSyntax:
+		lda 	#AXERRSyntax
+		sec
+_AXBExit:
+		rts
+
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		fill.asm
 ;		Purpose:	.fill command
 ;		Created:	20th August 2023
@@ -3880,6 +3984,67 @@ AXFillCmd2:	;; {.ds}
 		clc
 _AXFExit:
 		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		word.asm
+;		Purpose:	.word command
+;		Created:	21st August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;								Assemble .word command
+;
+; ************************************************************************************************
+
+AXWordCmd:	;; {.word}
+AXWordCmd2:	;; {.dw}
+		ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
+;
+_AXWLoop:
+		jsr 	AXPass2Expression 			; get value
+		bcs 	_AXWExit
+
+		lda 	AXLeft 						; output the word.
+		jsr 	AXWriteByte
+		lda 	AXLeft+1
+		jsr 	AXWriteByte
+
+		jsr 	AXGet 						; get next
+		inx
+		cmp 	#","
+		beq 	_AXWLoop
+		cmp 	#0
+		bne 	_AXWSyntax
+		clc
+_AXWExit:
+		rts
+_AXWSyntax:
+		lda 	#AXERRSyntax
+		sec
+		rts
+
 
 		.send as16code
 

@@ -56,10 +56,10 @@ _TAListChar:
 
 		.send as16code
 
-		.section as16zeropage
-codeTemp:	
-		.fill 	2
-		.send as16zeropage
+		.section as16storage
+TAHandleTracker:
+		.fill	 1			
+		.send as16storage
 
 ; ************************************************************************************************
 ;

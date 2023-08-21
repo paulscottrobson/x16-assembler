@@ -43,3 +43,5 @@ h1:
 	jmp loop
 loop:	
 	jsr loop	
+	.word $ABCD,sbcrt,$5678
+	.byte 1,2,3,4,1,>sbcrt,<sbcrt

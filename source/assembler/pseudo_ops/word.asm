@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		errors.inc
-;		Purpose:	Error codes
-;		Created:	9th August 2023
+;		Name:		word.asm
+;		Purpose:	.word command
+;		Created:	21st August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -14,25 +14,40 @@
 
 ; ************************************************************************************************
 ;
-;										Error codes
-;
-;					  lower 6 bits are ID, bit 7 identifies a fatal error.
+;								Assemble .word command
 ;
 ; ************************************************************************************************
 
-AXERREOF = $00 								; end of file, not assembler error.
-AXERRSyntax = $01 							; general syntax error.
-AXERRIdentifier = $02 						; bad identifier, missing/too long.
-AXERRDivZero = $03 							; divide by zero.
-AXERRRedefine = $04 						; value of an identifier has changed.
-AXERRNotFound = $85 						; source file not found.
-AXERRUndefined = $06 						; undefined identifier.
-AXERRRelative = $07 						; relative branch range.
-AXERRMode = $08 							; address mode not supported in 65C02
-AXERRSize = $09 							; bad expression size.
+AXWordCmd:	;; {.word}
+AXWordCmd2:	;; {.dw}
+		ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
+;
+_AXWLoop:
+		jsr 	AXPass2Expression 			; get value
+		bcs 	_AXWExit
+
+		lda 	AXLeft 						; output the word.
+		jsr 	AXWriteByte
+		lda 	AXLeft+1
+		jsr 	AXWriteByte
+
+		jsr 	AXGet 						; get next
+		inx
+		cmp 	#","
+		beq 	_AXWLoop
+		cmp 	#0
+		bne 	_AXWSyntax
+		clc
+_AXWExit:		
+		rts
+_AXWSyntax:
+		lda 	#AXERRSyntax
+		sec
+		rts
+
 
 		.send as16code
-
+		
 ; ************************************************************************************************
 ;
 ;									Changes and Updates
