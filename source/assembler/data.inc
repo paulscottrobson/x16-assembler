@@ -55,6 +55,9 @@ AXEvaluatePage: 							; page # of last evaluated label.
 AXLabelBuffer: 								; buffer for label to be evaluated (ASCIIZ, U/C)
 		.fill 	AXMaxIdentSize+1
 
+AXTextParameter:							; buffer for text parameter.
+		.fill 	AXMaxLineSize-2
+
 AXCurrent:									; address of currently selected identifier.
 		.fill 	2
 

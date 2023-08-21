@@ -1,5 +1,6 @@
 * = $9000
 sbcrt:
+	.text 13,"Hello",0
 	lda sbcrt
 	.fill 4
 	sbc $abcd
@@ -43,5 +44,7 @@ h1:
 	jmp loop
 loop:	
 	jsr loop	
+	
 	.word $ABCD,sbcrt,$5678
 	.byte 1,2,3,4,1,>sbcrt,<sbcrt
+	.text 13,"Hello",0

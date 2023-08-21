@@ -578,4 +578,12 @@ AXSystemDictionary:
 	.byte	0
 	.byte	$2e,$44,$d7              ; .DW
 
+	.byte	12
+	.byte	$f3
+	.byte	2
+	.byte	0
+	.word	AXTextCmd
+	.byte	0
+	.byte	$2e,$54,$45,$58,$d4      ; .TEXT
+
 	.byte	0
