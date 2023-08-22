@@ -22,7 +22,7 @@ AXReadLine:
 		stz 	AXInQuotes 					; ' " flag reset
 		ldx 	#0 							; read from line start
 		jsr 	AXReadCharacter 			; try to read one.
-		bcs		_AXRLEOFExit 				; failed		
+		bcs		_AXRLEOFExit 				; failed EOF	
 		;
 		;		Read a character successfully
 		;

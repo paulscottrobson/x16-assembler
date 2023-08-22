@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
 ; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=2 main.asm
-; Tue Aug 22 01:14:40 2023
+; Tue Aug 22 14:23:09 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -610,7 +610,7 @@
 .138b	9c d3 04	stz $04d3			stz 	AXInQuotes 					; ' " flag reset
 .138e	a2 00		ldx #$00			ldx 	#0 							; read from line start
 .1390	20 40 1c	jsr $1c40			jsr 	AXReadCharacter 			; try to read one.
-.1393	b0 3e		bcs $13d3			bcs		_AXRLEOFExit 				; failed
+.1393	b0 3e		bcs $13d3			bcs		_AXRLEOFExit 				; failed EOF
 .1395					_AXRLLoop:
 .1395	c9 0d		cmp #$0d			cmp 	#13 						; read EOL ? then exit.
 .1397	f0 35		beq $13ce			beq 	_AXRLEndLine
