@@ -530,6 +530,14 @@ AXSystemDictionary:
 	.byte	$00
 	.byte	$50,$4c,$d8              ; PLX
 
+	.byte	15
+	.byte	$b2
+	.byte	2
+	.byte	0
+	.word	AXInclude
+	.byte	0
+	.byte	$2e,$49,$4e,$43,$4c,$55,$44,$c5 ; .INCLUDE
+
 	.byte	12
 	.byte	$e2
 	.byte	2

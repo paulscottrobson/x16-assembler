@@ -153,6 +153,8 @@ AXListBytes: 								; those bytes
 
 AXEndFrame:
 
+AXFrameSize = AXEndFrame - AXStartFrame 	; calculate frame size.
+
 		.send as16storage
 
 ; ************************************************************************************************
@@ -3027,6 +3029,14 @@ AXSystemDictionary:
 	.byte	$00
 	.byte	$50,$4c,$d8              ; PLX
 
+	.byte	15
+	.byte	$b2
+	.byte	2
+	.byte	0
+	.word	AXInclude
+	.byte	0
+	.byte	$2e,$49,$4e,$43,$4c,$55,$44,$c5 ; .INCLUDE
+
 	.byte	12
 	.byte	$e2
 	.byte	2
@@ -4013,6 +4023,62 @@ _AXFExit:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		include.asm
+;		Purpose:	.include command
+;		Created:	22nd August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Include a file
+;
+; ************************************************************************************************
+
+AXInclude:	;; {.include}
+
+		ldx 	AXOperandPos
+		jsr		AXTGetTextString 			; file name to buffeer
+		bcs 	_AXISyntax 					; failed.
+		;
+		jsr 	AXPushFrame 				; save current frame
+
+		ldy 	#AXTextParameter >> 8 		; assemble named file
+		ldx 	#AXTextParameter & $FF
+		jsr 	AXAssembleFile
+
+		php 								; restore frame saving the results
+		pha
+		jsr 	AXPullFrame
+		pla
+		plp
+		rts
+
+_AXISyntax:
+		lda 	#AXERRSyntax
+		sec
+		rts
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		text.asm
 ;		Purpose:	.text command (byte with possible tex string)
 ;		Created:	21st August 2023
@@ -4362,6 +4428,86 @@ _AXELLoop:
 _AXELFail:
 		lda 	#AXERRIdentifier			; bad label.
 		sec
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		frames.asm
+;		Purpose:	Push/Pull frame off stack
+;		Created:	22nd August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Push frame on stack
+;
+; ************************************************************************************************
+
+AXPushFrame:
+		sec 								; subtract frame size from stack, copy to AXTemp0
+		lda 	AXIStack
+		sbc 	#AXFrameSize
+		sta 	AXIStack
+		sta 	AXTemp0
+		lda 	AXIStack+1
+		sbc 	#0
+		sta 	AXIStack+1
+		sta 	AXTemp0+1
+		;
+		ldy 	#AXFrameSize 				; copy frame to stack space.
+_AXPFCopy:
+		dey
+		lda 	AXStartFrame,y
+		sta 	(AXTemp0),y
+		cpy 	#0
+		bne 	_AXPFCopy
+		rts
+
+; ************************************************************************************************
+;
+;									Pull frame off stack
+;
+; ************************************************************************************************
+
+AXPullFrame:
+		clc 								; add frame size to stack, copy to AXTemp0
+		lda 	AXIStack
+		sta 	AXTemp0
+		adc 	#AXFrameSize
+		sta 	AXIStack
+
+		lda 	AXIStack+1
+		sta 	AXTemp0+1
+		adc 	#0
+		sta 	AXIStack+1
+		;
+		ldy 	#AXFrameSize 				; copy frame from stack space.
+_AXPFCopy:
+		dey
+		lda 	(AXTemp0),y
+		sta 	AXStartFrame,y
+		cpy 	#0
+		bne 	_AXPFCopy
 		rts
 
 		.send as16code

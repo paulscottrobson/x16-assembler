@@ -1,9 +1,6 @@
 TODO:
 	Push/Pull Frame on stack.
 
-	2nd level file I/O, involving rejigging of test API, which needs a general 
-	rewrite.
-
 	.include and .binary are fairly similar - get a file name, push frame,
 	open file and assemble it (AXAssembleFile) or just read it straight into 
 	memory with a Read/WriteByte loop.

@@ -44,7 +44,7 @@ _TAGetLen:
 		lda 	TAHandleTracker
 		pha
 		ldx 	#8
-		ldy 	#0
+		tay
 		jsr 	$FFBA 						; set LFS
 
 		jsr 	$FFC0 						; OPEN, returns CS on failure.

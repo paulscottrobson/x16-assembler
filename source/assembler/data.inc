@@ -98,6 +98,8 @@ AXListBytes: 								; those bytes
 
 AXEndFrame:
 
+AXFrameSize = AXEndFrame - AXStartFrame 	; calculate frame size.
+
 		.send as16storage
 
 ; ************************************************************************************************
