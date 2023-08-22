@@ -78,11 +78,11 @@ TAReadChar:
 		jsr 	$FFC6  						; CHKIN
 		jsr 	$FFCF 						; CHRIN
 		pha
-		jsr 	$FFB7 						; READST
-		and 	#64
-		clc
-		beq 	_TARExit
-		sec
+;		jsr 	$FFB7 						; READST
+;		and 	#64
+;		clc
+;		beq 	_TARExit
+;		sec
 _TARExit:		
 		php
 		jsr 	$FFCC  						; CLRCHN
