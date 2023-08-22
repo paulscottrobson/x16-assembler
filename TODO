@@ -1,9 +1,5 @@
 TODO:
-	Push/Pull Frame on stack.
-
-	.include and .binary are fairly similar - get a file name, push frame,
-	open file and assemble it (AXAssembleFile) or just read it straight into 
-	memory with a Read/WriteByte loop.
+	.binary command.
 
 	Macro storage - if xxxx .macro is found, the type is .macro, keep reading lines
 	using AXReadLine and appending to the macro definition until full or .endm

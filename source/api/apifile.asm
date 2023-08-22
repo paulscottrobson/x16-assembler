@@ -28,6 +28,7 @@ TAOpen:
 		ldy 	#>_FileName
 		lda 	#7 							; reset handle tracker
 		sta 	TAHandleTracker
+		stz 	TAIsEOF 					; reset EOF flag.
 _TAHaveName:
 		stx 	TATemp0 					; get length
 		sty 	TATemp0+1
@@ -75,26 +76,30 @@ TAClose:
 ; ************************************************************************************************
 
 TAReadChar:
+		bit 	TAIsEOF 					; last read reached EOF ?
+		bvs 	_TAFail 					; surely there has to be a better way to read a bloody sequential file ?
 		jsr 	$FFC6  						; CHKIN
 		jsr 	$FFCF 						; CHRIN
 		pha
-;		jsr 	$FFB7 						; READST
-;		and 	#64
-;		clc
-;		beq 	_TARExit
-;		sec
-_TARExit:		
-		php
-		jsr 	$FFCC  						; CLRCHN
-		plp	
+		jsr 	$FFB7 						; READST
+		and 	#64 						; EOF next read.
+		sta 	TAIsEOF
 		pla
+		clc
 		rts
+_TAFail:
+		stz 	TAIsEOF 					; clear EOF Flag
+		jsr  	$FFCC 						; CLRCHN
+		sec
+		rts		
 
 		.send as16code
 
 		.section as16zeropage
 TATemp0:
 		.fill 	2
+TAIsEOF:
+		.fill 	1		
 		.send as16zeropage
 
 ; ************************************************************************************************

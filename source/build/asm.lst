@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
 ; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=2 main.asm
-; Tue Aug 22 14:23:09 2023
+; Tue Aug 22 14:35:48 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -2399,9 +2399,9 @@
 .1f13					_TAOpen:
 .1f13	4c 53 1f	jmp $1f53			jmp 	TAOpen
 .1f16					_TAClose:
-.1f16	4c 90 1f	jmp $1f90			jmp 	TAClose
+.1f16	4c 92 1f	jmp $1f92			jmp 	TAClose
 .1f19					_TAReadChar:
-.1f19	4c 99 1f	jmp $1f99			jmp  	TAReadChar
+.1f19	4c 9b 1f	jmp $1f9b			jmp  	TAReadChar
 .1f1c					_TAWriteByte
 .1f1c	4c 26 1f	jmp $1f26			jmp 	TAWriteByte
 .1f1f					_TAListChar:
@@ -2448,60 +2448,65 @@
 
 .1f53					TAOpen:
 .1f53	e0 00		cpx #$00			cpx 	#0 							; check default name ?
-.1f55	d0 0d		bne $1f64			bne 	_TAHaveName
+.1f55	d0 0f		bne $1f66			bne 	_TAHaveName
 .1f57	c0 00		cpy #$00			cpy 	#0
-.1f59	d0 09		bne $1f64			bne 	_TAHaveName
-.1f5b	a2 87		ldx #$87			ldx 	#<_FileName 				; use default.
+.1f59	d0 0b		bne $1f66			bne 	_TAHaveName
+.1f5b	a2 89		ldx #$89			ldx 	#<_FileName 				; use default.
 .1f5d	a0 1f		ldy #$1f			ldy 	#>_FileName
 .1f5f	a9 07		lda #$07			lda 	#7 							; reset handle tracker
 .1f61	8d e0 04	sta $04e0			sta 	TAHandleTracker
-.1f64					_TAHaveName:
-.1f64	86 33		stx $33				stx 	TATemp0 					; get length
-.1f66	84 34		sty $34				sty 	TATemp0+1
-.1f68	a0 ff		ldy #$ff			ldy 	#255
-.1f6a					_TAGetLen:
-.1f6a	c8		iny				iny
-.1f6b	b1 33		lda ($33),y			lda 	(TATemp0),y
-.1f6d	d0 fb		bne $1f6a			bne 	_TAGetLen
-.1f6f	98		tya				tya 								; A = size, XY = filename
-.1f70	a4 34		ldy $34				ldy 	TATemp0+1
-.1f72	20 bd ff	jsr $ffbd			jsr 	$FFBD 						; SETNAM
-.1f75	ee e0 04	inc $04e0			inc 	TAHandleTracker
-.1f78	ad e0 04	lda $04e0			lda 	TAHandleTracker
-.1f7b	48		pha				pha
-.1f7c	a2 08		ldx #$08			ldx 	#8
-.1f7e	a8		tay				tay
-.1f7f	20 ba ff	jsr $ffba			jsr 	$FFBA 						; set LFS
-.1f82	20 c0 ff	jsr $ffc0			jsr 	$FFC0 						; OPEN, returns CS on failure.
-.1f85	68		pla				pla
-.1f86					_TAOExit:
-.1f86	60		rts				rts
-.1f87					_FileName:
->1f87	43 4f 44 45 2e 41 53 4d				.text 	'CODE.ASM',0
->1f8f	00
-.1f90					TAClose:
-.1f90	8a		txa				txa
-.1f91	20 c3 ff	jsr $ffc3			jsr 	$FFC3
-.1f94	ce e0 04	dec $04e0			dec 	TAHandleTracker
-.1f97	18		clc				clc
-.1f98	60		rts				rts
-.1f99					TAReadChar:
-.1f99	20 c6 ff	jsr $ffc6			jsr 	$FFC6  						; CHKIN
-.1f9c	20 cf ff	jsr $ffcf			jsr 	$FFCF 						; CHRIN
-.1f9f	48		pha				pha
-.1fa0	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
-.1fa3	29 40		and #$40			and 	#64
-.1fa5	18		clc				clc
-.1fa6	f0 01		beq $1fa9			beq 	_TARExit
-.1fa8	38		sec				sec
-.1fa9					_TARExit:
-.1fa9	08		php				php
-.1faa	20 cc ff	jsr $ffcc			jsr 	$FFCC  						; CLRCHN
-.1fad	28		plp				plp
-.1fae	68		pla				pla
+.1f64	64 35		stz $35				stz 	TAIsEOF 					; reset EOF flag.
+.1f66					_TAHaveName:
+.1f66	86 33		stx $33				stx 	TATemp0 					; get length
+.1f68	84 34		sty $34				sty 	TATemp0+1
+.1f6a	a0 ff		ldy #$ff			ldy 	#255
+.1f6c					_TAGetLen:
+.1f6c	c8		iny				iny
+.1f6d	b1 33		lda ($33),y			lda 	(TATemp0),y
+.1f6f	d0 fb		bne $1f6c			bne 	_TAGetLen
+.1f71	98		tya				tya 								; A = size, XY = filename
+.1f72	a4 34		ldy $34				ldy 	TATemp0+1
+.1f74	20 bd ff	jsr $ffbd			jsr 	$FFBD 						; SETNAM
+.1f77	ee e0 04	inc $04e0			inc 	TAHandleTracker
+.1f7a	ad e0 04	lda $04e0			lda 	TAHandleTracker
+.1f7d	48		pha				pha
+.1f7e	a2 08		ldx #$08			ldx 	#8
+.1f80	a8		tay				tay
+.1f81	20 ba ff	jsr $ffba			jsr 	$FFBA 						; set LFS
+.1f84	20 c0 ff	jsr $ffc0			jsr 	$FFC0 						; OPEN, returns CS on failure.
+.1f87	68		pla				pla
+.1f88					_TAOExit:
+.1f88	60		rts				rts
+.1f89					_FileName:
+>1f89	43 4f 44 45 2e 41 53 4d				.text 	'CODE.ASM',0
+>1f91	00
+.1f92					TAClose:
+.1f92	8a		txa				txa
+.1f93	20 c3 ff	jsr $ffc3			jsr 	$FFC3
+.1f96	ce e0 04	dec $04e0			dec 	TAHandleTracker
+.1f99	18		clc				clc
+.1f9a	60		rts				rts
+.1f9b					TAReadChar:
+.1f9b	24 35		bit $35				bit 	TAIsEOF 					; last read reached EOF ?
+.1f9d	70 11		bvs $1fb0			bvs 	_TAFail 					; surely there has to be a better way to read a bloody sequential file ?
+.1f9f	20 c6 ff	jsr $ffc6			jsr 	$FFC6  						; CHKIN
+.1fa2	20 cf ff	jsr $ffcf			jsr 	$FFCF 						; CHRIN
+.1fa5	48		pha				pha
+.1fa6	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
+.1fa9	29 40		and #$40			and 	#64 						; EOF next read.
+.1fab	85 35		sta $35				sta 	TAIsEOF
+.1fad	68		pla				pla
+.1fae	18		clc				clc
 .1faf	60		rts				rts
+.1fb0					_TAFail:
+.1fb0	64 35		stz $35				stz 	TAIsEOF 					; clear EOF Flag
+.1fb2	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
+.1fb5	38		sec				sec
+.1fb6	60		rts				rts
 .0033					TATemp0:
 >0033							.fill 	2
+.0035					TAIsEOF:
+>0035							.fill 	1
 
 ;******  Return to file: api/testapi.asm
 
