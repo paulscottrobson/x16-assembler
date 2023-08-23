@@ -1,4 +1,6 @@
 TODO:
+	Error system, some errors are fatal, some can be continued. 
+
 	File not found doesn't work. It's utter crap really !	
 	
 	Macro storage - if xxxx .macro is found, the type is .macro, keep reading lines
@@ -11,7 +13,6 @@ TODO:
 	Find the macro, read each and expand it as you go using the parameters in the 
 	frame.
 
-	Error system, some errors are fatal, some can be continued. 
 
 	Check collision of stack / identifiers at instruction end, out of memory error. fatal.
 	Pass 2 - throw out undefined values.

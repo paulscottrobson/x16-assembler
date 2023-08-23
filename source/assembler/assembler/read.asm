@@ -67,6 +67,9 @@ _AXInQuotes:
 _AXOutChar:
 		sta 	AXBuffer,x 				
 		inx
+		cpx 	#AXMaxLineSize-1 			; too long.
+		lda 	#AXERRLength
+		bcs 	_AXRLErrExit
 		jsr 	AXReadCharacter 			; read next
 		bcc 	_AXRLLoop	 				; loop back if not EOF
 		;
@@ -81,6 +84,7 @@ _AXRLExit:
 _AXRLEOFExit:
 		stz 	AXBuffer 					; clear buffer
 		lda 	#AXERREOF 					; return EOF error, which is complete :)
+_AXRLErrExit:		
 		sec
 		rts
 

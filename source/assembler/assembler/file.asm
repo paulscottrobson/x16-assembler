@@ -70,9 +70,9 @@ _AXMainLoop:
 		;
 _AXAFError:
 		cmp 	#AXERREOF 					; was the error EOF, which isn't an error :)
-		sec 								; if not, still report an error
-		bne 	_AFAXCloseExit
-		clc 								; if EOF, end of file, it's okay.
+		clc 								; if so don't report an error.
+		beq 	_AFAXCloseExit
+		.byte $DB
 
 _AFAXCloseExit:
 		php 								; save error flag and error ID

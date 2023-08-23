@@ -242,7 +242,8 @@ AXERRNotFound = $85 						; source file not found.
 AXERRUndefined = $06 						; undefined identifier.
 AXERRRelative = $07 						; relative branch range.
 AXERRMode = $08 							; address mode not supported in 65C02
-AXERRSize = $09 							; bad expression size.
+AXERRSize = $09 							; bad expression.
+AXERRLength = $8A 							; line too long.
 
 		.send as16code
 
@@ -846,9 +847,9 @@ _AXMainLoop:
 		;
 _AXAFError:
 		cmp 	#AXERREOF 					; was the error EOF, which isn't an error :)
-		sec 								; if not, still report an error
-		bne 	_AFAXCloseExit
-		clc 								; if EOF, end of file, it's okay.
+		clc 								; if so don't report an error.
+		beq 	_AFAXCloseExit
+		.byte $DB
 
 _AFAXCloseExit:
 		php 								; save error flag and error ID
@@ -1476,6 +1477,9 @@ _AXInQuotes:
 _AXOutChar:
 		sta 	AXBuffer,x
 		inx
+		cpx 	#AXMaxLineSize-1 			; too long.
+		lda 	#AXERRLength
+		bcs 	_AXRLErrExit
 		jsr 	AXReadCharacter 			; read next
 		bcc 	_AXRLLoop	 				; loop back if not EOF
 		;
@@ -1490,6 +1494,7 @@ _AXRLExit:
 _AXRLEOFExit:
 		stz 	AXBuffer 					; clear buffer
 		lda 	#AXERREOF 					; return EOF error, which is complete :)
+_AXRLErrExit:
 		sec
 		rts
 

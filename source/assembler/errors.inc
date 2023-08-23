@@ -29,7 +29,8 @@ AXERRNotFound = $85 						; source file not found.
 AXERRUndefined = $06 						; undefined identifier.
 AXERRRelative = $07 						; relative branch range.
 AXERRMode = $08 							; address mode not supported in 65C02
-AXERRSize = $09 							; bad expression size.
+AXERRSize = $09 							; bad expression.
+AXERRLength = $8A 							; line too long.
 
 		.send as16code
 

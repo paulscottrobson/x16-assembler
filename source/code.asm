@@ -40,7 +40,7 @@ h1:
 	bit #$12
 	stz $1234
 	stz $5667,x
-
+;	stz $1234,y
 	.include "code2.asm"
 	
 	jmp loop
@@ -52,3 +52,5 @@ loop:
 	.byte 1,2,3,4,1,>sbcrt,<sbcrt
 	.include "code2.asm"
 	.text 13,"Hello",0
+"
+	.word 0,0,0
