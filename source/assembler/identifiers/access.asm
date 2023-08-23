@@ -20,14 +20,14 @@
 
 AXIOpen:
 		pha 	
-		lda 	#7
+		lda 	#AXAPILock
 		jsr 	AXCallAPI
 		pla
 		rts
 
 AXIClose:
 		pha 	
-		lda 	#8
+		lda 	#AXAPIUnlock
 		jsr 	AXCallAPI
 		pla
 		rts

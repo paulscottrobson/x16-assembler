@@ -117,7 +117,7 @@ AXListOut:
 		phx 								; preserve XY and call API List function.
 		phy	
 		tax
-		lda 	#6
+		lda 	#AXAPIListChar
 		jsr 	AXCallAPI
 		ply
 		plx

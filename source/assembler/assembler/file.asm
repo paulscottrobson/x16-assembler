@@ -19,7 +19,7 @@
 ; ************************************************************************************************
 
 AXAssembleFile:
-		lda 	#1 							; open the source file.
+		lda 	#AXAPIOpen 					; open the source file.
 		jsr 	AXCallAPI 
 		sta 	AXFileHandle 				; save handle
 		lda 	#AXERRNotFound 				; return not found if failed.
@@ -77,7 +77,7 @@ _AXAFError:
 _AFAXCloseExit:
 		php 								; save error flag and error ID
 		pha
-		lda 	#2 							; close the file.
+		lda 	#AXAPIClose 				; close the file.
 		ldx 	AXFileHandle
 		jsr 	AXCallAPI
 		pla 								; restore flag/id and exit.

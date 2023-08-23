@@ -28,6 +28,8 @@ AXAPIReadByte = $03
 AXAPIWriteByte = $04
 AXAPIError = $05
 AXAPIListChar = $06
+AXAPILock = $07
+AXAPIUnlock = $08
 
 		.send as16code
 
@@ -793,7 +795,7 @@ AXVector: 									; for calling psuedo op code
 ; ************************************************************************************************
 
 AXAssembleFile:
-		lda 	#1 							; open the source file.
+		lda 	#AXAPIOpen 					; open the source file.
 		jsr 	AXCallAPI
 		sta 	AXFileHandle 				; save handle
 		lda 	#AXERRNotFound 				; return not found if failed.
@@ -851,7 +853,7 @@ _AXAFError:
 _AFAXCloseExit:
 		php 								; save error flag and error ID
 		pha
-		lda 	#2 							; close the file.
+		lda 	#AXAPIClose 				; close the file.
 		ldx 	AXFileHandle
 		jsr 	AXCallAPI
 		pla 								; restore flag/id and exit.
@@ -3255,14 +3257,14 @@ AXBinaryVectors:
 
 AXIOpen:
 		pha
-		lda 	#7
+		lda 	#AXAPILock
 		jsr 	AXCallAPI
 		pla
 		rts
 
 AXIClose:
 		pha
-		lda 	#8
+		lda 	#AXAPIUnlock
 		jsr 	AXCallAPI
 		pla
 		rts
@@ -3637,7 +3639,7 @@ AXIHash:
 ; ************************************************************************************************
 
 AXIReset:
-		lda 	#0 							; get the start & end
+		lda 	#AXAPISetup 				; get the start & end
 		jsr 	AXCallAPI
 		sta 	AXIBase
 		sty 	AXIEnd
@@ -3868,7 +3870,7 @@ AXListOut:
 		phx 								; preserve XY and call API List function.
 		phy
 		tax
-		lda 	#6
+		lda 	#AXAPIListChar
 		jsr 	AXCallAPI
 		ply
 		plx
@@ -3930,7 +3932,7 @@ AXWriteByte:
 
 		tay									; char to Y.
 		ldx 	#AXTemp0 					; ($00,X) is the address
-		lda 	#4 							; API function 4
+		lda 	#AXAPIWriteByte				; API function 4
 		jsr 	AXCallAPI
 		;
 _AXWBBumpPC:
@@ -3986,7 +3988,7 @@ AXBInclude2:;; {.incbin}
 		jsr 	AXListLine 					; list line before expansion
 		jsr 	AXPushFrame 				; save current frame
 
-		lda 	#1 							; open the source file.
+		lda 	#AXAPIOpen 					; open the source file.
 		ldy 	#AXTextParameter >> 8
 		ldx 	#AXTextParameter & $FF
 		jsr 	AXCallAPI
@@ -3995,15 +3997,14 @@ AXBInclude2:;; {.incbin}
 		bcs 	_AXBExit
 
 _AXBOut:
-		lda 	#3 							; read char using API
+		lda 	#AXAPIReadByte 				; read char using API
 		ldx 	AXFileHandle
 		jsr 	AXCallAPI
-		.byte $DB
 		bcs 	_AXBEndFile 				; exit on EOF
 		jsr 	AXWriteByte 				; otherwise copy out.
 		bra 	_AXBOut
 _AXBEndFile
-		lda 	#2 							; close the file.
+		lda 	#AXAPIClose 				; close the file.
 		ldx 	AXFileHandle
 		jsr 	AXCallAPI
 		;

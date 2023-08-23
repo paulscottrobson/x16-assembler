@@ -19,7 +19,7 @@
 ; ************************************************************************************************
 
 AXIReset:
-		lda 	#0 							; get the start & end
+		lda 	#AXAPISetup 				; get the start & end
 		jsr 	AXCallAPI 
 		sta 	AXIBase
 		sty 	AXIEnd

@@ -40,7 +40,7 @@ AXWriteByte:
 
 		tay									; char to Y.
 		ldx 	#AXTemp0 					; ($00,X) is the address
-		lda 	#4 							; API function 4
+		lda 	#AXAPIWriteByte				; API function 4
 		jsr 	AXCallAPI
 		;
 _AXWBBumpPC:		

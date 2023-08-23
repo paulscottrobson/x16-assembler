@@ -25,6 +25,8 @@ AXAPIReadByte = $03
 AXAPIWriteByte = $04
 AXAPIError = $05
 AXAPIListChar = $06
+AXAPILock = $07
+AXAPIUnlock = $08
 
 		.send as16code
 

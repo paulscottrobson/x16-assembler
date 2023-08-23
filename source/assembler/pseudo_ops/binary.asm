@@ -28,7 +28,7 @@ AXBInclude2:;; {.incbin}
 		jsr 	AXListLine 					; list line before expansion
 		jsr 	AXPushFrame 				; save current frame 	
 
-		lda 	#1 							; open the source file.
+		lda 	#AXAPIOpen 					; open the source file.
 		ldy 	#AXTextParameter >> 8
 		ldx 	#AXTextParameter & $FF
 		jsr 	AXCallAPI 
@@ -37,15 +37,14 @@ AXBInclude2:;; {.incbin}
 		bcs 	_AXBExit
 
 _AXBOut:
-		lda 	#3 							; read char using API
+		lda 	#AXAPIReadByte 				; read char using API
 		ldx 	AXFileHandle
 		jsr 	AXCallAPI
-		.byte $DB
 		bcs 	_AXBEndFile 				; exit on EOF
 		jsr 	AXWriteByte 				; otherwise copy out.
 		bra 	_AXBOut
 _AXBEndFile
-		lda 	#2 							; close the file.
+		lda 	#AXAPIClose 				; close the file.
 		ldx 	AXFileHandle
 		jsr 	AXCallAPI
 		;
