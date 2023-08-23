@@ -66,5 +66,6 @@ ident:
 asm: prelim	
 	# $(PYTHON) testing$(S)source.py testing$(S)source.txt >assembler$(S)generated$(S)sourcebytes.dat
 	$(ASSEMBLER) -D TESTING=2
-	$(CDEL) *.bin
-	$(EMULATOR)
+	$(CDEL) memo*.bin
+	#$(EMULATOR)
+	cmp build/asm.prg build/asm.original.prg
