@@ -3085,6 +3085,22 @@ AXSystemDictionary:
 	.byte	0
 	.byte	$2e,$44,$d7              ; .DW
 
+	.byte	14
+	.byte	$73
+	.byte	2
+	.byte	0
+	.word	AXBInclude
+	.byte	0
+	.byte	$2e,$42,$49,$4e,$41,$52,$d9 ; .BINARY
+
+	.byte	14
+	.byte	$61
+	.byte	2
+	.byte	0
+	.word	AXBInclude2
+	.byte	0
+	.byte	$2e,$49,$4e,$43,$42,$49,$ce ; .INCBIN
+
 	.byte	12
 	.byte	$f3
 	.byte	2
@@ -3717,6 +3733,9 @@ AXListLine:
 		cmp 	#2
 		bne 	_AXLLExit
 
+		lda 	AXBuffer 					; blank line ?
+		beq 	_AXLLExit
+
 		lda 	AXProgramCounterStart+2 	; Page
 		jsr 	AXLOutHex
 		lda 	#58
@@ -3899,6 +3918,80 @@ _AXWBSkip:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		binary.asm
+;		Purpose:	.binary command
+;		Created:	23rd August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Include a binary file
+;
+; ************************************************************************************************
+
+AXBInclude:	;; {.binary}
+AXBInclude2:;; {.incbin}
+
+		ldx 	AXOperandPos
+		jsr		AXTGetTextString 			; file name to buffeer
+		bcs 	_AXISyntax 					; failed.
+		;
+		jsr 	AXListLine 					; list line before expansion
+		jsr 	AXPushFrame 				; save current frame
+
+		lda 	#1 							; open the source file.
+		ldy 	#AXTextParameter >> 8
+		ldx 	#AXTextParameter & $FF
+		jsr 	AXCallAPI
+		sta 	AXFileHandle 				; save handle
+		lda 	#AXERRNotFound 				; return not found if failed.
+		bcs 	_AXBExit
+
+_AXBOut:
+		lda 	#3 							; read char using API
+		ldx 	AXFileHandle
+		jsr 	AXCallAPI
+		.byte $DB
+		bcs 	_AXBEndFile 				; exit on EOF
+		jsr 	AXWriteByte 				; otherwise copy out.
+		bra 	_AXBOut
+_AXBEndFile
+		lda 	#2 							; close the file.
+		ldx 	AXFileHandle
+		jsr 	AXCallAPI
+		;
+		jsr 	AXPullFrame 				; restore frame saving the results
+		stz 	AXBuffer 					; stop 2nd listing.
+		clc
+_AXBExit:
+		rts
+
+_AXISyntax:
+		lda 	#AXERRSyntax
+		sec
+		rts
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		byte.asm
 ;		Purpose:	.byte command
 ;		Created:	21st August 2023
@@ -4046,6 +4139,7 @@ AXInclude:	;; {.include}
 		jsr		AXTGetTextString 			; file name to buffeer
 		bcs 	_AXISyntax 					; failed.
 		;
+		jsr 	AXListLine 					; list line before expansion
 		jsr 	AXPushFrame 				; save current frame
 
 		ldy 	#AXTextParameter >> 8 		; assemble named file
@@ -4055,6 +4149,7 @@ AXInclude:	;; {.include}
 		php 								; restore frame saving the results
 		pha
 		jsr 	AXPullFrame
+		stz 	AXBuffer 					; stop 2nd listing.
 		pla
 		plp
 		rts

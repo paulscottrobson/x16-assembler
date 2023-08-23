@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		include.asm
-;		Purpose:	.include command
-;		Created:	22nd August 2023
+;		Name:		binary.asm
+;		Purpose:	.binary command
+;		Created:	23rd August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -14,11 +14,12 @@
 
 ; ************************************************************************************************
 ;
-;									Include a file
+;									Include a binary file
 ;
 ; ************************************************************************************************
 
-AXInclude:	;; {.include}
+AXBInclude:	;; {.binary}
+AXBInclude2:;; {.incbin}
 
 		ldx 	AXOperandPos		
 		jsr		AXTGetTextString 			; file name to buffeer
@@ -27,16 +28,31 @@ AXInclude:	;; {.include}
 		jsr 	AXListLine 					; list line before expansion
 		jsr 	AXPushFrame 				; save current frame 	
 
-		ldy 	#AXTextParameter >> 8 		; assemble named file
-		ldx 	#AXTextParameter & $FF 
-		jsr 	AXAssembleFile
+		lda 	#1 							; open the source file.
+		ldy 	#AXTextParameter >> 8
+		ldx 	#AXTextParameter & $FF
+		jsr 	AXCallAPI 
+		sta 	AXFileHandle 				; save handle
+		lda 	#AXERRNotFound 				; return not found if failed.
+		bcs 	_AXBExit
 
-		php 								; restore frame saving the results 
-		pha
-		jsr 	AXPullFrame
+_AXBOut:
+		lda 	#3 							; read char using API
+		ldx 	AXFileHandle
+		jsr 	AXCallAPI
+		.byte $DB
+		bcs 	_AXBEndFile 				; exit on EOF
+		jsr 	AXWriteByte 				; otherwise copy out.
+		bra 	_AXBOut
+_AXBEndFile
+		lda 	#2 							; close the file.
+		ldx 	AXFileHandle
+		jsr 	AXCallAPI
+		;
+		jsr 	AXPullFrame 				; restore frame saving the results 
 		stz 	AXBuffer 					; stop 2nd listing.	
-		pla
-		plp
+		clc
+_AXBExit:		
 		rts
 
 _AXISyntax:

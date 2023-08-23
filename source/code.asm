@@ -48,6 +48,7 @@ loop:
 	jsr loop	
 	
 	.word $ABCD,sbcrt,$5678
+	.binary "code3.dat"
 	.byte 1,2,3,4,1,>sbcrt,<sbcrt
 	.include "code2.asm"
 	.text 13,"Hello",0

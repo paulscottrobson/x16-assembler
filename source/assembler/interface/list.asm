@@ -23,6 +23,9 @@ AXListLine:
 		cmp 	#2
 		bne 	_AXLLExit
 
+		lda 	AXBuffer 					; blank line ?
+		beq 	_AXLLExit
+		
 		lda 	AXProgramCounterStart+2 	; Page
 		jsr 	AXLOutHex
 		lda 	#58

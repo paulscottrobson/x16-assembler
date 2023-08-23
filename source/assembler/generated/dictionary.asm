@@ -586,6 +586,22 @@ AXSystemDictionary:
 	.byte	0
 	.byte	$2e,$44,$d7              ; .DW
 
+	.byte	14
+	.byte	$73
+	.byte	2
+	.byte	0
+	.word	AXBInclude
+	.byte	0
+	.byte	$2e,$42,$49,$4e,$41,$52,$d9 ; .BINARY
+
+	.byte	14
+	.byte	$61
+	.byte	2
+	.byte	0
+	.word	AXBInclude2
+	.byte	0
+	.byte	$2e,$49,$4e,$43,$42,$49,$ce ; .INCBIN
+
 	.byte	12
 	.byte	$f3
 	.byte	2
