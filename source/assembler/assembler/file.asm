@@ -56,7 +56,7 @@ _AXMainLoop:
 		adc 	#1
 		sta 	AXLineNumberDecimal
 		lda 	AXLineNumberDecimal+1
-		adc 	#1
+		adc 	#0
 		sta 	AXLineNumberDecimal+1
 		cld
 
@@ -72,8 +72,16 @@ _AXAFError:
 		cmp 	#AXERREOF 					; was the error EOF, which isn't an error :)
 		clc 								; if so don't report an error.
 		beq 	_AFAXCloseExit
-		.byte $DB
-
+		
+		sta 	AXErrorCode 				; save errorcode
+		ldy 	#AXErrorCode >> 8 			; YX = error area.
+		ldx 	#AXErrorCode & $FF
+		lda 	#AXAPIError 		
+		jsr 	AXCallAPI 			 		; returns CS if always exit.
+		lda 	AXErrorCode 				; if error code is fatal, e.g. bit 7 set
+		bpl 	_AFAXCloseExit
+		sec 								; you cannot override it.
+		
 _AFAXCloseExit:
 		php 								; save error flag and error ID
 		pha

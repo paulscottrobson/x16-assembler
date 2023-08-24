@@ -26,6 +26,12 @@ AXListLine:
 		lda 	AXBuffer 					; blank line ?
 		beq 	_AXLLExit
 		
+		lda 	AXLineNumberDecimal+1
+		jsr 	AXLOutHex
+		lda 	AXLineNumberDecimal
+		jsr 	AXLOutHex
+		jsr	 	AXLSpace
+		
 		lda 	AXProgramCounterStart+2 	; Page
 		jsr 	AXLOutHex
 		lda 	#58

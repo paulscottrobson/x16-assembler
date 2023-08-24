@@ -19,7 +19,11 @@ Cmd: (in A)
 	4 		Write value Y to ($00,X) -> address $00+x constains address.low, address.high and page in 3 consecutive
 			locations.  Pass 2 only.
 			
-	5 		Report error.
+	5 		Report error. YX points to
+					+0 		error code
+					+1,2	line # (integer)
+					+3,4 	line # (bcd)
+			Return CC to continue.
 
 	6 		Write to listing output A, pass 2 only. Characters are U/C. Do what you want with this, including simply
 			ignoring it.

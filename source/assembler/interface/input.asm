@@ -40,9 +40,12 @@ _AXRNotSpace:
 		ldx 	AXLastCharacter 			; check last char was CR
 		cpx 	#13
 		beq 	_AXNext 					; if so its CR/LF so we ignore the LF.
-		lda 	#13 						; return CR.
+		sta 	AXLastCharacter
+		lda 	#13 						; return CR, last char still LF.
+		bra 	_AXRExit2
 _AXRExit:
 		sta 	AXLastCharacter
+_AXRExit2:		
 		clc
 		ply
 		plx

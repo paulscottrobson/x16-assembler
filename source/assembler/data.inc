@@ -79,11 +79,16 @@ AXFileHandle:	 							; file handle
 		.fill 	1
 AXLastCharacter:							; last character read.
 		.fill 	1
-
+;
+;								This block is made visible on error
+;
+AXErrorCode: 								; error code goes here.
+		.fill 	1
 AXLineNumber: 								; line number.
 		.fill 	2				
 AXLineNumberDecimal: 						; line number in decimal.
 		.fill 	2
+
 
 AXProgramCounterStart: 						; PCTR at instruction start.
 		.fill 	3
