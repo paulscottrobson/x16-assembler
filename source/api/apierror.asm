@@ -19,7 +19,24 @@
 ; ************************************************************************************************
 
 TAError:
-		.byte 	$DB
+		stx 	TATemp0
+		sty 	TATemp0+1
+		lda 	#'*'
+		jsr 	AXListOut
+		jsr 	AXListOut
+		jsr 	AXListOut
+		lda 	(TATemp0)
+		jsr 	AXLOutHex
+		lda 	#'@'
+		jsr 	AXListOut
+		ldy 	#4
+		lda 	(TATemp0),y
+		jsr 	AXLOutHex
+		dey
+		lda 	(TATemp0),y
+		jsr 	AXLOutHex
+		lda 	#13
+		jsr 	AXListOut
 		sec
 		rts
 

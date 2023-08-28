@@ -64,7 +64,8 @@ _FileName:
 
 TAClose:
 		txa
-		jsr 	$FFC3
+		jsr 	$FFC3						; CLOSE
+		jsr  	$FFCC 						; CLRCHN
 		dec 	TAHandleTracker
 		clc
 		rts		

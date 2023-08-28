@@ -808,9 +808,8 @@ AXAssembleFile:
 		bcs 	_AXAFExit
 		;
 		stz 	AXLastCharacter 			; no last character
-		lda 	#1 							; set line number to 1
-		sta 	AXLineNumber
-		sta 	AXLineNumberDecimal
+		stz 	AXLineNumber 				; reset line numbers
+		stz 	AXLineNumberDecimal
 		stz 	AXLineNumber+1
 		stz 	AXLineNumberDecimal+1
 		;
@@ -831,21 +830,7 @@ _AXMainLoop:
 		bcs 	_AXAFError 					; exit if problem there.
 
 		jsr 	AXListLine 					; list the line.
-
-		sed 								; increment the BCD line number.
-		clc
-		lda 	AXLineNumberDecimal
-		adc 	#1
-		sta 	AXLineNumberDecimal
-		lda 	AXLineNumberDecimal+1
-		adc 	#0
-		sta 	AXLineNumberDecimal+1
-		cld
-
-		inc 	AXLineNumber 				; bump line number (integer)
-		bne 	_AXMainLoop
-		inc 	AXLineNumber+1
-		bra 	_AXMainLoop
+				bra 	_AXMainLoop
 
 		;
 		;		Come here on error *or* EOF
@@ -1442,6 +1427,21 @@ AXDoPromote:
 ; ************************************************************************************************
 
 AXReadLine:
+		sed 								; increment the BCD line number.
+		clc
+		lda 	AXLineNumberDecimal
+		adc 	#1
+		sta 	AXLineNumberDecimal
+		lda 	AXLineNumberDecimal+1
+		adc 	#0
+		sta 	AXLineNumberDecimal+1
+		cld
+
+		inc 	AXLineNumber 				; bump line number (integer)
+		bne 	_AXNoCarry
+		inc 	AXLineNumber+1
+_AXNoCarry:
+
 		stz 	AXInQuotes 					; ' " flag reset
 		ldx 	#0 							; read from line start
 		jsr 	AXReadCharacter 			; try to read one.

@@ -26,9 +26,8 @@ AXAssembleFile:
 		bcs 	_AXAFExit
 		;
 		stz 	AXLastCharacter 			; no last character
-		lda 	#1 							; set line number to 1
-		sta 	AXLineNumber 	
-		sta 	AXLineNumberDecimal	
+		stz 	AXLineNumber 				; reset line numbers
+		stz 	AXLineNumberDecimal	
 		stz 	AXLineNumber+1 
 		stz 	AXLineNumberDecimal+1
 		;
@@ -49,21 +48,7 @@ _AXMainLoop:
 		bcs 	_AXAFError 					; exit if problem there.		
 
 		jsr 	AXListLine 					; list the line.
-		
-		sed 								; increment the BCD line number.
-		clc
-		lda 	AXLineNumberDecimal
-		adc 	#1
-		sta 	AXLineNumberDecimal
-		lda 	AXLineNumberDecimal+1
-		adc 	#0
-		sta 	AXLineNumberDecimal+1
-		cld
-
-		inc 	AXLineNumber 				; bump line number (integer)
-		bne 	_AXMainLoop
-		inc 	AXLineNumber+1
-		bra 	_AXMainLoop
+				bra 	_AXMainLoop
 
 		;
 		;		Come here on error *or* EOF
@@ -76,7 +61,7 @@ _AXAFError:
 		sta 	AXErrorCode 				; save errorcode
 		ldy 	#AXErrorCode >> 8 			; YX = error area.
 		ldx 	#AXErrorCode & $FF
-		lda 	#AXAPIError 		
+		lda 	#AXAPIError 				
 		jsr 	AXCallAPI 			 		; returns CS if always exit.
 		lda 	AXErrorCode 				; if error code is fatal, e.g. bit 7 set
 		bpl 	_AFAXCloseExit

@@ -19,6 +19,21 @@
 ; ************************************************************************************************
 
 AXReadLine:
+		sed 								; increment the BCD line number.
+		clc
+		lda 	AXLineNumberDecimal
+		adc 	#1
+		sta 	AXLineNumberDecimal
+		lda 	AXLineNumberDecimal+1
+		adc 	#0
+		sta 	AXLineNumberDecimal+1
+		cld
+
+		inc 	AXLineNumber 				; bump line number (integer)
+		bne 	_AXNoCarry
+		inc 	AXLineNumber+1
+_AXNoCarry:
+
 		stz 	AXInQuotes 					; ' " flag reset
 		ldx 	#0 							; read from line start
 		jsr 	AXReadCharacter 			; try to read one.

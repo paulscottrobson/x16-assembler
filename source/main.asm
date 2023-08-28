@@ -58,16 +58,9 @@ DummyAPI:
 		ldx 	#TestAPIHandler & $FF
 		ldy 	#TestAPIHandler >> 8
 		jsr 	AXAssemble
-		bcs 	_Error
 		rts
-
-
-_Error:	ldx 	#$EE
-		ldy 	#$EE
-		.byte 	$DB
-		bra 	_Error
-
 		.endif
+
 
 		;jmp 	$FFFF
 		.byte 	$DB

@@ -46,7 +46,7 @@ h1:
 	
 	jmp loop
 loop:	
-	jsr loop	
+	jsr loop
 	
 	.word $ABCD,sbcrt,$5678
 	.binary "code3.dat"
