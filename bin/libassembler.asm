@@ -830,7 +830,7 @@ _AXMainLoop:
 		bcs 	_AXAFError 					; exit if problem there.
 
 		jsr 	AXListLine 					; list the line.
-				bra 	_AXMainLoop
+		bra 	_AXMainLoop
 
 		;
 		;		Come here on error *or* EOF

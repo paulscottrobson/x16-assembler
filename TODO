@@ -1,5 +1,4 @@
 TODO:
-	File not found doesn't work. It's utter crap really !	
 	Local Identifiers code.
 	
 	Macro storage - if xxxx .macro is found, the type is .macro, keep reading lines

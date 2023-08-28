@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
 ; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=2 main.asm
-; Mon Aug 28 09:26:02 2023
+; Mon Aug 28 09:33:23 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -358,7 +358,7 @@
 .11c3	20 cb 10	jsr $10cb			jsr 	AXAssembleLine 				; assemble it.
 .11c6	b0 05		bcs $11cd			bcs 	_AXAFError 					; exit if problem there.
 .11c8	20 ac 1c	jsr $1cac			jsr 	AXListLine 					; list the line.
-.11cb	80 df		bra $11ac					bra 	_AXMainLoop
+.11cb	80 df		bra $11ac			bra 	_AXMainLoop
 .11cd					_AXAFError:
 .11cd	c9 00		cmp #$00			cmp 	#AXERREOF 					; was the error EOF, which isn't an error :)
 .11cf	18		clc				clc 								; if so don't report an error.
@@ -2480,15 +2480,15 @@
 .1fa0					_TAOpen:
 .1fa0	4c e3 1f	jmp $1fe3			jmp 	TAOpen
 .1fa3					_TAClose:
-.1fa3	4c 22 20	jmp $2022			jmp 	TAClose
+.1fa3	4c 27 20	jmp $2027			jmp 	TAClose
 .1fa6					_TAReadChar:
-.1fa6	4c 2e 20	jmp $202e			jmp  	TAReadChar
+.1fa6	4c 33 20	jmp $2033			jmp  	TAReadChar
 .1fa9					_TAWriteByte
 .1fa9	4c b6 1f	jmp $1fb6			jmp 	TAWriteByte
 .1fac					_TAListChar:
 .1fac	4c b2 1f	jmp $1fb2			jmp 	TAListChar
 .1faf					_TAError:
-.1faf	4c 4a 20	jmp $204a			jmp 	TAError
+.1faf	4c 4f 20	jmp $204f			jmp 	TAError
 
 ;******  Processing file: api/apilist.asm
 
@@ -2534,7 +2534,7 @@
 .1fe5	d0 0f		bne $1ff6			bne 	_TAHaveName
 .1fe7	c0 00		cpy #$00			cpy 	#0
 .1fe9	d0 0b		bne $1ff6			bne 	_TAHaveName
-.1feb	a2 19		ldx #$19			ldx 	#<_FileName 				; use default.
+.1feb	a2 1e		ldx #$1e			ldx 	#<_FileName 				; use default.
 .1fed	a0 20		ldy #$20			ldy 	#>_FileName
 .1fef	a9 07		lda #$07			lda 	#7 							; reset handle tracker
 .1ff1	8d e1 04	sta $04e1			sta 	TAHandleTracker
@@ -2556,37 +2556,39 @@
 .200e	a2 08		ldx #$08			ldx 	#8
 .2010	a8		tay				tay
 .2011	20 ba ff	jsr $ffba			jsr 	$FFBA 						; set LFS
-.2014	20 c0 ff	jsr $ffc0			jsr 	$FFC0 						; OPEN, returns CS on failure.
-.2017	68		pla				pla
-.2018					_TAOExit:
-.2018	60		rts				rts
-.2019					_FileName:
->2019	43 4f 44 45 2e 41 53 4d				.text 	'CODE.ASM',0
->2021	00
-.2022					TAClose:
-.2022	8a		txa				txa
-.2023	20 c3 ff	jsr $ffc3			jsr 	$FFC3						; CLOSE
-.2026	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
-.2029	ce e1 04	dec $04e1			dec 	TAHandleTracker
-.202c	18		clc				clc
-.202d	60		rts				rts
-.202e					TAReadChar:
-.202e	24 35		bit $35				bit 	TAIsEOF 					; last read reached EOF ?
-.2030	70 11		bvs $2043			bvs 	_TAFail 					; surely there has to be a better way to read a bloody sequential file ?
-.2032	20 c6 ff	jsr $ffc6			jsr 	$FFC6  						; CHKIN
-.2035	20 cf ff	jsr $ffcf			jsr 	$FFCF 						; CHRIN
-.2038	48		pha				pha
-.2039	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
-.203c	29 40		and #$40			and 	#64 						; EOF next read.
-.203e	85 35		sta $35				sta 	TAIsEOF
-.2040	68		pla				pla
-.2041	18		clc				clc
-.2042	60		rts				rts
-.2043					_TAFail:
-.2043	64 35		stz $35				stz 	TAIsEOF 					; clear EOF Flag
-.2045	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
-.2048	38		sec				sec
-.2049	60		rts				rts
+.2014	20 c0 ff	jsr $ffc0			jsr 	$FFC0 						; OPEN,
+.2017	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
+.201a	69 ff		adc #$ff			adc 	#$FF 						; set CS on error.
+.201c	68		pla				pla
+.201d					_TAOExit:
+.201d	60		rts				rts
+.201e					_FileName:
+>201e	43 4f 44 45 2e 41 53 4d				.text 	'CODE.ASM',0
+>2026	00
+.2027					TAClose:
+.2027	8a		txa				txa
+.2028	20 c3 ff	jsr $ffc3			jsr 	$FFC3						; CLOSE
+.202b	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
+.202e	ce e1 04	dec $04e1			dec 	TAHandleTracker
+.2031	18		clc				clc
+.2032	60		rts				rts
+.2033					TAReadChar:
+.2033	24 35		bit $35				bit 	TAIsEOF 					; last read reached EOF ?
+.2035	70 11		bvs $2048			bvs 	_TAFail 					; surely there has to be a better way to read a bloody sequential file ?
+.2037	20 c6 ff	jsr $ffc6			jsr 	$FFC6  						; CHKIN
+.203a	20 cf ff	jsr $ffcf			jsr 	$FFCF 						; CHRIN
+.203d	48		pha				pha
+.203e	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
+.2041	29 40		and #$40			and 	#64 						; EOF next read.
+.2043	85 35		sta $35				sta 	TAIsEOF
+.2045	68		pla				pla
+.2046	18		clc				clc
+.2047	60		rts				rts
+.2048					_TAFail:
+.2048	64 35		stz $35				stz 	TAIsEOF 					; clear EOF Flag
+.204a	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
+.204d	38		sec				sec
+.204e	60		rts				rts
 .0033					TATemp0:
 >0033							.fill 	2
 .0035					TAIsEOF:
@@ -2597,27 +2599,27 @@
 
 ;******  Processing file: api/apierror.asm
 
-.204a					TAError:
-.204a	86 33		stx $33				stx 	TATemp0
-.204c	84 34		sty $34				sty 	TATemp0+1
-.204e	a9 2a		lda #$2a			lda 	#'*'
-.2050	20 3d 1d	jsr $1d3d			jsr 	AXListOut
-.2053	20 3d 1d	jsr $1d3d			jsr 	AXListOut
-.2056	20 3d 1d	jsr $1d3d			jsr 	AXListOut
-.2059	b2 33		lda ($33)			lda 	(TATemp0)
-.205b	20 25 1d	jsr $1d25			jsr 	AXLOutHex
-.205e	a9 40		lda #$40			lda 	#'@'
-.2060	20 3d 1d	jsr $1d3d			jsr 	AXListOut
-.2063	a0 04		ldy #$04			ldy 	#4
-.2065	b1 33		lda ($33),y			lda 	(TATemp0),y
-.2067	20 25 1d	jsr $1d25			jsr 	AXLOutHex
-.206a	88		dey				dey
-.206b	b1 33		lda ($33),y			lda 	(TATemp0),y
-.206d	20 25 1d	jsr $1d25			jsr 	AXLOutHex
-.2070	a9 0d		lda #$0d			lda 	#13
-.2072	20 3d 1d	jsr $1d3d			jsr 	AXListOut
-.2075	38		sec				sec
-.2076	60		rts				rts
+.204f					TAError:
+.204f	86 33		stx $33				stx 	TATemp0
+.2051	84 34		sty $34				sty 	TATemp0+1
+.2053	a9 2a		lda #$2a			lda 	#'*'
+.2055	20 3d 1d	jsr $1d3d			jsr 	AXListOut
+.2058	20 3d 1d	jsr $1d3d			jsr 	AXListOut
+.205b	20 3d 1d	jsr $1d3d			jsr 	AXListOut
+.205e	b2 33		lda ($33)			lda 	(TATemp0)
+.2060	20 25 1d	jsr $1d25			jsr 	AXLOutHex
+.2063	a9 40		lda #$40			lda 	#'@'
+.2065	20 3d 1d	jsr $1d3d			jsr 	AXListOut
+.2068	a0 04		ldy #$04			ldy 	#4
+.206a	b1 33		lda ($33),y			lda 	(TATemp0),y
+.206c	20 25 1d	jsr $1d25			jsr 	AXLOutHex
+.206f	88		dey				dey
+.2070	b1 33		lda ($33),y			lda 	(TATemp0),y
+.2072	20 25 1d	jsr $1d25			jsr 	AXLOutHex
+.2075	a9 0d		lda #$0d			lda 	#13
+.2077	20 3d 1d	jsr $1d3d			jsr 	AXListOut
+.207a	38		sec				sec
+.207b	60		rts				rts
 
 ;******  Return to file: api/testapi.asm
 

@@ -48,7 +48,9 @@ _TAGetLen:
 		tay
 		jsr 	$FFBA 						; set LFS
 
-		jsr 	$FFC0 						; OPEN, returns CS on failure.
+		jsr 	$FFC0 						; OPEN, 
+		jsr 	$FFB7 						; READST
+		adc 	#$FF 						; set CS on error.
 		pla
 _TAOExit:			
 		rts
