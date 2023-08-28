@@ -55,8 +55,8 @@ DummyAPI:
 		.endif
 
 		.if 	TESTING==2
-		ldx 	#TestAPIHandler & $FF
-		ldy 	#TestAPIHandler >> 8
+		ldx 	#SampleAPIHandler & $FF
+		ldy 	#SampleAPIHandler >> 8
 		jsr 	AXAssemble
 		rts
 		.endif
@@ -72,7 +72,7 @@ h1:		bra 	h1
 		.include "testing/testexpr.asm"
 		.endif
 		.if 	TESTING==2
-		.include "api/testapi.asm"
+		.include "api/api.asm"
 		.endif
 
 ; ************************************************************************************************

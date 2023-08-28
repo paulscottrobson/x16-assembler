@@ -1,8 +1,8 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name : 		testapi.asm
-;		Purpose :	API Test
+;		Name : 		api.asm
+;		Purpose :	Sample Assembbler API.
 ;		Date :		12th August 2023
 ; 		Reviewed :	No
 ;		Author : 	Paul Robson (paul@robsons.org.uk)
@@ -12,21 +12,32 @@
 
 		.section as16code
 
-TestAPIHandler:
-		cmp 	#0
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;											API Entry Point
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+SampleAPIHandler:
+		cmp 	#AXAPISetup
 		beq 	_TAMemInfo
-		cmp 	#1
+		cmp 	#AXAPIOpen
 		beq 	_TAOpen
-		cmp 	#2
+		cmp 	#AXAPIClose
 		beq 	_TAClose
-		cmp 	#3
+		cmp 	#AXAPIReadByte
 		beq	 	_TAReadChar
-		cmp 	#4
+		cmp 	#AXAPIWriteByte
 		beq 	_TAWriteByte
-		cmp 	#5
+		cmp 	#AXAPIError
 		beq 	_TAError
-		cmp 	#6
+		cmp 	#AXAPIListChar
 		beq 	_TAListChar
+		;
+		;		Lock/Unlock are not implemented as the storage is not in banked memory.
+		;
 		clc
 		rts
 
@@ -37,7 +48,7 @@ TestAPIHandler:
 ; ************************************************************************************************
 
 _TAMemInfo:
-		lda 	#$94
+		lda 	#$94 						; memory from $9400 - $9EFF
 		ldy 	#$9F
 		clc
 		rts		
