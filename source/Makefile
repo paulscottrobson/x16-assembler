@@ -61,10 +61,11 @@ expr: prelim
 	$(EMULATOR)
 
 ident:
-	$(PYTHON) scripts$(S)showident.py $(ASMDATA)
+	$(PYTHON) scripts$(S)showident.py 9400
 
 asm: prelim	
 	# $(PYTHON) testing$(S)source.py testing$(S)source.txt >assembler$(S)generated$(S)sourcebytes.dat
+	$(CDEL) *.bin
 	$(ASSEMBLER) -D TESTING=2
 	$(CDEL) memo*.bin
 	$(EMULATOR)

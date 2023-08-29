@@ -165,7 +165,15 @@ _AXLabelPC:
 		ldx 	AXProgramCounter
 		ldy 	AXProgramCounter+1
 		jsr 	AXIPutData 					; write it.
+
+		lda 	AXLabelBuffer 				; is it a non local label ?
+		cmp 	#"_"
+		beq 	_AXNotGlobal
+		jsr 	AXIBumpLocal 				; we need new locals.
+_AXNotGlobal:		
+
 		plx 								; restore position
+		clc
 		rts 								; return with that error code.
 
 		; ========================================================================================

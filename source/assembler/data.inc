@@ -66,6 +66,9 @@ AXAPI:  									; API call address.
 
 AXPass:										; pass (1 or 2)
 		.fill 	1		
+
+AXLocalLabelID: 							; local label ID counter.
+		.fill 	2		
 		
 ; ************************************************************************************************
 ;

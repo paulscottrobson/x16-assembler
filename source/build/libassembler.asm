@@ -165,6 +165,9 @@ AXAPI:  									; API call address.
 AXPass:										; pass (1 or 2)
 		.fill 	1
 
+AXLocalLabelID: 							; local label ID counter.
+		.fill 	2
+
 ; ************************************************************************************************
 ;
 ;					Frame data - this is saved when macro recursion occurs
@@ -729,7 +732,15 @@ _AXLabelPC:
 		ldx 	AXProgramCounter
 		ldy 	AXProgramCounter+1
 		jsr 	AXIPutData 					; write it.
+
+		lda 	AXLabelBuffer 				; is it a non local label ?
+		cmp 	#"_"
+		beq 	_AXNotGlobal
+		jsr 	AXIBumpLocal 				; we need new locals.
+_AXNotGlobal:
+
 		plx 								; restore position
+		clc
 		rts 								; return with that error code.
 
 		; ========================================================================================
@@ -813,6 +824,9 @@ AXAssembleFile:
 		stz 	AXLineNumber+1
 		stz 	AXLineNumberDecimal+1
 		;
+		stz 	AXLocalLabelID 				; reset the local label ID
+		stz 	AXLocalLabelID+1
+		;
 		;		The main assembler loop.
 		;
 _AXMainLoop:
@@ -831,7 +845,6 @@ _AXMainLoop:
 
 		jsr 	AXListLine 					; list the line.
 		bra 	_AXMainLoop
-
 		;
 		;		Come here on error *or* EOF
 		;
@@ -870,7 +883,6 @@ AXCallAPI:
 		jmp 	(AXAPI)
 
 		.send as16code
-
 
 ; ************************************************************************************************
 ;
@@ -2273,7 +2285,7 @@ AXTerm:	jsr		AXGet
 
 _AXIsConstant:
 		stz 	AXDigitCount 				; clear count of digits
-		sty 	AXBase 					; save base.
+		sty 	AXBase 						; save base.
 _AXConstantLoop:
 		lda 	AXBuffer,x 					; get the next character of the constant.
 		jsr 	AXIsAlphaNumeric 			; must be 0-9A-Z
@@ -3169,6 +3181,14 @@ AXSystemDictionary:
 	.word	AXTextCmd
 	.byte	0
 	.byte	$2e,$54,$45,$58,$d4      ; .TEXT
+
+	.byte	12
+	.byte	$fe
+	.byte	2
+	.byte	0
+	.word	AXXOutCmd
+	.byte	0
+	.byte	$2e,$58,$4f,$55,$d4      ; .XOUT
 
 	.byte	0
 ;
@@ -4422,6 +4442,47 @@ _AXWSyntax:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		xout.asm
+;		Purpose:	.xout command
+;		Created:	29th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;								.xout does jmp $FFFF on pass 2
+;
+; ************************************************************************************************
+
+AXXOutCmd:	;; {.xout}
+		lda 	AXPass
+		cmp 	#2
+		beq		_AXXExit
+		rts
+_AXXExit:
+		jmp 	$FFFF
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		ctypes.asm
 ;		Purpose:	Simple character functions
 ;		Created:	9th August 2023
@@ -4567,7 +4628,16 @@ AXExtractIdentifier:
 		lda 	AXBuffer,x 					; check the first character.
 		jsr 	AXIsIdentifierHead
 		bcs 	_AXELFail
+		;
 		ldy 	#0 							; save position.
+		lda 	AXBuffer,x 					; is the first character a _
+		cmp 	#"_"						; if so, we need to make it a local
+		bne 	_AXELLoop
+		pha
+		phx 								; local header into labelbuffer
+		jsr 	AXILocalHeader
+		plx
+		pla
 		;
 _AXELLoop:
 		sta 	AXLabelBuffer,y 			; save in buffer, bump position
@@ -4592,6 +4662,52 @@ _AXELLoop:
 _AXELFail:
 		lda 	#AXERRIdentifier			; bad label.
 		sec
+		rts
+
+; ************************************************************************************************
+;
+;						New local label set, encountered on global label
+;
+; ************************************************************************************************
+
+AXIBumpLocal:
+		sed
+		clc
+		lda 	AXLocalLabelID
+		adc 	#1
+		sta 	AXLocalLabelID
+		lda 	AXLocalLabelID+1
+		adc 	#0
+		sta 	AXLocalLabelID+1
+		cld
+		rts
+
+; ************************************************************************************************
+;
+;									Make a local label unique
+;
+; ************************************************************************************************
+
+AXILocalHeader:
+		lda 	#"_"
+		sta 	AXLabelBuffer,y
+		iny
+		lda 	AXLocalLabelID+1
+		jsr 	_AXILHOut
+		lda 	AXLocalLabelID
+_AXILHOut:
+		pha
+		lsr 	a
+		lsr 	a
+		lsr 	a
+		lsr 	a
+		jsr 	_AXILNOut
+		pla
+_AXILNOut:
+		and 	#15
+		ora 	#48
+		sta 	AXLabelBuffer,y
+		iny
 		rts
 
 		.send as16code

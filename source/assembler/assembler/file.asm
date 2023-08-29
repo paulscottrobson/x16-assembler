@@ -31,6 +31,9 @@ AXAssembleFile:
 		stz 	AXLineNumber+1 
 		stz 	AXLineNumberDecimal+1
 		;
+		stz 	AXLocalLabelID 				; reset the local label ID
+		stz 	AXLocalLabelID+1
+		;
 		;		The main assembler loop.
 		;
 _AXMainLoop:
@@ -49,7 +52,6 @@ _AXMainLoop:
 
 		jsr 	AXListLine 					; list the line.
 		bra 	_AXMainLoop
-
 		;
 		;		Come here on error *or* EOF
 		;
@@ -88,7 +90,6 @@ AXCallAPI:
 		jmp 	(AXAPI)
 
 		.send as16code
-
 
 ; ************************************************************************************************
 ;

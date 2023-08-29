@@ -48,6 +48,12 @@ h1:
 loop:	
 	jsr loop
 	
+	jmp 	_t3
+_t1:
+	bra 	_t1
+_t2
+	bra 	_t2
+_t3:	
 	.word $ABCD,sbcrt,$5678
 	.binary "code3.dat"
 	.byte 1,2,3,4,1,>sbcrt,<sbcrt

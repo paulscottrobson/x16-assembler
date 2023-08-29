@@ -11,7 +11,7 @@
 
 import os,sys,math,re
 
-addr = int(sys.argv[1][1:],16)	
+addr = int(sys.argv[1],16)	
 mem = [x for x in open("dump.bin","rb").read(-1)]
 
 while mem[addr] != 0:

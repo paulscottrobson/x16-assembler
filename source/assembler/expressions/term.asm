@@ -55,7 +55,7 @@ AXTerm:	jsr		AXGet
 
 _AXIsConstant:		
 		stz 	AXDigitCount 				; clear count of digits
-		sty 	AXBase 					; save base.
+		sty 	AXBase 						; save base.
 _AXConstantLoop:
 		lda 	AXBuffer,x 					; get the next character of the constant.		
 		jsr 	AXIsAlphaNumeric 			; must be 0-9A-Z
