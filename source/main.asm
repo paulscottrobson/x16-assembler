@@ -2,7 +2,7 @@
 ; ************************************************************************************************
 ;
 ;		Name : 		main.asm
-;		Purpose :	Main Program
+;		Purpose :	Main Program (wrapper for testing with api in api directory)
 ;		Date :		9th August 2023
 ; 		Reviewed :	No
 ;		Author : 	Paul Robson (paul@robsons.org.uk)
@@ -37,7 +37,9 @@
 		.include "build/libassembler.asm"
 
 Start:	
-
+		;
+		;		This tests expressions
+		;
 		.if 	TESTING==1
 		ldx 	#<DummyAPI 			; set up dummy so reset works.
 		ldy 	#>DummyAPI
@@ -46,25 +48,22 @@ Start:
 		jsr 	AXIReset
 		jsr 	TestExpressions
 
-DummyAPI:		
+DummyAPI:		 					; just enough to make it work !!
 		lda 	#$94
 		ldy 	#$9F
 		clc
 		rts		
 
 		.endif
-
+		;
+		;		This is what is normally run, assembles code as received via API.
+		;
 		.if 	TESTING==2
 		ldx 	#SampleAPIHandler & $FF
 		ldy 	#SampleAPIHandler >> 8
 		jsr 	AXAssemble
 		rts
 		.endif
-
-
-		;jmp 	$FFFF
-		.byte 	$DB
-h1:		bra 	h1		
 
 		.send as16code
 

@@ -619,6 +619,14 @@ AXSystemDictionary:
 	.byte	$2e,$54,$45,$58,$d4      ; .TEXT
 
 	.byte	12
+	.byte	$ca
+	.byte	2
+	.byte	0
+	.word	AXBankCmd
+	.byte	0
+	.byte	$2e,$42,$41,$4e,$cb      ; .BANK
+
+	.byte	12
 	.byte	$fe
 	.byte	2
 	.byte	0

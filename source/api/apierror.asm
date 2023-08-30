@@ -19,23 +19,23 @@
 ; ************************************************************************************************
 
 TAError:
-		stx 	TATemp0
+		stx 	TATemp0 					; save info area address
 		sty 	TATemp0+1
-		lda 	#'*'
+		lda 	#'*'						; print 3 stars
 		jsr 	AXListOut
 		jsr 	AXListOut
 		jsr 	AXListOut
-		lda 	(TATemp0)
+		lda 	(TATemp0) 					; output error code
 		jsr 	AXLOutHex
-		lda 	#'@'
+		lda 	#'@' 						; output @
 		jsr 	AXListOut
-		ldy 	#4
+		ldy 	#4 						 	; output the page number (4+5 are BCD)
 		lda 	(TATemp0),y
 		jsr 	AXLOutHex
 		dey
 		lda 	(TATemp0),y
 		jsr 	AXLOutHex
-		lda 	#13
+		lda 	#13 						; new line.
 		jsr 	AXListOut
 		sec
 		rts

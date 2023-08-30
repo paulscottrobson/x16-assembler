@@ -136,11 +136,15 @@ _AXExit:
 ; ************************************************************************************************
 
 AXProcessLabel:		
+		lda 	AXPass 						; don't set the type on pass 2
+		cmp 	#2
+		beq 	_AXPLNoSet
 		phx 								; set type to label/identifiier.
 		lda 	#AXIT_Label
 		ldy 	#AXID_Type
 		jsr 	AXIPut
 		plx
+_AXPLNoSet:		
 
 		jsr 	AXGet 						; what is next
 		beq 	_AXLabelPC 					; nothing, it's a program counter label

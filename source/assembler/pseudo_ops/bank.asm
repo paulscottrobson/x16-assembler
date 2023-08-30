@@ -1,11 +1,11 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name : 		apiwrite.asm
-;		Purpose :	Write assembled byte 
-;		Date :		20th August 2023
-; 		Reviewed :	No
-;		Author : 	Paul Robson (paul@robsons.org.uk)
+;		Name:		bank.asm
+;		Purpose:	.bank command
+;		Created:	30th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
 ; ************************************************************************************************
@@ -14,37 +14,33 @@
 
 ; ************************************************************************************************
 ;
-;								Handle byte assembly/save/storage.
+;								Select bank for object code.
 ;
 ; ************************************************************************************************
 
-TAWriteByte:
-		tya 								; simple save
-		sta 	($00,x)
+AXBankCmd:	;; {.bank}
 
+		ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
+		jsr 	AXGet 						; what follows
+		cmp 	#0
+		beq 	_AXBCIncrement 				; if eol then just increment the bank.
+
+		jsr 	AXPass2Expression 			; get value
+		bcs 	_AXBExit
+		lda 	AXLeft 						; update the bank
+		sta 	AXProgramCounter+2
+		clc
+_AXBExit:		
 		rts
 
-		phy 								; dump code to screen, not used really but an option.
-		lda 	#'@' 						; or you could write it to a file.
-		jsr 	AXListOut
-		lda 	$02,x
-		jsr 	AXLOutHex
-		lda 	#'.'
-		jsr 	AXListOut
-		lda 	$01,x
-		jsr 	AXLOutHex
-		lda 	$00,x
-		jsr 	AXLOutHex
-		lda 	#"="
-		jsr 	AXListOut
-		pla
-		jsr 	AXLOutHex
-		lda 	#13
-		jsr 	AXListOut
+_AXBCIncrement:
+		inc 	AXProgramCounter+2 			; next bank
+		clc
 		rts
+
 
 		.send as16code
-
+		
 ; ************************************************************************************************
 ;
 ;									Changes and Updates

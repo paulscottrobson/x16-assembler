@@ -50,7 +50,7 @@ _TAGetLen:
 
 		jsr 	$FFC0 						; OPEN, 
 		jsr 	$FFB7 						; READST
-		adc 	#$FF 						; set CS on error.
+		adc 	#$FF 						; set CS on error (A != 0)
 		pla
 _TAOExit:			
 		rts

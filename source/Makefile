@@ -40,10 +40,6 @@ prelim:
 	$(PYTHON) scripts$(S)makelib.py >build$(S)libassembler.asm
 	$(CCOPY)  build$(S)libassembler.asm $(BINDIR)
 	
-run: assemble
-	$(CDEL) *.bin
-	$(EMULATOR)
-
 tools:
 	$(CCOPY) $(ROOTDIR)..$(S)x16-emulator$(S)x16emu$(APPSTEM) $(BINDIR)
 	$(CCOPY) $(ROOTDIR)..$(S)x16-rom$(S)build$(S)x16$(S)rom.bin $(BINDIR)
@@ -63,7 +59,7 @@ expr: prelim
 ident:
 	$(PYTHON) scripts$(S)showident.py 9400
 
-asm: prelim	
+run: prelim	
 	# $(PYTHON) testing$(S)source.py testing$(S)source.txt >assembler$(S)generated$(S)sourcebytes.dat
 	$(CDEL) *.bin
 	$(ASSEMBLER) -D TESTING=2
