@@ -8,6 +8,7 @@ m11	.macro
 	lda 	#\1
 	sta 	count
 	.endm
+	m11 	42,sbcrt,"Hello world"
 
 sbcrt:
 

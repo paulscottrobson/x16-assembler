@@ -1,13 +1,5 @@
 TODO:
-		
-	Macro execution - divide the parameters by offset/length in the frame, push the
-	frame on stack. 
-	Find the macro, read each and expand it as you go using the parameters in the 
-	frame.
-	At the end, pop the frame.
+	- code as described.		
 
-
-	Check collision of stack / identifiers at instruction end, out of memory error. fatal.
-	Pass 2 - throw out undefined values.
-	Pass 1 - assignments must be defined, values not.
+	- Check collision of stack / identifiers at instruction end, out of memory error. fatal.
 

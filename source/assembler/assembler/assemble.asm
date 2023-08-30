@@ -96,7 +96,13 @@ _AXALabel:
 		ldy 	AXIBase 					; start scanning.
 		ldx 	#0
 		jsr 	AXICreateFind 				; find it, or create it if necessary.
+
+		ldy 	#AXID_Type  				; get the type.
+		jsr 	AXIGet
 		plx
+
+		cmp 	#AXIT_Macro 				; if macro, go to macro code.
+		beq 	_AXAMacro
 
 		jsr 	AXProcessLabel 				; process the label.
 		bcc 	_AXAContinue 				; if okay, try the line again.

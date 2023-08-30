@@ -19,7 +19,16 @@
 ; ************************************************************************************************
 
 AXPAssembleMacro:
-		.byte 	$DB
+		.byte 	$DB		
+		; analyse from X on looking for substitutions
+		; start from beginning of code in macro
+		; create frame
+		; for each line
+		; 		get line from macro storage
+		; 		perform substitutions until all donw
+		; 		assemble line
+		; release frame
+		; return flag.
 		bra 	AXPAssembleMacro
 
 		.send as16code
