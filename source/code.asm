@@ -1,4 +1,10 @@
 * = $9000
+label1
+
+m1 	.macro
+	lda 	#\1
+	sta 	count
+	.endm
 
 sbcrt:
 	.text 13,"Hello",0
@@ -61,3 +67,4 @@ _t3:
 	.text 13,"Hello",0
 
 	.word 0,0,0
+	.xout

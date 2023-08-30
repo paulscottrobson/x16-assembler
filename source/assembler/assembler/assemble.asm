@@ -136,6 +136,12 @@ _AXExit:
 ; ************************************************************************************************
 
 AXProcessLabel:		
+		phx 								; set type to label/identifiier.
+		lda 	#AXIT_Label
+		ldy 	#AXID_Type
+		jsr 	AXIPut
+		plx
+
 		jsr 	AXGet 						; what is next
 		beq 	_AXLabelPC 					; nothing, it's a program counter label
 		cmp 	#':'						; if label: then it's a program counter label.

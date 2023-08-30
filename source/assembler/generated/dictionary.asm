@@ -586,6 +586,14 @@ AXSystemDictionary:
 	.byte	0
 	.byte	$2e,$44,$d7              ; .DW
 
+	.byte	13
+	.byte	$20
+	.byte	2
+	.byte	0
+	.word	AXXMacro
+	.byte	0
+	.byte	$2e,$4d,$41,$43,$52,$cf  ; .MACRO
+
 	.byte	14
 	.byte	$73
 	.byte	2

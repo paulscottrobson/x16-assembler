@@ -1,13 +1,11 @@
 TODO:
-	Macro storage - if xxxx .macro is found, the type is .macro, keep reading lines
-	using AXReadLine and appending to the macro definition until full or .endm
-	found. Make the ident lister list them.
-	At the end, pop the frame.
+	Macro code adding.
 
 	Macro execution - divide the parameters by offset/length in the frame, push the
 	frame on stack. 
 	Find the macro, read each and expand it as you go using the parameters in the 
 	frame.
+	At the end, pop the frame.
 
 
 	Check collision of stack / identifiers at instruction end, out of memory error. fatal.

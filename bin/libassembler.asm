@@ -703,6 +703,12 @@ _AXExit:
 ; ************************************************************************************************
 
 AXProcessLabel:
+		phx 								; set type to label/identifiier.
+		lda 	#AXIT_Label
+		ldy 	#AXID_Type
+		jsr 	AXIPut
+		plx
+
 		jsr 	AXGet 						; what is next
 		beq 	_AXLabelPC 					; nothing, it's a program counter label
 		cmp 	#':'						; if label: then it's a program counter label.
@@ -3158,6 +3164,14 @@ AXSystemDictionary:
 	.byte	0
 	.byte	$2e,$44,$d7              ; .DW
 
+	.byte	13
+	.byte	$20
+	.byte	2
+	.byte	0
+	.word	AXXMacro
+	.byte	0
+	.byte	$2e,$4d,$41,$43,$52,$cf  ; .MACRO
+
 	.byte	14
 	.byte	$73
 	.byte	2
@@ -3306,6 +3320,52 @@ AXIClose:
 		jsr 	AXCallAPI
 		pla
 		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		appendmacro.asm
+;		Purpose:	Add the buffer string to the last defined word
+;		Created:	39th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;			For the last defined label in the list, set type to Macro and ....
+;
+;			Add the string in the buffer to the macro text with CR (Carry Clear)
+; 			Add NULL to macro text (Carry Set)
+;
+; ************************************************************************************************
+
+AXIAppendMacro:
+		php 								; save end marker/line flag.
+		.byte 	$DB
+		jsr 	AXIOpen 					; start.
+		lda 	AXBuffer
+		plp
+		jsr 	AXIClose 					; close access
+		rts
+
 
 		.send as16code
 
@@ -3490,7 +3550,7 @@ AXIGet:
 
 ; ************************************************************************************************
 ;
-;									Get element Y => A
+;									Set element Y to A
 ;
 ; ************************************************************************************************
 
@@ -4247,6 +4307,92 @@ _AXISyntax:
 		lda 	#AXERRSyntax
 		sec
 		rts
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		macro.asm
+;		Purpose:	.macro command
+;		Created:	30th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									.macro definition
+;
+; ************************************************************************************************
+
+AXXMacro:	;; {.macro}
+		jsr 	AXReadLine 					; read the next line
+		bcs 	_AXMExit 					; error ?
+		jsr 	AXMCheckEnd 				; is this .endm
+		bcs 	_AXMComplete
+		;
+		lda 	AXPass 						; only do the define on pass 1.
+		cmp 	#2
+		beq 	AXXMacro
+		;
+		clc 								; append the buffer to the macro.
+		jsr 	AXIAppendMacro
+		bra 	AXXMacro
+		;
+_AXMComplete:								; do nothing on pass 2.
+		lda 	AXPass
+		cmp 	#2
+		beq		_AXMExitOkay
+
+		sec 		 						; this appends the NULL to the macro.
+		jsr 	AXIAppendMacro
+
+_AXMExitOkay:
+		clc
+_AXMExit:
+		rts
+
+; ************************************************************************************************
+;
+;								Check if buffer contains .ENDM
+;
+; ************************************************************************************************
+
+AXMCheckEnd:
+		ldx 	#0 							; first non space.
+		jsr 	AXGet
+		ldy 	#0
+_AXMCheck:
+		lda 	AXBuffer,x 					; match ?
+		cmp 	_AXMMarker,y
+		clc 								; no, return CC
+		bne 	_AXMExit
+		inx 								; next chars
+		iny
+		cmp 	#0 							; two NULLs matched ?
+		bne 	_AXMCheck 					; yes, then found .endm
+		sec
+_AXMExit:
+		rts
+
+_AXMMarker:
+		.text 	".ENDM",0
+
 		.send as16code
 
 ; ************************************************************************************************
