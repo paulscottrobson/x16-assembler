@@ -7,6 +7,7 @@ label1
 m11	.macro
 	lda 	#10
 	sta 	label1
+	sta 	*	
 	.endm
 
 m11 	42,sbcrt,"Hello world"
@@ -68,6 +69,8 @@ h1:
 	jmp loop
 loop:	
 	jsr loop
+
+	.include "code2.asm" 				; include text file. 
 	
 	jmp 	_t3 						; _ is a local identifier with the scope of the previous
 _t1: 									; global identifier (loop) to the next global identifier
@@ -83,6 +86,6 @@ _t3:
 
 	.word 0,0,0
 
-;	.xout 								; this is for testing. It does jmp $FFFF on pass#2 so I can analyse the dump.bin file.
+	.xout 								; this is for testing. It does jmp $FFFF on pass#2 so I can analyse the dump.bin file.
 										; comment it out and it returns to the READY prompt.
 										

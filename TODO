@@ -1,8 +1,7 @@
 TODO:
 	- labels have bank.
 
-h1 : doesn't report error even though labels are changed.
-   : puts different levels.
+   - puts different levels, should default to 16 bit ??
    
 	- Check collision of stack / identifiers at instruction end, out of memory error. fatal.
 	- Check defining macro twice ??
