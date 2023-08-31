@@ -5,10 +5,11 @@ label1
 ;		Macro definition. Expansion not yet working. Would be done with "m11 12" for example
 ;
 m11	.macro
-	lda 	#\1
+	lda 	#10
 	sta 	count
 	.endm
-	m11 	42,sbcrt,"Hello world"
+
+m11 	42,sbcrt,"Hello world"
 
 sbcrt:
 
@@ -21,27 +22,27 @@ sbcrt:
 
 	zreg = $42	
 
-	sbc $abcd,x 						; address mode tests
-	sbc $abcd,y
-	sbc (zreg)
-	sbc (zreg),y
-	sbc (zreg,x)
-	sbc zreg,x
-	sbc #zreg
-	sbc zreg
+;	sbc $abcd,x 						; address mode tests
+;	sbc $abcd,y
+;	sbc (zreg)
+;	sbc (zreg),y
+;	sbc (zreg,x)
+;	sbc zreg,x
+;	sbc #zreg
+;	sbc zreg
 	ldx sbcrt
 
 	.bank 								; increments the bank with no operand.
 
-	asl 	 
-	asl a
-	asl $04
-	asl $1234
-	asl $12,x
-	asl $1234,x
-	ldx #0
-	ldy #0
-	jmp $ABCD
+;	asl 	 
+;	asl a
+;	asl $04
+;	asl $1234
+;	asl $12,x
+;	asl $1234,x
+;	ldx #0
+;	ldy #0
+;	jmp $ABCD
 
 	bra sbcrt
 	bra h1 				; forward

@@ -19,17 +19,23 @@
 ; ************************************************************************************************
 
 AXPAssembleMacro:
-		.byte 	$DB		
-		; analyse from X on looking for substitutions
+		jsr 	AXMAnalyseParameters		; work out the parameters limits.
+		bcs 	_AXPAMExit 					; error (probably too many parameters)
+
+		.byte 	$DB	
 		; start from beginning of code in macro
-		; create frame
+
+		jsr 	AXPushFrame 				; save current frame 	
+
 		; for each line
 		; 		get line from macro storage
-		; 		perform substitutions until all donw
+		; 		perform substitutions until all done
 		; 		assemble line
-		; release frame
-		; return flag.
-		bra 	AXPAssembleMacro
+
+		jsr 	AXPullFrame
+		clc
+_AXPAMExit:
+		rts
 
 		.send as16code
 		

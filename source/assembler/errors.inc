@@ -31,6 +31,7 @@ AXERRRelative = $07 						; relative branch range.
 AXERRMode = $08 							; address mode not supported in 65C02
 AXERRSize = $09 							; bad expression.
 AXERRLength = $8A 							; line too long.
+AXERRMacroParams = $8B 						; too many macro parameters.
 
 		.send as16code
 

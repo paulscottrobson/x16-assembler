@@ -132,6 +132,7 @@ AXTemp0: 									; 3 bytes as it is used for the API output function.
 AXMaxLineSize = 80
 AXMaxIdentSize = 16
 AXListByteCount = 4
+AXMaxParams = 4
 
 ; ************************************************************************************************
 ;
@@ -194,6 +195,11 @@ AXLineNumberDecimal: 						; line number in decimal.
 AXProgramCounterStart: 						; PCTR at instruction start.
 		.fill 	3
 
+AXMParamCount: 								; number of macro parameters
+		.fill 	1
+AXMParameters: 								; offset to parameter in AXBuffer
+		.fill 	AXMaxParams+1
+
 AXBuffer:	 								; current line, ASCIIZ.
 		.fill 	AXMaxLineSize+1
 
@@ -252,6 +258,7 @@ AXERRRelative = $07 						; relative branch range.
 AXERRMode = $08 							; address mode not supported in 65C02
 AXERRSize = $09 							; bad expression.
 AXERRLength = $8A 							; line too long.
+AXERRMacroParams = $8B 						; too many macro parameters.
 
 		.send as16code
 
@@ -590,8 +597,10 @@ AXAssembleLine:
 		ldx 	#0 							; start of line
 _AXAContinue:
 		jsr 	AXGet 						; get first character
+		cmp 	#0
+		bne 	_AXHasText
 		clc 								; if 0, empty line, exit with carry clear
-		beq 	_AXExit
+		rts
 
 		; ========================================================================================
 		;
@@ -599,6 +608,7 @@ _AXAContinue:
 		;
 		; ========================================================================================
 
+_AXHasText:
 		cmp 	#'*' 						; is it * (for * = )
 		beq 	_AXSetPC
 		;
@@ -644,7 +654,6 @@ _AXAContinue:
 		jsr 	AXIGet
 		sta 	AXVector+1
 		jmp 	(AXVector)
-
 		;
 		jmp 	$FFFF 						; load the address and jump to it.
 _AXAMacro:
@@ -664,6 +673,12 @@ _AXALabel:
 		ldx 	#0
 		jsr 	AXICreateFind 				; find it, or create it if necessary.
 
+		plx
+		jsr 	AXGet 						; if followed by '.' cannot be macro invocation
+		cmp 	#"."
+		beq 	_AXANotMacro
+		phx
+
 		ldy 	#AXID_Type  				; get the type.
 		jsr 	AXIGet
 		plx
@@ -671,6 +686,7 @@ _AXALabel:
 		cmp 	#AXIT_Macro 				; if macro, go to macro code.
 		beq 	_AXAMacro
 
+_AXANotMacro:
 		jsr 	AXProcessLabel 				; process the label.
 		bcc 	_AXAContinue 				; if okay, try the line again.
 		rts 								; return with error.
@@ -1271,6 +1287,92 @@ AXGroup4:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		analyse.asm
+;		Purpose:	Analyse the instruction parameters
+;		Created:	31st August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;						Analyse parameters (X points to end of identifier)
+;
+;		Creates table in frame of macro parameters - this is a list of positions in AXBuffer.
+;												CS = Error
+;
+; ************************************************************************************************
+
+AXMAnalyseParameters:
+		ldy 	#0 							; count the parameters
+_AXMAPLoop:
+		jsr 	AXGet 						; get the next.
+		cmp 	#0 							; if not zero there is a parameter
+		bne 	_AXMAPParameter
+		;
+_AXMAPExit:
+		sty 	AXMParamCount 				; save the count of parameters
+		txa 								; update the last position in the position list.
+		sta 	AXMParameters,y
+		clc
+		rts
+		;
+_AXMAPParameter:
+		cpy 	#AXMaxParams 				; too many parameters
+		beq 	_AXMAPError
+		;
+		txa 								; save the start of the parameter and increment the count
+		sta 	AXMParameters,y
+		iny
+		;
+_AXMAPSkip:
+		jsr 	AXGet 						; get first non-space character
+		cmp 	#'"'						; quoted string handled seperately.
+		beq 	_AXMAPString
+		cmp 	#0 							; if End found then exit
+		beq 	_AXMAPExit
+		inx 								; consume character
+		cmp 	#","						; keep getting if ,
+		bne 	_AXMAPSkip
+		lda 	#' ' 						; overwrite with a space so the comma isn't copied out.
+		sta 	AXBuffer-1,x
+		bra 	_AXMAPLoop 					; see if another parameter follows.
+		;
+_AXMAPString:
+		inx 								; get next
+		jsr 	AXGet
+		cmp 	#0 							; exit if end of string
+		beq 	_AXMAPExit
+		cmp 	#'"'						; loop back if not closing quote
+		bne 	_AXMAPString
+		inx 								; consume closing quote
+		bra 	_AXMAPSkip 					; and keep looking.
+
+_AXMAPError:
+		lda 	#AXERRMacroParams
+		sec
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		macro.asm
 ;		Purpose:	Assemble a macro
 ;		Created:	14th August 2023
@@ -1290,16 +1392,22 @@ AXGroup4:
 
 AXPAssembleMacro:
 		.byte 	$DB
-		; analyse from X on looking for substitutions
+		jsr 	AXMAnalyseParameters		; work out the parameters limits.
+		bcs 	_AXPAMExit 					; error (probably too many parameters)
+
 		; start from beginning of code in macro
-		; create frame
+
+		jsr 	AXPushFrame 				; save current frame
+
 		; for each line
 		; 		get line from macro storage
-		; 		perform substitutions until all donw
+		; 		perform substitutions until all done
 		; 		assemble line
-		; release frame
-		; return flag.
-		bra 	AXPAssembleMacro
+
+		jsr 	AXPullFrame
+		clc
+_AXPAMExit:
+		rts
 
 		.send as16code
 

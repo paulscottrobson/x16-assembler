@@ -23,8 +23,10 @@ AXAssembleLine:
 		ldx 	#0 							; start of line
 _AXAContinue:		
 		jsr 	AXGet 						; get first character
+		cmp 	#0
+		bne 	_AXHasText
 		clc 								; if 0, empty line, exit with carry clear
-		beq 	_AXExit
+		rts
 
 		; ========================================================================================
 		;
@@ -32,6 +34,7 @@ _AXAContinue:
 		;
 		; ========================================================================================
 
+_AXHasText:
 		cmp 	#'*' 						; is it * (for * = )
 		beq 	_AXSetPC
 		;
@@ -77,7 +80,6 @@ _AXAContinue:
 		jsr 	AXIGet
 		sta 	AXVector+1
 		jmp 	(AXVector)
-
 		;
 		jmp 	$FFFF 						; load the address and jump to it.
 _AXAMacro:
@@ -97,6 +99,12 @@ _AXALabel:
 		ldx 	#0
 		jsr 	AXICreateFind 				; find it, or create it if necessary.
 
+		plx
+		jsr 	AXGet 						; if followed by '.' cannot be macro invocation
+		cmp 	#"."
+		beq 	_AXANotMacro
+		phx
+		
 		ldy 	#AXID_Type  				; get the type.
 		jsr 	AXIGet
 		plx
@@ -104,6 +112,7 @@ _AXALabel:
 		cmp 	#AXIT_Macro 				; if macro, go to macro code.
 		beq 	_AXAMacro
 
+_AXANotMacro:
 		jsr 	AXProcessLabel 				; process the label.
 		bcc 	_AXAContinue 				; if okay, try the line again.
 		rts 								; return with error.
