@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		macro.asm
-;		Purpose:	Assemble a macro
-;		Created:	14th August 2023
+;		Name:		getdata.asm
+;		Purpose:	Get address of associated data
+;		Created:	31st August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -14,39 +14,37 @@
 
 ; ************************************************************************************************
 ;
-;									Assemble a macro, parameters from X.
+;										Get data address to YX
 ;
 ; ************************************************************************************************
 
-AXPAssembleMacro:
-		jsr 	AXMAnalyseParameters		; work out the parameters limits.
-		bcs 	_AXPAMExit 					; error (probably too many parameters)
+AXIGetDataAddress:	
+		jsr 	AXIOpen 					; start.
 
-		jsr 	AXIGetDataAddress 			; get address of macro data => YX
+		lda 	AXCurrent 					; copy address for access
+		sta 	AXTemp0
+		lda 	AXCurrent+1
+		sta 	AXTemp0+1
 
-		phx
-		phy
-		jsr 	AXPushFrame 				; save current frame preserving YX
-		ply
-		plx
-
-		stx 	AXMPointer 					; save macro expansion pointer in current frame.
-		sty 	AXMPointer+1
-
-		.byte 	$DB	
-
-		; for each line
-		; 		get line from macro storage
-		; 		perform substitutions until all done
-		; 		assemble line
-
-		jsr 	AXPullFrame
+		ldy 	#AXID_Identifier 			; point to name
+_AXIFindEnd: 								; find end of name.
+		lda 	(AXTemp0),y 				; get next
+		asl 	a		 					; bit 7 to carry
+		iny
+		bcc 	_AXIFindEnd
+		;
+		tya 								; put address of data in YX.
 		clc
-_AXPAMExit:
+		adc 	AXTemp0
+		tax
+		lda 	AXTemp0+1
+		tay
+
+		jsr 	AXIClose 					; close access
 		rts
 
 		.send as16code
-		
+
 ; ************************************************************************************************
 ;
 ;									Changes and Updates

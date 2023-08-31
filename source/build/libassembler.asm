@@ -200,6 +200,9 @@ AXMParamCount: 								; number of macro parameters
 AXMParameters: 								; offset to parameter in AXBuffer
 		.fill 	AXMaxParams+1
 
+AXMPointer: 								; macro expansion pointer
+		.fill 	2
+
 AXBuffer:	 								; current line, ASCIIZ.
 		.fill 	AXMaxLineSize+1
 
@@ -1391,13 +1394,21 @@ _AXMAPError:
 ; ************************************************************************************************
 
 AXPAssembleMacro:
-		.byte 	$DB
 		jsr 	AXMAnalyseParameters		; work out the parameters limits.
 		bcs 	_AXPAMExit 					; error (probably too many parameters)
 
-		; start from beginning of code in macro
+		jsr 	AXIGetDataAddress 			; get address of macro data => YX
 
-		jsr 	AXPushFrame 				; save current frame
+		phx
+		phy
+		jsr 	AXPushFrame 				; save current frame preserving YX
+		ply
+		plx
+
+		stx 	AXMPointer 					; save macro expansion pointer in current frame.
+		sty 	AXMPointer+1
+
+		.byte 	$DB
 
 		; for each line
 		; 		get line from macro storage
@@ -3687,6 +3698,64 @@ AXISetCurrent:
 		sta 	AXCurrent
 		lda 	AXTemp0+1
 		sta 	AXCurrent+1
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		getdata.asm
+;		Purpose:	Get address of associated data
+;		Created:	31st August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;										Get data address to YX
+;
+; ************************************************************************************************
+
+AXIGetDataAddress:
+		jsr 	AXIOpen 					; start.
+
+		lda 	AXCurrent 					; copy address for access
+		sta 	AXTemp0
+		lda 	AXCurrent+1
+		sta 	AXTemp0+1
+
+		ldy 	#AXID_Identifier 			; point to name
+_AXIFindEnd: 								; find end of name.
+		lda 	(AXTemp0),y 				; get next
+		asl 	a		 					; bit 7 to carry
+		iny
+		bcc 	_AXIFindEnd
+		;
+		tya 								; put address of data in YX.
+		clc
+		adc 	AXTemp0
+		tax
+		lda 	AXTemp0+1
+		tay
+
+		jsr 	AXIClose 					; close access
 		rts
 
 		.send as16code

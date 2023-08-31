@@ -2,4 +2,4 @@ TODO:
 	- code as described.		
 
 	- Check collision of stack / identifiers at instruction end, out of memory error. fatal.
-
+	- Check defining macro twice ??

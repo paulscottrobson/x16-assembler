@@ -102,6 +102,9 @@ AXMParamCount: 								; number of macro parameters
 AXMParameters: 								; offset to parameter in AXBuffer
 		.fill 	AXMaxParams+1
 
+AXMPointer: 								; macro expansion pointer
+		.fill 	2
+		
 AXBuffer:	 								; current line, ASCIIZ.
 		.fill 	AXMaxLineSize+1 						
 
