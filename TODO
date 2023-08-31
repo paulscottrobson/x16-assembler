@@ -1,6 +1,4 @@
 TODO:
-	- labels have bank.
-
    - puts different levels, should default to 16 bit ??
    
 	- Check collision of stack / identifiers at instruction end, out of memory error. fatal.

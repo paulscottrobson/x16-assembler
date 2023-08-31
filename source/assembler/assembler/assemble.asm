@@ -198,6 +198,11 @@ _AXLabelPC:
 		ldy 	AXProgramCounter+1
 		jsr 	AXIPutData 					; write it.
 		bcs 	_AXRedefine
+		;
+		lda 	AXProgramCounter+2 			; write the bank
+		ldy 	#AXID_DataAux
+		jsr 	AXIPut
+
 		lda 	AXLabelBuffer 				; is it a non local label ?
 		cmp 	#"_"
 		beq 	_AXNotGlobal

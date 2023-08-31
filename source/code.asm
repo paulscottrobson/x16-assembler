@@ -17,10 +17,10 @@ sbcrt:
 	lda sbcrt
 	.fill 4 							; allocate 4 bytes but don't write to them, for zero page.
 	sbc $abcd
-
+	m11 	12
 	.bank 	7 							; sets current bank. The API decides what to do with it.
 										; doesn't change PC as this is system dependent.
-
+labelbank7:
 	zreg = $42	
 
 ;	sbc $abcd,x 						; address mode tests
