@@ -1,4 +1,4 @@
-* = $9000
+* = $8000
 label1
 
 ;
@@ -86,6 +86,6 @@ _t3:
 
 	.word 0,0,0
 
-	.xout 								; this is for testing. It does jmp $FFFF on pass#2 so I can analyse the dump.bin file.
+;	.xout 								; this is for testing. It does jmp $FFFF on pass#2 so I can analyse the dump.bin file.
 										; comment it out and it returns to the READY prompt.
 										

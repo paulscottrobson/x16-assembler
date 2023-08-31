@@ -48,7 +48,7 @@ SampleAPIHandler:
 ; ************************************************************************************************
 
 _TAMemInfo:
-		lda 	#$94 						; memory from $9400 - $9EFF
+		lda 	#$90 						; memory from $9000 - $9EFF
 		ldy 	#$9F
 		clc
 		rts		

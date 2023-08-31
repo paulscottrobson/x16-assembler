@@ -53,7 +53,7 @@ Start:
 		jsr 	TestExpressions
 
 DummyAPI:		 					; just enough to make it work !!
-		lda 	#$94
+		lda 	#$90
 		ldy 	#$9F
 		clc
 		rts		
