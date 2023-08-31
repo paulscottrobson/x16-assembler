@@ -37,12 +37,6 @@ AXAssembleFile:
 		;		The main assembler loop.
 		;
 _AXMainLoop:
-		lda 	AXProgramCounter 			; copy program counter to program counter start
-		sta 	AXProgramCounterStart 		; this is the value used in the unary function *
-		lda 	AXProgramCounter+1
-		sta 	AXProgramCounterStart+1
-		lda 	AXProgramCounter+2
-		sta 	AXProgramCounterStart+2
 		;
 		jsr 	AXReadLine 					; read the next line
 		bcs 	_AXAFError 					; exit if problem (e.g. too long/eof)

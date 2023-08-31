@@ -19,6 +19,13 @@
 ; ************************************************************************************************
 
 AXAssembleLine:
+		lda 	AXProgramCounter 			; copy program counter to program counter start
+		sta 	AXProgramCounterStart 		; this is the value used in the unary function *
+		lda 	AXProgramCounter+1
+		sta 	AXProgramCounterStart+1
+		lda 	AXProgramCounter+2
+		sta 	AXProgramCounterStart+2
+
 		stz 	AXListCount					; clear the listing bytes.
 		ldx 	#0 							; start of line
 _AXAContinue:		

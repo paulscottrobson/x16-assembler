@@ -6,7 +6,7 @@ label1
 ;
 m11	.macro
 	lda 	#10
-	sta 	count
+	sta 	label1
 	.endm
 
 m11 	42,sbcrt,"Hello world"

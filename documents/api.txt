@@ -1,7 +1,7 @@
 Assembler API
 =============
 
-This is the API spec. The simple API used is in the source/api directory. It works on the X16 emulator.
+This is the API spec. The simple API used is in the source/x16_api directory. It works on the X16 emulator.
 
 Cmd: (in A)	
 

@@ -71,7 +71,7 @@ DummyAPI:		 					; just enough to make it work !!
 		.include "testing/testexpr.asm"
 		.endif
 		.if 	TESTING==2
-		.include "api/api.asm"
+		.include "x16_api/api.asm"
 		.endif
 
 ; ************************************************************************************************

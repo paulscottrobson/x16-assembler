@@ -33,17 +33,26 @@ AXPAssembleMacro:
 		stx 	AXMPointer 					; save macro expansion pointer in current frame.
 		sty 	AXMPointer+1
 
-		.byte 	$DB	
+_AXPALoop:
+		jsr 	AXIGetDataLine 				; get data line
+		bcs 	_AXPADone 					; end of lines.
+		jsr 	AXAssembleLine 				; assemble that line
+		bcs 	_AXPAMacroFailed 			; something went wrong.
+		jsr 	AXListLine 					; list the line.
+		bra 	_AXPALoop
 
-		; for each line
-		; 		get line from macro storage
-		; 		perform substitutions until all done
-		; 		assemble line
-
-		jsr 	AXPullFrame
-		clc
+_AXPADone:		
+		jsr 	AXPullFrame 				; pull previous frame
+		clc 								; return okay
 _AXPAMExit:
 		rts
+
+_AXPAMacroFailed:
+		pha 								; save error code
+		jsr 	AXPullFrame 				; restore frame
+		pla 								; get error code back and return error.
+		sec
+		rts		
 
 		.send as16code
 		

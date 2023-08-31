@@ -4,49 +4,6 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		api.inc
-;		Purpose:	API Constants
-;		Created:	22nd August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;									API operation constants
-;
-; ************************************************************************************************
-
-AXAPISetup = $00
-AXAPIOpen = $01
-AXAPIClose = $02
-AXAPIReadByte = $03
-AXAPIWriteByte = $04
-AXAPIError = $05
-AXAPIListChar = $06
-AXAPILock = $07
-AXAPIUnlock = $08
-
-		.send as16code
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
 ;		Name:		modes.inc
 ;		Purpose:	Address modes
 ;		Created:	17th August 2023
@@ -96,6 +53,90 @@ AXMIndirectX = 			$0D + AXMRequireZero 	; lda ($2A,x)
 ;		==== 			=====
 ;
 ; ************************************************************************************************
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		ident.inc
+;		Purpose:	Identifier offsets
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+
+AXIT_Unused = 		0
+AXIT_Label = 		1
+AXIT_PsuedoOp = 	2
+AXIT_Macro =  		3
+AXIT_Opcode = 		4
+
+AXID_Hash = 		1
+AXID_Type = 		2
+AXID_Flags = 		3
+AXID_DataLow = 		4
+AXID_DataHigh = 	5
+AXID_DataAux = 		6
+AXID_Identifier = 	7
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		api.inc
+;		Purpose:	API Constants
+;		Created:	22nd August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									API operation constants
+;
+; ************************************************************************************************
+
+AXAPISetup = $00
+AXAPIOpen = $01
+AXAPIClose = $02
+AXAPIReadByte = $03
+AXAPIWriteByte = $04
+AXAPIError = $05
+AXAPIListChar = $06
+AXAPILock = $07
+AXAPIUnlock = $08
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
@@ -276,47 +317,6 @@ AXERRMacroParams = $8B 						; too many macro parameters.
 ;
 ; ************************************************************************************************
 
-; ************************************************************************************************
-; ************************************************************************************************
-;
-;		Name:		ident.inc
-;		Purpose:	Identifier offsets
-;		Created:	11th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-
-AXIT_Unused = 		0
-AXIT_Label = 		1
-AXIT_PsuedoOp = 	2
-AXIT_Macro =  		3
-AXIT_Opcode = 		4
-
-AXID_Hash = 		1
-AXID_Type = 		2
-AXID_Flags = 		3
-AXID_DataLow = 		4
-AXID_DataHigh = 	5
-AXID_DataAux = 		6
-AXID_Identifier = 	7
-
-		.send as16code
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
@@ -596,6 +596,13 @@ AXAddrMode:
 ; ************************************************************************************************
 
 AXAssembleLine:
+		lda 	AXProgramCounter 			; copy program counter to program counter start
+		sta 	AXProgramCounterStart 		; this is the value used in the unary function *
+		lda 	AXProgramCounter+1
+		sta 	AXProgramCounterStart+1
+		lda 	AXProgramCounter+2
+		sta 	AXProgramCounterStart+2
+
 		stz 	AXListCount					; clear the listing bytes.
 		ldx 	#0 							; start of line
 _AXAContinue:
@@ -865,12 +872,6 @@ AXAssembleFile:
 		;		The main assembler loop.
 		;
 _AXMainLoop:
-		lda 	AXProgramCounter 			; copy program counter to program counter start
-		sta 	AXProgramCounterStart 		; this is the value used in the unary function *
-		lda 	AXProgramCounter+1
-		sta 	AXProgramCounterStart+1
-		lda 	AXProgramCounter+2
-		sta 	AXProgramCounterStart+2
 		;
 		jsr 	AXReadLine 					; read the next line
 		bcs 	_AXAFError 					; exit if problem (e.g. too long/eof)
@@ -1408,16 +1409,25 @@ AXPAssembleMacro:
 		stx 	AXMPointer 					; save macro expansion pointer in current frame.
 		sty 	AXMPointer+1
 
-		.byte 	$DB
+_AXPALoop:
+		jsr 	AXIGetDataLine 				; get data line
+		bcs 	_AXPADone 					; end of lines.
+		jsr 	AXAssembleLine 				; assemble that line
+		bcs 	_AXPAMacroFailed 			; something went wrong.
+		jsr 	AXListLine 					; list the line.
+		bra 	_AXPALoop
 
-		; for each line
-		; 		get line from macro storage
-		; 		perform substitutions until all done
-		; 		assemble line
-
-		jsr 	AXPullFrame
-		clc
+_AXPADone:
+		jsr 	AXPullFrame 				; pull previous frame
+		clc 								; return okay
 _AXPAMExit:
+		rts
+
+_AXPAMacroFailed:
+		pha 								; save error code
+		jsr 	AXPullFrame 				; restore frame
+		pla 								; get error code back and return error.
+		sec
 		rts
 
 		.send as16code
@@ -3717,7 +3727,7 @@ AXISetCurrent:
 ; ************************************************************************************************
 ;
 ;		Name:		getdata.asm
-;		Purpose:	Get address of associated data
+;		Purpose:	Get address of associated data / Get line.
 ;		Created:	31st August 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
@@ -3753,9 +3763,45 @@ _AXIFindEnd: 								; find end of name.
 		adc 	AXTemp0
 		tax
 		lda 	AXTemp0+1
+		adc 	#0
 		tay
 
 		jsr 	AXIClose 					; close access
+		rts
+
+; ************************************************************************************************
+;
+;				Get line from AXMPointer to AXBuffer, CS if EOData, CC if okay
+;
+; ************************************************************************************************
+
+AXIGetDataLine:
+		lda 	AXMPointer 					; copy pointer to AXTemp0
+		sta 	AXTemp0
+		lda 	AXMPointer+1
+		sta 	AXTemp0+1
+		lda 	(AXTemp0) 					; reached the end ?
+		cmp 	#$FF
+		sec 								; if so exit with CS.
+		beq 	_AXIExit
+		;
+		ldy 	#0 							; copy data line to buffer.
+_AXIGDLCopy:
+		lda 	(AXTemp0),y
+		sta 	AXBuffer,y
+		iny
+		cmp 	#0
+		bne 	_AXIGDLCopy
+		;
+		tya 								; Y is step to next line.
+		clc
+		adc 	AXMPointer
+		sta 	AXMPointer
+		bcc 	_AXIExitOkay
+		inc 	AXMPointer+1
+_AXIExitOkay:
+		clc 								; is okay.
+_AXIExit:
 		rts
 
 		.send as16code
