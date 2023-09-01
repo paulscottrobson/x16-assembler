@@ -3265,13 +3265,21 @@ AXSystemDictionary:
 	.byte	$00
 	.byte	$50,$4c,$d8              ; PLX
 
-	.byte	15
-	.byte	$b2
+	.byte	12
+	.byte	$ea
 	.byte	2
 	.byte	0
-	.word	AXInclude
+	.word	AXWordCmd
 	.byte	0
-	.byte	$2e,$49,$4e,$43,$4c,$55,$44,$c5 ; .INCLUDE
+	.byte	$2e,$57,$4f,$52,$c4      ; .WORD
+
+	.byte	10
+	.byte	$49
+	.byte	2
+	.byte	0
+	.word	AXWordCmd2
+	.byte	0
+	.byte	$2e,$44,$d7              ; .DW
 
 	.byte	12
 	.byte	$e2
@@ -3290,6 +3298,22 @@ AXSystemDictionary:
 	.byte	$2e,$44,$c2              ; .DB
 
 	.byte	12
+	.byte	$ca
+	.byte	2
+	.byte	0
+	.word	AXBankCmd
+	.byte	0
+	.byte	$2e,$42,$41,$4e,$cb      ; .BANK
+
+	.byte	12
+	.byte	$f3
+	.byte	2
+	.byte	0
+	.word	AXTextCmd
+	.byte	0
+	.byte	$2e,$54,$45,$58,$d4      ; .TEXT
+
+	.byte	12
 	.byte	$d5
 	.byte	2
 	.byte	0
@@ -3306,20 +3330,12 @@ AXSystemDictionary:
 	.byte	$2e,$44,$d3              ; .DS
 
 	.byte	12
-	.byte	$ea
+	.byte	$fe
 	.byte	2
 	.byte	0
-	.word	AXWordCmd
+	.word	AXXOutCmd
 	.byte	0
-	.byte	$2e,$57,$4f,$52,$c4      ; .WORD
-
-	.byte	10
-	.byte	$49
-	.byte	2
-	.byte	0
-	.word	AXWordCmd2
-	.byte	0
-	.byte	$2e,$44,$d7              ; .DW
+	.byte	$2e,$58,$4f,$55,$d4      ; .XOUT
 
 	.byte	13
 	.byte	$20
@@ -3328,6 +3344,14 @@ AXSystemDictionary:
 	.word	AXXMacro
 	.byte	0
 	.byte	$2e,$4d,$41,$43,$52,$cf  ; .MACRO
+
+	.byte	15
+	.byte	$b2
+	.byte	2
+	.byte	0
+	.word	AXInclude
+	.byte	0
+	.byte	$2e,$49,$4e,$43,$4c,$55,$44,$c5 ; .INCLUDE
 
 	.byte	14
 	.byte	$73
@@ -3344,30 +3368,6 @@ AXSystemDictionary:
 	.word	AXBInclude2
 	.byte	0
 	.byte	$2e,$49,$4e,$43,$42,$49,$ce ; .INCBIN
-
-	.byte	12
-	.byte	$f3
-	.byte	2
-	.byte	0
-	.word	AXTextCmd
-	.byte	0
-	.byte	$2e,$54,$45,$58,$d4      ; .TEXT
-
-	.byte	12
-	.byte	$ca
-	.byte	2
-	.byte	0
-	.word	AXBankCmd
-	.byte	0
-	.byte	$2e,$42,$41,$4e,$cb      ; .BANK
-
-	.byte	12
-	.byte	$fe
-	.byte	2
-	.byte	0
-	.word	AXXOutCmd
-	.byte	0
-	.byte	$2e,$58,$4f,$55,$d4      ; .XOUT
 
 	.byte	0
 ;

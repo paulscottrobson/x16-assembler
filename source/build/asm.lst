@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
-; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=2 main.asm
-; Thu Aug 31 16:35:09 2023
+; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=0 main.asm
+; Fri Sep  1 17:12:56 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -9,7 +9,7 @@
 
 =$30					ZEROPAGE=$30
 =$400					STORAGE=$400
-=2					TESTING=2
+=0					TESTING=0
 
 ;******  Processing input file: main.asm
 
@@ -1778,97 +1778,97 @@
 >1af2	04 fa					.byte	4,$fa
 >1af4	00					.byte	$00
 >1af5	50 4c d8				.byte	$50,$4c,$d8              ; PLX
->1af8	0f					.byte	15
->1af9	b2					.byte	$b2
+>1af8	0c					.byte	12
+>1af9	ea					.byte	$ea
 >1afa	02					.byte	2
 >1afb	00					.byte	0
->1afc	9c 1f					.word	AXInclude
+>1afc	70 20					.word	AXWordCmd
 >1afe	00					.byte	0
->1aff	2e 49 4e 43 4c 55 44 c5			.byte	$2e,$49,$4e,$43,$4c,$55,$44,$c5 ; .INCLUDE
->1b07	0c					.byte	12
->1b08	e2					.byte	$e2
->1b09	02					.byte	2
+>1aff	2e 57 4f 52 c4				.byte	$2e,$57,$4f,$52,$c4      ; .WORD
+>1b04	0a					.byte	10
+>1b05	49					.byte	$49
+>1b06	02					.byte	2
+>1b07	00					.byte	0
+>1b08	70 20					.word	AXWordCmd2
 >1b0a	00					.byte	0
->1b0b	4f 1f					.word	AXByteCmd
->1b0d	00					.byte	0
->1b0e	2e 42 59 54 c5				.byte	$2e,$42,$59,$54,$c5      ; .BYTE
->1b13	0a					.byte	10
->1b14	34					.byte	$34
->1b15	02					.byte	2
->1b16	00					.byte	0
->1b17	4f 1f					.word	AXByteCmd2
->1b19	00					.byte	0
->1b1a	2e 44 c2				.byte	$2e,$44,$c2              ; .DB
->1b1d	0c					.byte	12
->1b1e	d5					.byte	$d5
->1b1f	02					.byte	2
+>1b0b	2e 44 d7				.byte	$2e,$44,$d7              ; .DW
+>1b0e	0c					.byte	12
+>1b0f	e2					.byte	$e2
+>1b10	02					.byte	2
+>1b11	00					.byte	0
+>1b12	4f 1f					.word	AXByteCmd
+>1b14	00					.byte	0
+>1b15	2e 42 59 54 c5				.byte	$2e,$42,$59,$54,$c5      ; .BYTE
+>1b1a	0a					.byte	10
+>1b1b	34					.byte	$34
+>1b1c	02					.byte	2
+>1b1d	00					.byte	0
+>1b1e	4f 1f					.word	AXByteCmd2
 >1b20	00					.byte	0
->1b21	7f 1f					.word	AXFillCmd
->1b23	00					.byte	0
->1b24	2e 46 49 4c cc				.byte	$2e,$46,$49,$4c,$cc      ; .FILL
->1b29	0a					.byte	10
->1b2a	45					.byte	$45
->1b2b	02					.byte	2
->1b2c	00					.byte	0
->1b2d	7f 1f					.word	AXFillCmd2
->1b2f	00					.byte	0
->1b30	2e 44 d3				.byte	$2e,$44,$d3              ; .DS
->1b33	0c					.byte	12
->1b34	ea					.byte	$ea
->1b35	02					.byte	2
+>1b21	2e 44 c2				.byte	$2e,$44,$c2              ; .DB
+>1b24	0c					.byte	12
+>1b25	ca					.byte	$ca
+>1b26	02					.byte	2
+>1b27	00					.byte	0
+>1b28	f2 1e					.word	AXBankCmd
+>1b2a	00					.byte	0
+>1b2b	2e 42 41 4e cb				.byte	$2e,$42,$41,$4e,$cb      ; .BANK
+>1b30	0c					.byte	12
+>1b31	f3					.byte	$f3
+>1b32	02					.byte	2
+>1b33	00					.byte	0
+>1b34	02 20					.word	AXTextCmd
 >1b36	00					.byte	0
->1b37	70 20					.word	AXWordCmd
->1b39	00					.byte	0
->1b3a	2e 57 4f 52 c4				.byte	$2e,$57,$4f,$52,$c4      ; .WORD
->1b3f	0a					.byte	10
->1b40	49					.byte	$49
->1b41	02					.byte	2
+>1b37	2e 54 45 58 d4				.byte	$2e,$54,$45,$58,$d4      ; .TEXT
+>1b3c	0c					.byte	12
+>1b3d	d5					.byte	$d5
+>1b3e	02					.byte	2
+>1b3f	00					.byte	0
+>1b40	7f 1f					.word	AXFillCmd
 >1b42	00					.byte	0
->1b43	70 20					.word	AXWordCmd2
->1b45	00					.byte	0
->1b46	2e 44 d7				.byte	$2e,$44,$d7              ; .DW
->1b49	0d					.byte	13
->1b4a	20					.byte	$20
->1b4b	02					.byte	2
->1b4c	00					.byte	0
->1b4d	c0 1f					.word	AXXMacro
->1b4f	00					.byte	0
->1b50	2e 4d 41 43 52 cf			.byte	$2e,$4d,$41,$43,$52,$cf  ; .MACRO
->1b56	0e					.byte	14
->1b57	73					.byte	$73
->1b58	02					.byte	2
->1b59	00					.byte	0
->1b5a	0e 1f					.word	AXBInclude
->1b5c	00					.byte	0
->1b5d	2e 42 49 4e 41 52 d9			.byte	$2e,$42,$49,$4e,$41,$52,$d9 ; .BINARY
->1b64	0e					.byte	14
->1b65	61					.byte	$61
->1b66	02					.byte	2
->1b67	00					.byte	0
->1b68	0e 1f					.word	AXBInclude2
->1b6a	00					.byte	0
->1b6b	2e 49 4e 43 42 49 ce			.byte	$2e,$49,$4e,$43,$42,$49,$ce ; .INCBIN
->1b72	0c					.byte	12
->1b73	f3					.byte	$f3
->1b74	02					.byte	2
->1b75	00					.byte	0
->1b76	02 20					.word	AXTextCmd
->1b78	00					.byte	0
->1b79	2e 54 45 58 d4				.byte	$2e,$54,$45,$58,$d4      ; .TEXT
->1b7e	0c					.byte	12
->1b7f	ca					.byte	$ca
->1b80	02					.byte	2
->1b81	00					.byte	0
->1b82	f2 1e					.word	AXBankCmd
->1b84	00					.byte	0
->1b85	2e 42 41 4e cb				.byte	$2e,$42,$41,$4e,$cb      ; .BANK
->1b8a	0c					.byte	12
->1b8b	fe					.byte	$fe
->1b8c	02					.byte	2
->1b8d	00					.byte	0
->1b8e	96 20					.word	AXXOutCmd
->1b90	00					.byte	0
->1b91	2e 58 4f 55 d4				.byte	$2e,$58,$4f,$55,$d4      ; .XOUT
+>1b43	2e 46 49 4c cc				.byte	$2e,$46,$49,$4c,$cc      ; .FILL
+>1b48	0a					.byte	10
+>1b49	45					.byte	$45
+>1b4a	02					.byte	2
+>1b4b	00					.byte	0
+>1b4c	7f 1f					.word	AXFillCmd2
+>1b4e	00					.byte	0
+>1b4f	2e 44 d3				.byte	$2e,$44,$d3              ; .DS
+>1b52	0c					.byte	12
+>1b53	fe					.byte	$fe
+>1b54	02					.byte	2
+>1b55	00					.byte	0
+>1b56	96 20					.word	AXXOutCmd
+>1b58	00					.byte	0
+>1b59	2e 58 4f 55 d4				.byte	$2e,$58,$4f,$55,$d4      ; .XOUT
+>1b5e	0d					.byte	13
+>1b5f	20					.byte	$20
+>1b60	02					.byte	2
+>1b61	00					.byte	0
+>1b62	c0 1f					.word	AXXMacro
+>1b64	00					.byte	0
+>1b65	2e 4d 41 43 52 cf			.byte	$2e,$4d,$41,$43,$52,$cf  ; .MACRO
+>1b6b	0f					.byte	15
+>1b6c	b2					.byte	$b2
+>1b6d	02					.byte	2
+>1b6e	00					.byte	0
+>1b6f	9c 1f					.word	AXInclude
+>1b71	00					.byte	0
+>1b72	2e 49 4e 43 4c 55 44 c5			.byte	$2e,$49,$4e,$43,$4c,$55,$44,$c5 ; .INCLUDE
+>1b7a	0e					.byte	14
+>1b7b	73					.byte	$73
+>1b7c	02					.byte	2
+>1b7d	00					.byte	0
+>1b7e	0e 1f					.word	AXBInclude
+>1b80	00					.byte	0
+>1b81	2e 42 49 4e 41 52 d9			.byte	$2e,$42,$49,$4e,$41,$52,$d9 ; .BINARY
+>1b88	0e					.byte	14
+>1b89	61					.byte	$61
+>1b8a	02					.byte	2
+>1b8b	00					.byte	0
+>1b8c	0e 1f					.word	AXBInclude2
+>1b8e	00					.byte	0
+>1b8f	2e 49 4e 43 42 49 ce			.byte	$2e,$49,$4e,$43,$42,$49,$ce ; .INCBIN
 >1b96	00					.byte	0
 .1b97					AXGroup2OpcodeFixupTable:
 >1b97	60 07 9e				.byte	$60,7,			$9e ; STZ ABS,X
@@ -2784,185 +2784,5 @@
 ;******  Return to file: main.asm
 
 .2195					Start:
-.2195	a2 9d		ldx #$9d			ldx 	#SampleAPIHandler & $FF
-.2197	a0 21		ldy #$21			ldy 	#SampleAPIHandler >> 8
-.2199	20 03 10	jsr $1003			jsr 	AXAssemble
-.219c	60		rts				rts
-
-;******  Processing file: x16_api/api.asm
-
-.219d					SampleAPIHandler:
-.219d	c9 00		cmp #$00			cmp 	#AXAPISetup
-.219f	f0 1a		beq $21bb			beq 	_TAMemInfo
-.21a1	c9 01		cmp #$01			cmp 	#AXAPIOpen
-.21a3	f0 1c		beq $21c1			beq 	_TAOpen
-.21a5	c9 02		cmp #$02			cmp 	#AXAPIClose
-.21a7	f0 1b		beq $21c4			beq 	_TAClose
-.21a9	c9 03		cmp #$03			cmp 	#AXAPIReadByte
-.21ab	f0 1a		beq $21c7			beq	 	_TAReadChar
-.21ad	c9 04		cmp #$04			cmp 	#AXAPIWriteByte
-.21af	f0 19		beq $21ca			beq 	_TAWriteByte
-.21b1	c9 05		cmp #$05			cmp 	#AXAPIError
-.21b3	f0 1b		beq $21d0			beq 	_TAError
-.21b5	c9 06		cmp #$06			cmp 	#AXAPIListChar
-.21b7	f0 14		beq $21cd			beq 	_TAListChar
-.21b9	18		clc				clc
-.21ba	60		rts				rts
-.21bb					_TAMemInfo:
-.21bb	a9 90		lda #$90			lda 	#$90 						; memory from $9000 - $9EFF
-.21bd	a0 9f		ldy #$9f			ldy 	#$9F
-.21bf	18		clc				clc
-.21c0	60		rts				rts
-.21c1					_TAOpen:
-.21c1	4c 04 22	jmp $2204			jmp 	TAOpen
-.21c4					_TAClose:
-.21c4	4c 48 22	jmp $2248			jmp 	TAClose
-.21c7					_TAReadChar:
-.21c7	4c 54 22	jmp $2254			jmp  	TAReadChar
-.21ca					_TAWriteByte
-.21ca	4c d7 21	jmp $21d7			jmp 	TAWriteByte
-.21cd					_TAListChar:
-.21cd	4c d3 21	jmp $21d3			jmp 	TAListChar
-.21d0					_TAError:
-.21d0	4c 70 22	jmp $2270			jmp 	TAError
-
-;******  Processing file: x16_api/apilist.asm
-
-.21d3					TAListChar:
-.21d3	8a		txa				txa
-.21d4	4c d2 ff	jmp $ffd2			jmp 	$FFD2
-
-;******  Return to file: x16_api/api.asm
-
-
-;******  Processing file: x16_api/apiwrite.asm
-
-.21d7					TAWriteByte:
-.21d7	98		tya				tya 								; simple save
-.21d8	81 00		sta ($00,x)			sta 	($00,x)
-.21da	60		rts				rts
-.21db	5a		phy				phy 								; dump code to screen, not used really but an option.
-.21dc	a9 40		lda #$40			lda 	#'@' 						; or you could write it to a file.
-.21de	20 b5 1e	jsr $1eb5			jsr 	AXListOut
-.21e1	b5 02		lda $02,x			lda 	$02,x
-.21e3	20 9d 1e	jsr $1e9d			jsr 	AXLOutHex
-.21e6	a9 2e		lda #$2e			lda 	#'.'
-.21e8	20 b5 1e	jsr $1eb5			jsr 	AXListOut
-.21eb	b5 01		lda $01,x			lda 	$01,x
-.21ed	20 9d 1e	jsr $1e9d			jsr 	AXLOutHex
-.21f0	b5 00		lda $00,x			lda 	$00,x
-.21f2	20 9d 1e	jsr $1e9d			jsr 	AXLOutHex
-.21f5	a9 3d		lda #$3d			lda 	#"="
-.21f7	20 b5 1e	jsr $1eb5			jsr 	AXListOut
-.21fa	68		pla				pla
-.21fb	20 9d 1e	jsr $1e9d			jsr 	AXLOutHex
-.21fe	a9 0d		lda #$0d			lda 	#13
-.2200	20 b5 1e	jsr $1eb5			jsr 	AXListOut
-.2203	60		rts				rts
-
-;******  Return to file: x16_api/api.asm
-
-
-;******  Processing file: x16_api/apifile.asm
-
-.2204					TAOpen:
-.2204	e0 00		cpx #$00			cpx 	#0 							; check default name ?
-.2206	d0 0f		bne $2217			bne 	_TAHaveName
-.2208	c0 00		cpy #$00			cpy 	#0
-.220a	d0 0b		bne $2217			bne 	_TAHaveName
-.220c	a2 3f		ldx #$3f			ldx 	#<_FileName 				; use default.
-.220e	a0 22		ldy #$22			ldy 	#>_FileName
-.2210	a9 07		lda #$07			lda 	#7 							; reset handle tracker
-.2212	8d eb 04	sta $04eb			sta 	TAHandleTracker
-.2215	64 35		stz $35				stz 	TAIsEOF 					; reset EOF flag.
-.2217					_TAHaveName:
-.2217	86 33		stx $33				stx 	TATemp0 					; get length
-.2219	84 34		sty $34				sty 	TATemp0+1
-.221b	a0 ff		ldy #$ff			ldy 	#255
-.221d					_TAGetLen:
-.221d	c8		iny				iny
-.221e	b1 33		lda ($33),y			lda 	(TATemp0),y
-.2220	d0 fb		bne $221d			bne 	_TAGetLen
-.2222	98		tya				tya 								; A = size, XY = filename
-.2223	a4 34		ldy $34				ldy 	TATemp0+1
-.2225	20 bd ff	jsr $ffbd			jsr 	$FFBD 						; SETNAM
-.2228	ee eb 04	inc $04eb			inc 	TAHandleTracker
-.222b	ad eb 04	lda $04eb			lda 	TAHandleTracker
-.222e	48		pha				pha
-.222f	a2 08		ldx #$08			ldx 	#8
-.2231	a8		tay				tay
-.2232	20 ba ff	jsr $ffba			jsr 	$FFBA 						; set LFS
-.2235	20 c0 ff	jsr $ffc0			jsr 	$FFC0 						; OPEN,
-.2238	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
-.223b	69 ff		adc #$ff			adc 	#$FF 						; set CS on error (A != 0)
-.223d	68		pla				pla
-.223e					_TAOExit:
-.223e	60		rts				rts
-.223f					_FileName:
->223f	43 4f 44 45 2e 41 53 4d				.text 	'CODE.ASM',0
->2247	00
-.2248					TAClose:
-.2248	8a		txa				txa
-.2249	20 c3 ff	jsr $ffc3			jsr 	$FFC3						; CLOSE
-.224c	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
-.224f	ce eb 04	dec $04eb			dec 	TAHandleTracker
-.2252	18		clc				clc
-.2253	60		rts				rts
-.2254					TAReadChar:
-.2254	24 35		bit $35				bit 	TAIsEOF 					; last read reached EOF ?
-.2256	70 11		bvs $2269			bvs 	_TAFail 					; surely there has to be a better way to read a bloody sequential file ?
-.2258	20 c6 ff	jsr $ffc6			jsr 	$FFC6  						; CHKIN
-.225b	20 cf ff	jsr $ffcf			jsr 	$FFCF 						; CHRIN
-.225e	48		pha				pha
-.225f	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
-.2262	29 40		and #$40			and 	#64 						; EOF next read.
-.2264	85 35		sta $35				sta 	TAIsEOF
-.2266	68		pla				pla
-.2267	18		clc				clc
-.2268	60		rts				rts
-.2269					_TAFail:
-.2269	64 35		stz $35				stz 	TAIsEOF 					; clear EOF Flag
-.226b	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
-.226e	38		sec				sec
-.226f	60		rts				rts
-.0033					TATemp0:
->0033							.fill 	2
-.0035					TAIsEOF:
->0035							.fill 	1
-
-;******  Return to file: x16_api/api.asm
-
-
-;******  Processing file: x16_api/apierror.asm
-
-.2270					TAError:
-.2270	86 33		stx $33				stx 	TATemp0 					; save info area address
-.2272	84 34		sty $34				sty 	TATemp0+1
-.2274	a9 2a		lda #$2a			lda 	#'*'						; print 3 stars
-.2276	20 b5 1e	jsr $1eb5			jsr 	AXListOut
-.2279	20 b5 1e	jsr $1eb5			jsr 	AXListOut
-.227c	20 b5 1e	jsr $1eb5			jsr 	AXListOut
-.227f	b2 33		lda ($33)			lda 	(TATemp0) 					; output error code
-.2281	20 9d 1e	jsr $1e9d			jsr 	AXLOutHex
-.2284	a9 40		lda #$40			lda 	#'@' 						; output @
-.2286	20 b5 1e	jsr $1eb5			jsr 	AXListOut
-.2289	a0 04		ldy #$04			ldy 	#4 						 	; output the page number (4+5 are BCD)
-.228b	b1 33		lda ($33),y			lda 	(TATemp0),y
-.228d	20 9d 1e	jsr $1e9d			jsr 	AXLOutHex
-.2290	88		dey				dey
-.2291	b1 33		lda ($33),y			lda 	(TATemp0),y
-.2293	20 9d 1e	jsr $1e9d			jsr 	AXLOutHex
-.2296	a9 0d		lda #$0d			lda 	#13 						; new line.
-.2298	20 b5 1e	jsr $1eb5			jsr 	AXListOut
-.229b	38		sec				sec
-.229c	60		rts				rts
-
-;******  Return to file: x16_api/api.asm
-
-.04eb					TAHandleTracker:
->04eb							.fill	 1
-
-;******  Return to file: main.asm
-
 
 ;******  End of listing
