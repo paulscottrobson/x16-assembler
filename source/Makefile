@@ -35,6 +35,7 @@ assemble: prelim
 	$(ASSEMBLER) -D TESTING=0
 
 prelim:
+	$(CDEL) *.bin
 	$(PYTHON) scripts$(S)exprtable.py
 	$(PYTHON) scripts$(S)makeasmtable.py
 	$(PYTHON) scripts$(S)makelib.py >build$(S)libassembler.asm
@@ -47,7 +48,6 @@ tools:
 test: prelim
 	$(PYTHON) testing$(S)expr.py >build$(S)testdata.inc
 	$(ASSEMBLER) -D TESTING=1
-	$(CDEL) *.bin
 	$(EMULATOR)
 
 expr: prelim
@@ -60,8 +60,9 @@ ident:
 	$(PYTHON) scripts$(S)showident.py 9000
 
 run: prelim	
-	# $(PYTHON) testing$(S)source.py testing$(S)source.txt >assembler$(S)generated$(S)sourcebytes.dat
-	$(CDEL) *.bin
 	$(ASSEMBLER) -D TESTING=2
-	$(CDEL) memo*.bin
+	$(EMULATOR)
+
+asm: prelim
+	$(ASSEMBLER) -D TESTING=3
 	$(EMULATOR)

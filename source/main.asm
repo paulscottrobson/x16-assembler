@@ -62,10 +62,13 @@ DummyAPI:		 					; just enough to make it work !!
 		;
 		;		This is what is normally run, assembles code as received via API.
 		;
-		.if 	TESTING==2
+		.if 	(TESTING==2)||(TESTING==3)	
 		ldx 	#SampleAPIHandler & $FF
 		ldy 	#SampleAPIHandler >> 8
 		jsr 	AXAssemble
+		.if 	TESTING==3
+		jmp		$FFFF
+		.endif
 		rts
 		.endif
 
@@ -74,7 +77,7 @@ DummyAPI:		 					; just enough to make it work !!
 		.if 	TESTING==1
 		.include "testing/testexpr.asm"
 		.endif
-		.if 	TESTING==2
+		.if 	(TESTING==2)||(TESTING==3)	
 		.include "x16_api/api.asm"
 		.endif
 

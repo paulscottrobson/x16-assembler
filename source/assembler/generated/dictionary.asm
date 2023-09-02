@@ -594,14 +594,6 @@ AXSystemDictionary:
 	.byte	0
 	.byte	$2e,$44,$d3              ; .DS
 
-	.byte	12
-	.byte	$fe
-	.byte	2
-	.byte	0
-	.word	AXXOutCmd
-	.byte	0
-	.byte	$2e,$58,$4f,$55,$d4      ; .XOUT
-
 	.byte	13
 	.byte	$20
 	.byte	2

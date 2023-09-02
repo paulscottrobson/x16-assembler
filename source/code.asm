@@ -85,7 +85,3 @@ _t3:
 	.text 13,"Hello",0 					; mix char and byte data
 
 	.word 0,0,0
-
-;	.xout 								; this is for testing. It does jmp $FFFF on pass#2 so I can analyse the dump.bin file.
-										; comment it out and it returns to the READY prompt.
-										
