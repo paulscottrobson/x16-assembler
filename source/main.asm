@@ -75,7 +75,7 @@ DummyAPI:		 					; just enough to make it work !!
 		.send as16code
 
 		.if 	TESTING==1
-		.include "testing/testexpr.asm"
+		.include "expr_testing/testexpr.asm"
 		.endif
 		.if 	(TESTING==2)||(TESTING==3)	
 		.include "x16_api/api.asm"

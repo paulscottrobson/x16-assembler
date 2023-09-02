@@ -2365,14 +2365,14 @@ AXPass2Expression:
 		lda 	AXLeft+2 					; check defined.
 		bpl 	_AXDExit 					; okay.
 
+		lda 	#$EE 						; set the default value to $EEEE
+		sta 	AXLeft
+		sta 	AXLeft+1
+
 		lda 	AXPass 						; if pass 1, that's okay even if undefined.
 		cmp 	#1
 		clc
 		beq 	_AXDExit
-
-		lda 	#$EE 						; set the default value to $EEEE
-		sta 	AXLeft
-		sta 	AXLeft+1
 
 		sec 								; return undefined error
 		lda 	#AXERRUndefined

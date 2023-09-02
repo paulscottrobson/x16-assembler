@@ -46,12 +46,12 @@ tools:
 	$(CCOPY) $(ROOTDIR)..$(S)x16-rom$(S)build$(S)x16$(S)rom.bin $(BINDIR)
 
 test: prelim
-	$(PYTHON) testing$(S)expr.py >build$(S)testdata.inc
+	$(PYTHON) expr_testing$(S)expr.py >build$(S)testdata.inc
 	$(ASSEMBLER) -D TESTING=1
 	$(EMULATOR)
 
 expr: prelim
-	$(PYTHON) testing$(S)setupexpr.py >build$(S)testdata.inc
+	$(PYTHON) expr_testing$(S)setupexpr.py >build$(S)testdata.inc
 	$(ASSEMBLER) -D TESTING=1
 	$(CDEL) *.bin
 	$(EMULATOR)
@@ -60,9 +60,11 @@ ident:
 	$(PYTHON) scripts$(S)showident.py 9000
 
 run: prelim	
+	$(CCOPY) testing$(S)dev.asm _code.asm
 	$(ASSEMBLER) -D TESTING=2
 	$(EMULATOR)
 
 asm: prelim
+	$(CCOPY) testing$(S)dev.asm _code.asm
 	$(ASSEMBLER) -D TESTING=3
 	$(EMULATOR)

@@ -23,27 +23,27 @@ sbcrt:
 labelbank7:
 	zreg = $42	
 
-;	sbc $abcd,x 						; address mode tests
-;	sbc $abcd,y
-;	sbc (zreg)
-;	sbc (zreg),y
-;	sbc (zreg,x)
-;	sbc zreg,x
-;	sbc #zreg
-;	sbc zreg
+	sbc $abcd,x 						; address mode tests
+	sbc $abcd,y
+	sbc (zreg)
+	sbc (zreg),y
+	sbc (zreg,x)
+	sbc zreg,x
+	sbc #zreg
+	sbc zreg
 	ldx sbcrt
 
 	.bank 								; increments the bank with no operand.
 
-;	asl 	 
-;	asl a
-;	asl $04
-;	asl $1234
-;	asl $12,x
-;	asl $1234,x
-;	ldx #0
-;	ldy #0
-;	jmp $ABCD
+	asl 	 
+	asl a
+	asl $04
+	asl $1234
+	asl $12,x
+	asl $1234,x
+	ldx #0
+	ldy #0
+	jmp $ABCD
 
 	bra sbcrt
 	bra h1 				; forward
@@ -64,13 +64,13 @@ h1:
 	stz $5667,x
 ;	stz $1234,y
 
-	.include "code2.asm" 				; include text file. 
+	.include "incfile.asm" 				; include text file. 
 	
 	jmp loop
 loop:	
 	jsr loop
 
-	.include "code2.asm" 				; include text file. 
+	.include "incfile.asm" 				; include text file. 
 	
 	jmp 	_t3 						; _ is a local identifier with the scope of the previous
 _t1: 									; global identifier (loop) to the next global identifier
@@ -80,7 +80,7 @@ _t2
 _t3:	
 
 	.word $ABCD,sbcrt,$5678 			; word data, can use .dw
-	.binary "code3.dat" 				; include binary data
+	.binary "binfile.dat" 				; include binary data
 	.byte 1,2,3,4,1,>sbcrt,<sbcrt 		; byte data, can use .db
 	.text 13,"Hello",0 					; mix char and byte data
 
