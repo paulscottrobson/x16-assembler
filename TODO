@@ -1,7 +1,6 @@
 TODO:
 	- add BBS and BBR which I forgot about.
 	- continue comparative testing
-		branches
 		macros (when working)
 	- substitute macro parameters.
 	- Check collision of stack / identifiers at instruction end, out of memory error. fatal.
