@@ -1,4 +1,4 @@
 
-	.byte 	42
-	lda 	sbcrt
-	bra 	loop
+	lda 	#42
+	adc 	#43
+	.binary "binfile.dat"

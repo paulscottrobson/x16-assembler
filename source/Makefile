@@ -84,13 +84,22 @@ asm: prelim
 #
 #		Assemble, exit and compare against 64tass equivalent.
 #
+tests: 
+	make opcodes
+	make data
+	make include
+
 opcodes: prelim
 	$(call check_assembler,opcodes)
+data:prelim
+	$(call check_assembler,data)
+include:prelim
+	$(call check_assembler,include)
 
 define check_assembler	
 	$(CCOPY) testing$(S)$(1).asm _code.asm
 	$(ASSEMBLER) -D TESTING=3
-	64tass -c -b -o build/compare.bin _code.asm
+	64tass -c -b -o build/compare.bin -L build/compare.lst _code.asm
 	$(EMULATOR)
 	$(PYTHON) testing$(S)compare.py
 endef
