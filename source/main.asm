@@ -31,9 +31,6 @@
 ;
 ; ************************************************************************************************
 
-debug 	.macro
-		.byte 	$DB
-		.endm
 
 		.section as16code
 		jmp 	Start
@@ -63,6 +60,7 @@ DummyAPI:		 					; just enough to make it work !!
 		;		This is what is normally run, assembles code as received via API.
 		;
 		.if 	(TESTING==2)||(TESTING==3)	
+		jsr 	ClearMemory
 		ldx 	#SampleAPIHandler & $FF
 		ldy 	#SampleAPIHandler >> 8
 		jsr 	AXAssemble
@@ -72,6 +70,18 @@ DummyAPI:		 					; just enough to make it work !!
 		rts
 		.endif
 
+ClearMemory:
+		lda 	#$8F
+		sta 	AXTemp0+1
+		stz 	AXTemp0
+_CMLoop:lda 	#$FF
+		sta 	(AXTemp0)
+		inc 	AXTemp0
+		bne 	_CMLoop
+		dec 	AXTemp0+1		
+		bmi 	_CMLoop
+		rts
+
 		.send as16code
 
 		.if 	TESTING==1
@@ -79,6 +89,8 @@ DummyAPI:		 					; just enough to make it work !!
 		.endif
 		.if 	(TESTING==2)||(TESTING==3)	
 		.include "x16_api/api.asm"
+
+
 		.endif
 
 ; ************************************************************************************************

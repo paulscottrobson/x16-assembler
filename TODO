@@ -1,5 +1,6 @@
 TODO:
-	- start comparative testing
+	- add BBS and BBR which I forgot about.
+	- continue comparative testing
 	- substitute macro parameters.
 	- Check collision of stack / identifiers at instruction end, out of memory error. fatal.
 	- Check defining macro twice ??

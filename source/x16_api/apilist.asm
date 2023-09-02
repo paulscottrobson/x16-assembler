@@ -20,10 +20,12 @@
 
 TAListChar:
 		txa
-		jmp 	$FFD2
+		.if TESTING==2
+		jsr 	$FFD2 						; this is only displayed for TESTING=2
+		.endif
+		rts
 
 		.send as16code
-
 
 ; ************************************************************************************************
 ;
