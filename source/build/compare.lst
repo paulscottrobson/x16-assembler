@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
 ; 64tass --mw65c02 -b -o build/compare.bin -L build/compare.lst _code.asm
-; Sun Sep  3 11:30:05 2023
+; Sun Sep  3 12:10:02 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -19,5 +19,25 @@
 .800e	20 d2 ff	jsr $ffd2			jsr 	$FFD2
 .8011	ca		dex				dex
 .8012	d0 f8		bne $800c			bne 	_loop
+.8014	a2 05		ldx #$05			ldx 	#5
+.8016					_loop
+.8016	a9 20		lda #$20			lda 	#32
+.8018	20 d2 ff	jsr $ffd2			jsr 	$FFD2
+.801b	ca		dex				dex
+.801c	d0 f8		bne $8016			bne 	_loop
+.801e	a2 27		ldx #$27			ldx 	#_textmsg & $FF
+.8020	a0 80		ldy #$80			ldy 	#_textmsg >> 8
+.8022	20 fc ff	jsr $fffc			jsr 	$FFFC
+.8025	80 06		bra $802d			bra 	_continue
+.8027					_textmsg:
+>8027	48 65 6c 6c 6f 00				.text 	"Hello",0
+.802d					_continue
+.802d	a2 36		ldx #$36			ldx 	#_textmsg & $FF
+.802f	a0 80		ldy #$80			ldy 	#_textmsg >> 8
+.8031	20 fc ff	jsr $fffc			jsr 	$FFFC
+.8034	80 08		bra $803e			bra 	_continue
+.8036					_textmsg:
+>8036	57 6f 72 6c 64 20 21 00				.text 	"World !",0
+.803e					_continue
 
 ;******  End of listing

@@ -55,6 +55,15 @@ _AXG2CheckSelector: 						; shift the mode enabled bit into the carry
 		;
 		lda 	AXAddrMode 					; if it is not zero page, then it's okay.
 		bpl 	_AX2IsOkay
+
+		lda 	AXPass 						; for immediate check pass 2 only.
+		cmp 	#2 							; (see group 1)
+		beq 	_AX2CheckSize
+		lda 	AXAddrMode
+		cmp 	#AXMImmediate
+		beq 	_AX2IsOkay
+
+_AX2CheckSize:
 		lda 	AXLeft+1 					; okay if zero page, and < 256
 		bne 	_AX2Fail
 _AX2IsOkay:

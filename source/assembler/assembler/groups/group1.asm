@@ -57,6 +57,14 @@ _AXG1ModeOk:
 		lda 	AXAddrMode 					; does the mode support 3 byte.
 		bpl 	_AXGOperandOk 				; if so, we can't reject for being ZP.
 
+		lda 	AXPass 						; on pass 1, allow immediate always.
+		cmp 	#2  
+		beq 	_AXGCheckSize
+		lda 	AXAddrMode
+		cmp 	#AXMImmediate
+		beq 	_AXGOperandOk
+
+_AXGCheckSize:
 		lda 	AXLeft+1 					; fail if not a zero page operand.
 		bne 	_AXG1Fail
 _AXGOperandOk:
