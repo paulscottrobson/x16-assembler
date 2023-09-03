@@ -1,19 +1,9 @@
-; *******************************************************************************************
-;
-;									Test assembly of macros
-;
-; *******************************************************************************************
+		* = $8000		
+		nop
+;		lda 	#<textmsg 
+;		ldx 	#<textmsg 
+		jsr 	Printstring
+textmsg:
 
-		* = $8000
 
-mchars 	.macro
-		ldx 	#\2
-_loop
-		lda 	#\1
-		jsr 	$FFD2
-		dex
-		bne 	_loop
-		.endm
-
-		mchars 42,3
-		mchars 43,4
+Printstring:

@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
-; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=3 main.asm
-; Sun Sep  3 11:30:05 2023
+; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=2 main.asm
+; Sun Sep  3 11:31:25 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -9,7 +9,7 @@
 
 =$30					ZEROPAGE=$30
 =$400					STORAGE=$400
-=3					TESTING=3
+=2					TESTING=2
 
 ;******  Processing input file: main.asm
 
@@ -2872,65 +2872,65 @@
 ;******  Return to file: main.asm
 
 .2220					Start:
-.2220	20 2e 22	jsr $222e			jsr 	ClearMemory
-.2223	a2 41		ldx #$41			ldx 	#SampleAPIHandler & $FF
+.2220	20 2b 22	jsr $222b			jsr 	ClearMemory
+.2223	a2 3e		ldx #$3e			ldx 	#SampleAPIHandler & $FF
 .2225	a0 22		ldy #$22			ldy 	#SampleAPIHandler >> 8
 .2227	20 03 10	jsr $1003			jsr 	AXAssemble
-.222a	4c ff ff	jmp $ffff			jmp		$FFFF
-.222d	60		rts				rts
-.222e					ClearMemory:
-.222e	a9 8f		lda #$8f			lda 	#$8F
-.2230	85 31		sta $31				sta 	AXTemp0+1
-.2232	64 30		stz $30				stz 	AXTemp0
-.2234	a9 ff		lda #$ff	_CMLoop:lda 	#$FF
-.2236	92 30		sta ($30)			sta 	(AXTemp0)
-.2238	e6 30		inc $30				inc 	AXTemp0
-.223a	d0 f8		bne $2234			bne 	_CMLoop
-.223c	c6 31		dec $31				dec 	AXTemp0+1
-.223e	30 f4		bmi $2234			bmi 	_CMLoop
-.2240	60		rts				rts
+.222a	60		rts				rts
+.222b					ClearMemory:
+.222b	a9 8f		lda #$8f			lda 	#$8F
+.222d	85 31		sta $31				sta 	AXTemp0+1
+.222f	64 30		stz $30				stz 	AXTemp0
+.2231	a9 ff		lda #$ff	_CMLoop:lda 	#$FF
+.2233	92 30		sta ($30)			sta 	(AXTemp0)
+.2235	e6 30		inc $30				inc 	AXTemp0
+.2237	d0 f8		bne $2231			bne 	_CMLoop
+.2239	c6 31		dec $31				dec 	AXTemp0+1
+.223b	30 f4		bmi $2231			bmi 	_CMLoop
+.223d	60		rts				rts
 
 ;******  Processing file: x16_api/api.asm
 
-.2241					SampleAPIHandler:
-.2241	c9 00		cmp #$00			cmp 	#AXAPISetup
-.2243	f0 1a		beq $225f			beq 	_TAMemInfo
-.2245	c9 01		cmp #$01			cmp 	#AXAPIOpen
-.2247	f0 1c		beq $2265			beq 	_TAOpen
-.2249	c9 02		cmp #$02			cmp 	#AXAPIClose
-.224b	f0 1b		beq $2268			beq 	_TAClose
-.224d	c9 03		cmp #$03			cmp 	#AXAPIReadByte
-.224f	f0 1a		beq $226b			beq	 	_TAReadChar
-.2251	c9 04		cmp #$04			cmp 	#AXAPIWriteByte
-.2253	f0 19		beq $226e			beq 	_TAWriteByte
-.2255	c9 05		cmp #$05			cmp 	#AXAPIError
-.2257	f0 1b		beq $2274			beq 	_TAError
-.2259	c9 06		cmp #$06			cmp 	#AXAPIListChar
-.225b	f0 14		beq $2271			beq 	_TAListChar
-.225d	18		clc				clc
-.225e	60		rts				rts
-.225f					_TAMemInfo:
-.225f	a9 90		lda #$90			lda 	#$90 						; memory from $9000 - $9EFF
-.2261	a0 9f		ldy #$9f			ldy 	#$9F
-.2263	18		clc				clc
-.2264	60		rts				rts
-.2265					_TAOpen:
-.2265	4c a6 22	jmp $22a6			jmp 	TAOpen
-.2268					_TAClose:
-.2268	4c eb 22	jmp $22eb			jmp 	TAClose
-.226b					_TAReadChar:
-.226b	4c f7 22	jmp $22f7			jmp  	TAReadChar
-.226e					_TAWriteByte
-.226e	4c 79 22	jmp $2279			jmp 	TAWriteByte
-.2271					_TAListChar:
-.2271	4c 77 22	jmp $2277			jmp 	TAListChar
-.2274					_TAError:
-.2274	4c 13 23	jmp $2313			jmp 	TAError
+.223e					SampleAPIHandler:
+.223e	c9 00		cmp #$00			cmp 	#AXAPISetup
+.2240	f0 1a		beq $225c			beq 	_TAMemInfo
+.2242	c9 01		cmp #$01			cmp 	#AXAPIOpen
+.2244	f0 1c		beq $2262			beq 	_TAOpen
+.2246	c9 02		cmp #$02			cmp 	#AXAPIClose
+.2248	f0 1b		beq $2265			beq 	_TAClose
+.224a	c9 03		cmp #$03			cmp 	#AXAPIReadByte
+.224c	f0 1a		beq $2268			beq	 	_TAReadChar
+.224e	c9 04		cmp #$04			cmp 	#AXAPIWriteByte
+.2250	f0 19		beq $226b			beq 	_TAWriteByte
+.2252	c9 05		cmp #$05			cmp 	#AXAPIError
+.2254	f0 1b		beq $2271			beq 	_TAError
+.2256	c9 06		cmp #$06			cmp 	#AXAPIListChar
+.2258	f0 14		beq $226e			beq 	_TAListChar
+.225a	18		clc				clc
+.225b	60		rts				rts
+.225c					_TAMemInfo:
+.225c	a9 90		lda #$90			lda 	#$90 						; memory from $9000 - $9EFF
+.225e	a0 9f		ldy #$9f			ldy 	#$9F
+.2260	18		clc				clc
+.2261	60		rts				rts
+.2262					_TAOpen:
+.2262	4c a6 22	jmp $22a6			jmp 	TAOpen
+.2265					_TAClose:
+.2265	4c eb 22	jmp $22eb			jmp 	TAClose
+.2268					_TAReadChar:
+.2268	4c f7 22	jmp $22f7			jmp  	TAReadChar
+.226b					_TAWriteByte
+.226b	4c 79 22	jmp $2279			jmp 	TAWriteByte
+.226e					_TAListChar:
+.226e	4c 74 22	jmp $2274			jmp 	TAListChar
+.2271					_TAError:
+.2271	4c 13 23	jmp $2313			jmp 	TAError
 
 ;******  Processing file: x16_api/apilist.asm
 
-.2277					TAListChar:
-.2277	8a		txa				txa
+.2274					TAListChar:
+.2274	8a		txa				txa
+.2275	20 d2 ff	jsr $ffd2			jsr 	$FFD2 						; this is only displayed for TESTING=2
 .2278	60		rts				rts
 
 ;******  Return to file: x16_api/api.asm

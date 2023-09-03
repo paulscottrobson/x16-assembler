@@ -1,6 +1,6 @@
 TODO:
 	- continue comparative testing
-		macros (when working)
+		macros (when working) retry stringprint.
 	- .align ?
 	- Check collision of stack / identifiers at instruction end, out of memory error. fatal.
 	- Check defining macro twice ??
@@ -10,5 +10,5 @@ Forward references that have mandatory 8 bit values generate an error on pass 1.
 Anything other than immediate split ups of addresses ?
 Immediate undefined on pass 1 *always* passes muster.
 
-Group 1
-Group 2
+Fix Group 1
+Fix Group 2
