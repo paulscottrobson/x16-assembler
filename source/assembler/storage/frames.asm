@@ -19,6 +19,7 @@
 ; ************************************************************************************************
 
 AXPushFrame:	
+		jsr 	AXIOpen
 		sec 								; subtract frame size from stack, copy to AXTemp0
 		lda 	AXIStack
 		sbc 	#AXFrameSize
@@ -36,6 +37,7 @@ _AXPFCopy:
 		sta 	(AXTemp0),y
 		cpy 	#0
 		bne 	_AXPFCopy		
+		jsr 	AXIClose
 		rts
 
 ; ************************************************************************************************
@@ -45,6 +47,7 @@ _AXPFCopy:
 ; ************************************************************************************************
 
 AXPullFrame:	
+		jsr 	AXIOpen
 		clc 								; add frame size to stack, copy to AXTemp0
 		lda 	AXIStack
 		sta 	AXTemp0
@@ -63,6 +66,7 @@ _AXPFCopy:
 		sta 	AXStartFrame,y
 		cpy 	#0
 		bne 	_AXPFCopy		
+		jsr 	AXIClose
 		rts
 
 		.send as16code

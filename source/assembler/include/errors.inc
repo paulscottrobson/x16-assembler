@@ -33,6 +33,7 @@ AXERRSize = $09 							; bad expression.
 AXERRLength = $8A 							; line too long.
 AXERRMacroParams = $8B 						; too many macro parameters.
 AXERRParam = $8C 							; bad expansion parameter.
+AXERRMemory = $8D 							; memory.
 
 		.send as16code
 

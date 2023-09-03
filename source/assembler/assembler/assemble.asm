@@ -19,6 +19,12 @@
 ; ************************************************************************************************
 
 AXAssembleLine:
+		lda 	AXIMemory 					; out of memory ?
+		beq 	_AXALMemOkay
+		lda 	#AXERRMemory 				; if so, report it.
+		sec
+		rts
+_AXALMemOkay:		
 		lda 	AXProgramCounter 			; copy program counter to program counter start
 		sta 	AXProgramCounterStart 		; this is the value used in the unary function *
 		lda 	AXProgramCounter+1

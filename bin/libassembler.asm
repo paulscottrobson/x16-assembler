@@ -56,47 +56,6 @@ AXMIndirectX = 			$0D + AXMRequireZero 	; lda ($2A,x)
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		ident.inc
-;		Purpose:	Identifier offsets
-;		Created:	11th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-
-AXIT_Unused = 		0
-AXIT_Label = 		1
-AXIT_PsuedoOp = 	2
-AXIT_Macro =  		3
-AXIT_Opcode = 		4
-
-AXID_Hash = 		1
-AXID_Type = 		2
-AXID_Flags = 		3
-AXID_DataLow = 		4
-AXID_DataHigh = 	5
-AXID_DataAux = 		6
-AXID_Identifier = 	7
-
-		.send as16code
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-; ************************************************************************************************
-; ************************************************************************************************
-;
 ;		Name:		api.inc
 ;		Purpose:	API Constants
 ;		Created:	22nd August 2023
@@ -307,6 +266,7 @@ AXERRSize = $09 							; bad expression.
 AXERRLength = $8A 							; line too long.
 AXERRMacroParams = $8B 						; too many macro parameters.
 AXERRParam = $8C 							; bad expansion parameter.
+AXERRMemory = $8D 							; memory.
 
 		.send as16code
 
@@ -321,6 +281,47 @@ AXERRParam = $8C 							; bad expansion parameter.
 ;
 ; ************************************************************************************************
 
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		ident.inc
+;		Purpose:	Identifier offsets
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+
+AXIT_Unused = 		0
+AXIT_Label = 		1
+AXIT_PsuedoOp = 	2
+AXIT_Macro =  		3
+AXIT_Opcode = 		4
+
+AXID_Hash = 		1
+AXID_Type = 		2
+AXID_Flags = 		3
+AXID_DataLow = 		4
+AXID_DataHigh = 	5
+AXID_DataAux = 		6
+AXID_Identifier = 	7
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
@@ -600,6 +601,12 @@ AXAddrMode:
 ; ************************************************************************************************
 
 AXAssembleLine:
+		lda 	AXIMemory 					; out of memory ?
+		beq 	_AXALMemOkay
+		lda 	#AXERRMemory 				; if so, report it.
+		sec
+		rts
+_AXALMemOkay:
 		lda 	AXProgramCounter 			; copy program counter to program counter start
 		sta 	AXProgramCounterStart 		; this is the value used in the unary function *
 		lda 	AXProgramCounter+1
@@ -3550,760 +3557,6 @@ AXBinaryVectors:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		access.asm
-;		Purpose:	Access the identifier store (if, say, it's in paged memory.)
-;		Created:	11th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;									Access identifier memory
-;
-; ************************************************************************************************
-
-AXIOpen:
-		pha
-		lda 	#AXAPILock
-		jsr 	AXCallAPI
-		pla
-		rts
-
-AXIClose:
-		pha
-		lda 	#AXAPIUnlock
-		jsr 	AXCallAPI
-		pla
-		rts
-
-		.send as16code
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
-;		Name:		appendmacro.asm
-;		Purpose:	Add the buffer string to the last defined word
-;		Created:	39th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;			For the last defined label in the list, set type to Macro and ....
-;
-;			Add the ASCIIZ string in the buffer to the macro text with CR (Carry Clear)
-; 			Add $FF to macro text (Carry Set)
-;
-; ************************************************************************************************
-
-AXIAppendMacro:
-		php 								; save end marker/line flag.
-		jsr 	AXIOpen 					; start.
-		;
-		;		Make AXTemp0 point to the *last* entry, which is a macro.
-		;
-		lda 	AXIBase
-		sta 	AXTemp0+1
-		stz 	AXTemp0 					; save address at zTemp0
-		;
-_AXIFindLast:
-		lda 	(AXTemp0)					; read the *next* link
-		tay
-		lda 	(AXTemp0),y
-		beq 	_AXIFoundLast 				; if zero, we're at the last defined.
-		;
-		tya 								; move to next.
-		clc
-		adc 	AXTemp0
-		sta 	AXTemp0
-		bcc 	_AXIFindLast
-		inc 	AXTemp0+1
-		bra 	_AXIFindLast
-_AXIFoundLast:
-		ldy 	#AXID_Type 					; set the type to macro.
-		lda 	#AXIT_Macro
-		sta 	(AXTemp0),y
-
-		plp 								; type of operation required.
-		bcs 	_AXIInsertNull
-		ldx 	#0 							; insert the buffer
-_AXIInsertBuffer:
-		lda 	AXBuffer,x 					; if end of line insert $00 and exit
-		beq 	_AXIInsertA
-		jsr 	_AXIInsert 					; insert character
-		inx 								; do next
-		bra 	_AXIInsertBuffer
-		;
-_AXIInsertNull:
-		lda 	#$FF 						; insert a $FF marking macro end.
-_AXIInsertA:
-		jsr 	_AXIInsert
-		jsr 	AXIClose 					; close access
-		clc
-		rts
-
-
-_AXIInsert:
-		pha 								; save insertable.
-		lda 	(AXTemp0) 					; get offset to end.
-		tay 								; now points to next free character
-		pla 								; write new character out.
-		sta 	(AXTemp0),y
-		iny 								; write new end-next-link-zero
-		lda 	#0
-		sta 	(AXTemp0),y
-		;
-		tya 								; bump length by one.
-		iny
-		sta 	(AXTemp0)
-		rts
-
-		.send as16code
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
-;		Name:		createfind.asm
-;		Purpose:	Create/Find an identifier
-;		Created:	11th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;									Create/Find an identifier in YX
-; 									  CC = Found, CS = Created
-;
-; ************************************************************************************************
-
-AXICreateFind:
-		jsr 	AXIFind 					; find it ?
-		bcc 	_AXFound 					; found so do nothing
-		jsr 	AXICreate 					; create new record
-		sec
-_AXFound:
-		rts
-
-; ************************************************************************************************
-;
-;									   Find an identifier in YX
-; 				CC = Found, AXTemp0 points to it CS = Not Found, AXTemp0 points to end
-;
-; ************************************************************************************************
-
-AXIFind:
-		stx 	AXTemp0 					; save address at zTemp0
-		sty 	AXTemp0+1
-		jsr 	AXICalculateHash 			; calculate hash
-		;
-		jsr 	AXIOpen 					; start.
-		;
-		;		Find the end, checking for duplicates as we go.
-		;
-_AXIFindEnd:								; go to the end checking for duplicates.
-		lda 	(AXTemp0)
-		sec
-		beq 	_AXIFindExit
-		jsr 	AXICompareCurrent 			; compare AXTemp1 ident vs AXTemp0 record
-		bcc 	_AXIFoundExit 				; it's been found.
-		;
-		clc 								; go to next
-		lda 	(AXTemp0)
-		adc 	AXTemp0
-		sta 	AXTemp0
-		bcc 	_AXIFindEnd
-		inc 	AXTemp0+1
-		bra 	_AXIFindEnd
-
-_AXIFoundExit:
-		jsr 	AXISetCurrent
-		clc
-
-_AXIFindExit:
-		php
-		jsr 	AXIClose
-		plp
-		rts
-
-; ************************************************************************************************
-;
-;								Create identifier if not found
-;
-; ************************************************************************************************
-
-AXICreate:
-		jsr 	AXIOpen 					; start.
-		ldy 	#0
-		;
-_AXIFill:									; fill +2,3,4,5 with zeros.
-		lda 	#0
-		sta 	(AXTemp0),y
-		iny
-		cpy 	#AXID_Identifier
-		bne 	_AXIFill
-_AXICopy:
-		lda 	AXLabelBuffer-AXID_Identifier,y 	; copy name in from buffer.
-		sta 	(AXTemp0),y
-		iny 								; next character
-		asl 	a 							; keep going till bit 7 set.
-		bcc 	_AXICopy
-
-		lda 	#0 							; write zero at end (end of list)
-		sta 	(AXTemp0),y
-		;
-		tya 								; set the offset link.
-		sta 	(AXTemp0)
-		;
-		ldy 	#AXID_Hash 					; fill the data in. +1 is the hash
-		lda 	AXIHash
-		sta 	(AXTemp0),y
-		;
-		ldy 	#AXID_Flags 				; set the undefined flag.
-		lda 	#$80
-		sta 	(AXTemp0),y
-		sec 								; return CS, created
-		;
-_AXICFound:
-		php 								; save carry
-		jsr 	AXISetCurrent
-		jsr 	AXIClose 					; close access
-		plp 								; restore carry.
-		rts
-
-AXISetCurrent:
-		lda 	AXTemp0 					; save as current record
-		sta 	AXCurrent
-		lda 	AXTemp0+1
-		sta 	AXCurrent+1
-		rts
-
-		.send as16code
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
-;		Name:		getdata.asm
-;		Purpose:	Get address of associated data / Get line.
-;		Created:	31st August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;										Get data address to YX
-;
-; ************************************************************************************************
-
-AXIGetDataAddress:
-		jsr 	AXIOpen 					; start.
-
-		lda 	AXCurrent 					; copy address for access
-		sta 	AXTemp0
-		lda 	AXCurrent+1
-		sta 	AXTemp0+1
-
-		ldy 	#AXID_Identifier 			; point to name
-_AXIFindEnd: 								; find end of name.
-		lda 	(AXTemp0),y 				; get next
-		asl 	a		 					; bit 7 to carry
-		iny
-		bcc 	_AXIFindEnd
-		;
-		tya 								; put address of data in YX.
-		clc
-		adc 	AXTemp0
-		tax
-		lda 	AXTemp0+1
-		adc 	#0
-		tay
-
-		jsr 	AXIClose 					; close access
-		rts
-
-; ************************************************************************************************
-;
-;				Get line from AXMPointer to AXBuffer, CS if EOData, CC if okay
-;
-; ************************************************************************************************
-
-AXIGetDataLine:
-		lda 	AXMPointer 					; copy pointer to AXTemp0
-		sta 	AXTemp0
-		lda 	AXMPointer+1
-		sta 	AXTemp0+1
-		lda 	(AXTemp0) 					; reached the end ?
-		cmp 	#$FF
-		sec 								; if so exit with CS.
-		beq 	_AXIExit
-		;
-		ldy 	#0 							; copy data line to buffer.
-_AXIGDLCopy:
-		lda 	(AXTemp0),y
-		sta 	AXBuffer,y
-		iny
-		cmp 	#0
-		bne 	_AXIGDLCopy
-		;
-		tya 								; Y is step to next line.
-		clc
-		adc 	AXMPointer
-		sta 	AXMPointer
-		bcc 	_AXIExitOkay
-		inc 	AXMPointer+1
-_AXIExitOkay:
-		clc 								; is okay.
-_AXIExit:
-		rts
-
-		.send as16code
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
-;		Name:		getset.asm
-;		Purpose:	Access offset data.
-;		Created:	11th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;									Get element Y => A
-;
-; ************************************************************************************************
-
-AXIGet:
-		jsr 	AXIOpen 					; start.
-
-		lda 	AXCurrent 					; copy address for access
-		sta 	AXTemp0
-		lda 	AXCurrent+1
-		sta 	AXTemp0+1
-
-		lda 	(AXTemp0),y 				; read
-		jsr 	AXIClose 					; close access
-
-		rts
-
-; ************************************************************************************************
-;
-;									Set element Y to A
-;
-; ************************************************************************************************
-
-AXIPut:
-		jsr 	AXIOpen 					; start.
-		pha
-		lda 	AXCurrent 					; copy address for access
-		sta 	AXTemp0
-		lda 	AXCurrent+1
-		sta 	AXTemp0+1
-		pla
-		sta 	(AXTemp0),y 				; write
-		jsr 	AXIClose 					; close access
-		rts
-
-; ************************************************************************************************
-;
-;								Put Data YX to DataLow/High, and set flag
-;
-;				  Put can *FAIL* if defined and different - a redefinition error.
-;
-; ************************************************************************************************
-
-AXIPutData:
-		jsr 	AXIOpen 					; start.
-		lda 	AXCurrent 					; copy address for access
-		sta 	AXTemp0
-		lda 	AXCurrent+1
-		sta 	AXTemp0+1
-
-		phy 								; save Y on stack.
-		ldy 	#AXID_Flags
-		lda 	(AXTemp0),y 				; check if defined.
-		bmi 	_AXIPutOkay 				; no, it is always okay to put.
-
-		pla  								; get MSB back
-		pha
-		ldy 	#AXID_DataHigh
-		cmp 	(AXTemp0),y
-		bne 	_AXIPutError 				; if value has changed, that's an error
-		txa 								; check LSB
-		ldy 	#AXID_DataLow
-		cmp 	(AXTemp0),y
-		bne 	_AXIPutError 				; if value has changed, that's an error
-
-_AXIPutOkay:
-		pla
-		ldy 	#AXID_DataHigh 				; write high byte
-		sta 	(AXTemp0),y
-
-		txa
-		ldy 	#AXID_DataLow 				; write low byte
-		sta 	(AXTemp0),y
-
-		ldy 	#AXID_Flags 				; clear the 'defined' flag.
-		lda 	(AXTemp0),y
-		and 	#$7F
-		sta 	(AXTemp0),y
-
-		jsr 	AXIClose 					; close access
-		clc
-		rts
-
-_AXIPutError:
-		pla 								; throw saved Y
-		jsr 	AXIClose 					; return with error redefine.
-		lda 	#AXERRRedefine
-		sec
-		rts
-
-		.send as16code
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
-;		Name:		insert.asm
-;		Purpose:	Insert parameter from previous frame in current buffer
-;		Created:	3rd September 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;		Insert parameter A (0-n-1, one short) at position X in buffer. Parameter is obtained
-;		from the *previous frame*
-;
-; ************************************************************************************************
-
-AXIInsertParameter:
-		stx 	AXIPPosition 				; save position & index
-		sta 	AXIPIndex
-		jsr 	AXIOpen 					; start.
-
-		lda 	AXIStack 					; AXTemp0 points to previous frame.
-		sta 	AXTemp0
-		lda 	AXIStack+1
-		sta 	AXTemp0+1
-
-		lda 	AXIPIndex 					; get the count of parameters
-		ldy 	#(AXMParamCount-AXStartFrame)
-		lda 	AXIPIndex 					; compare index vs count
-		cmp 	(AXTemp0),y
-		bcs 	_AXIPError 					; parameter error
-		;
-		clc 								; point into parameter array
-		adc 	#(AXMParameters-AXStartFrame)
-		tay
-		lda 	(AXTemp0),y 				; copy start and end offset
-		sta 	AXIPStart
-		iny
-		lda 	(AXTemp0),y
-		sta 	AXIPEnd
-		;
-		ldx 	AXIPPosition 				; move to end to check size and insert spaces.
-_AXIPFindEnd:
-		inx
-		lda 	AXBuffer,x
-		bne 	_AXIPFindEnd
-		;
-		sec 								; to position add length to insert
-		txa 								; (end-start)
-		adc 	AXIPEnd
-		sbc 	AXIPStart
-		cmp 	#AXMaxLineSize 				; line is too long ?
-		bcs 	_AXIPError
-		;
-		tay 	 							; now shift it up to make room.
-_AXIPShiftUp:
-		lda 	AXBuffer,x
-		sta 	AXBuffer,y
-		cpx 	AXIPPosition
-		beq 	_AXIPShifted
-		dex
-		dey
-		bra 	_AXIPShiftUp
-_AXIPShifted:
-		;
-		ldy 	AXIPStart 					; copy parameter data in place.
-_AXIPCopy:
-		lda 	(AXTemp0),y
-		sta 	AXBuffer,x
-		inx
-		iny
-		cpy 	AXIPEnd
-		bne 	_AXIPCopy
-		clc		 							; and successful.
-		bra 	_AXIPExit
-
-_AXIPError:
-		lda 	#AXERRParam 				; return bad parameter.
-		sec
-_AXIPExit: 									; exit preserving AP through close.
-		php
-		pha
-		jsr 	AXIClose 					; close access
-		pla
-		plp
-		rts
-
-
-		.send as16code
-
-		.section as16storage
-AXIPPosition: 								; position in buffer
-		.fill 	1
-AXIPIndex:		 							; index-1 (e.g. \1 => 0)
-		.fill 	1
-AXIPStart:									; start position
-		.fill 	1
-AXIPEnd:									; end position.
-		.fill 	1
-		.send as16storage
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
-;		Name:		utility.asm
-;		Purpose:	Identifier utility functions
-;		Created:	11th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;		Compare current checked (text at AXTemp1, hash in AXHash) with record AXTemp0
-;								CC if match, CS if no match.
-;
-; ************************************************************************************************
-
-AXICompareCurrent:
-		ldy 	#1 							; check the hashes match.
-		lda 	(AXTemp0),y
-		cmp 	AXIHash
-		bne 	_AXICCFail 					; they don't, fail.
-		;
-		ldy 	#AXID_Identifier 			; compare identifier
-_AXICCLoop:
-		lda 	AXLabelBuffer-AXID_Identifier,y 	; get buffer entry
-		cmp 	(AXTemp0),y 				; compare against record entry.
-		bne 	_AXICCFail
-		;
-		iny 								; consume it
-		asl 	a 							; if it's bit 7 was clear, go back.
-		bcc 	_AXICCLoop
-		clc 								; matched !
-		rts
-
-_AXICCFail:
-		sec
-		rts
-
-; ************************************************************************************************
-;
-;						Calculate hash at AXTemp1 return in A/AXIHash
-;
-; ************************************************************************************************
-
-AXICalculateHash:
-		stz 	AXIHash 					; clear hash
-		ldy 	#0
-_AXICHLoop:
-		clc 								; add character, saving it
-		lda 	AXLabelBuffer,y
-		iny
-		pha
-		adc 	AXIHash
-		sta 	AXIHash
-		pla 								; loop back if +ve
-		bpl 	_AXICHLoop
-		lda 	AXIHash 					; return value.
-		rts
-
-		.send as16code
-
-		.section as16storage
-AXIHash:
-		.fill 	1
-		.endsection
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
-;		Name:		initialise.asm
-;		Purpose:	Initialise the identifier store
-;		Created:	11th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;							Initialise the identifier store and stack
-;
-; ************************************************************************************************
-
-AXIReset:
-		lda 	#AXAPISetup 				; get the start & end
-		jsr 	AXCallAPI
-		sta 	AXIBase
-		sty 	AXIEnd
-		;
-		sty 	AXIStack+1 					; reset stack
-		stz 	AXIStack
-		;
-		jsr 	AXIOpen 					; access id store
-		;
-		lda 	AXIBase 					; erase the user definitions.
-		sta 	AXTemp0+1
-		stz 	AXTemp0
-		lda 	#0
-		sta 	(AXTemp0)
-		;
-		jsr 	AXIClose 					; release ID store.
-		rts
-
-		.send as16code
-
-		.section as16storage
-AXIBase:									; MSB of identifier base area
-		.fill 	1
-AXIEnd: 									; MSB of identifier end area
-		.fill 	1
-AXIStack: 									; Frame stack pointe.
-		.fill 	2
-		.send as16storage
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
 ;		Name:		input.asm
 ;		Purpose:	Read a character from the input
 ;		Created:	13th August 2023
@@ -5246,6 +4499,855 @@ _AXWSyntax:
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
+;		Name:		access.asm
+;		Purpose:	Access the identifier store (if, say, it's in paged memory.)
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Access identifier memory
+;
+; ************************************************************************************************
+
+AXIOpen:
+		pha
+		lda 	#AXAPILock
+		jsr 	AXCallAPI
+		pla
+		rts
+
+AXIClose:
+		pha
+		lda 	#AXAPIUnlock
+		jsr 	AXCallAPI
+		pla
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		appendmacro.asm
+;		Purpose:	Add the buffer string to the last defined word
+;		Created:	39th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;			For the last defined label in the list, set type to Macro and ....
+;
+;			Add the ASCIIZ string in the buffer to the macro text with CR (Carry Clear)
+; 			Add $FF to macro text (Carry Set)
+;
+; ************************************************************************************************
+
+AXIAppendMacro:
+		php 								; save end marker/line flag.
+		jsr 	AXIOpen 					; start.
+		;
+		;		Make AXTemp0 point to the *last* entry, which is a macro.
+		;
+		lda 	AXIBase
+		sta 	AXTemp0+1
+		stz 	AXTemp0 					; save address at zTemp0
+		;
+_AXIFindLast:
+		lda 	(AXTemp0)					; read the *next* link
+		tay
+		lda 	(AXTemp0),y
+		beq 	_AXIFoundLast 				; if zero, we're at the last defined.
+		;
+		tya 								; move to next.
+		clc
+		adc 	AXTemp0
+		sta 	AXTemp0
+		bcc 	_AXIFindLast
+		inc 	AXTemp0+1
+		bra 	_AXIFindLast
+_AXIFoundLast:
+		ldy 	#AXID_Type 					; set the type to macro.
+		lda 	#AXIT_Macro
+		sta 	(AXTemp0),y
+
+		plp 								; type of operation required.
+		bcs 	_AXIInsertNull
+		ldx 	#0 							; insert the buffer
+_AXIInsertBuffer:
+		lda 	AXBuffer,x 					; if end of line insert $00 and exit
+		beq 	_AXIInsertA
+		jsr 	_AXIInsert 					; insert character
+		inx 								; do next
+		bra 	_AXIInsertBuffer
+		;
+_AXIInsertNull:
+		lda 	#$FF 						; insert a $FF marking macro end.
+_AXIInsertA:
+		jsr 	_AXIInsert
+		jsr 	AXIClose 					; close access
+		clc
+		rts
+
+
+_AXIInsert:
+		pha 								; save insertable.
+		lda 	(AXTemp0) 					; get offset to end.
+		tay 								; now points to next free character
+		pla 								; write new character out.
+		sta 	(AXTemp0),y
+		iny 								; write new end-next-link-zero
+		lda 	#0
+		sta 	(AXTemp0),y
+		;
+		tya 								; bump length by one.
+		iny
+		sta 	(AXTemp0)
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		createfind.asm
+;		Purpose:	Create/Find an identifier
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Create/Find an identifier in YX
+; 									  CC = Found, CS = Created
+;
+; ************************************************************************************************
+
+AXICreateFind:
+		jsr 	AXIFind 					; find it ?
+		bcc 	_AXFound 					; found so do nothing
+		jsr 	AXICreate 					; create new record
+		sec
+_AXFound:
+		rts
+
+; ************************************************************************************************
+;
+;									   Find an identifier in YX
+; 				CC = Found, AXTemp0 points to it CS = Not Found, AXTemp0 points to end
+;
+; ************************************************************************************************
+
+AXIFind:
+		stx 	AXTemp0 					; save address at zTemp0
+		sty 	AXTemp0+1
+		jsr 	AXICalculateHash 			; calculate hash
+		;
+		jsr 	AXIOpen 					; start.
+		;
+		;		Find the end, checking for duplicates as we go.
+		;
+_AXIFindEnd:								; go to the end checking for duplicates.
+		lda 	(AXTemp0)
+		sec
+		beq 	_AXIFindExit
+		jsr 	AXICompareCurrent 			; compare AXTemp1 ident vs AXTemp0 record
+		bcc 	_AXIFoundExit 				; it's been found.
+		;
+		clc 								; go to next
+		lda 	(AXTemp0)
+		adc 	AXTemp0
+		sta 	AXTemp0
+		bcc 	_AXIFindEnd
+		inc 	AXTemp0+1
+		bra 	_AXIFindEnd
+
+_AXIFoundExit:
+		jsr 	AXISetCurrent
+		clc
+
+_AXIFindExit:
+		php
+		jsr 	AXIClose
+		plp
+		rts
+
+; ************************************************************************************************
+;
+;								Create identifier if not found
+;
+; ************************************************************************************************
+
+AXICreate:
+		clc 								; check memory short ?
+		lda 	AXTemp0+1
+		adc 	#2
+		cmp 	AXIStack+1
+		bcc 	_AXINoMemory
+		dec 	AXIMemory 					; set memory flag.
+_AXINoMemory:
+
+		jsr 	AXIOpen 					; start.
+		ldy 	#0
+		;
+_AXIFill:									; fill +2,3,4,5 with zeros.
+		lda 	#0
+		sta 	(AXTemp0),y
+		iny
+		cpy 	#AXID_Identifier
+		bne 	_AXIFill
+_AXICopy:
+		lda 	AXLabelBuffer-AXID_Identifier,y 	; copy name in from buffer.
+		sta 	(AXTemp0),y
+		iny 								; next character
+		asl 	a 							; keep going till bit 7 set.
+		bcc 	_AXICopy
+
+		lda 	#0 							; write zero at end (end of list)
+		sta 	(AXTemp0),y
+		;
+		tya 								; set the offset link.
+		sta 	(AXTemp0)
+		;
+		ldy 	#AXID_Hash 					; fill the data in. +1 is the hash
+		lda 	AXIHash
+		sta 	(AXTemp0),y
+		;
+		ldy 	#AXID_Flags 				; set the undefined flag.
+		lda 	#$80
+		sta 	(AXTemp0),y
+		sec 								; return CS, created
+		;
+_AXICFound:
+		php 								; save carry
+		jsr 	AXISetCurrent
+		jsr 	AXIClose 					; close access
+		plp 								; restore carry.
+		rts
+
+AXISetCurrent:
+		lda 	AXTemp0 					; save as current record
+		sta 	AXCurrent
+		lda 	AXTemp0+1
+		sta 	AXCurrent+1
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		frames.asm
+;		Purpose:	Push/Pull frame off stack
+;		Created:	22nd August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Push frame on stack
+;
+; ************************************************************************************************
+
+AXPushFrame:
+		jsr 	AXIOpen
+		sec 								; subtract frame size from stack, copy to AXTemp0
+		lda 	AXIStack
+		sbc 	#AXFrameSize
+		sta 	AXIStack
+		sta 	AXTemp0
+		lda 	AXIStack+1
+		sbc 	#0
+		sta 	AXIStack+1
+		sta 	AXTemp0+1
+		;
+		ldy 	#AXFrameSize 				; copy frame to stack space.
+_AXPFCopy:
+		dey
+		lda 	AXStartFrame,y
+		sta 	(AXTemp0),y
+		cpy 	#0
+		bne 	_AXPFCopy
+		jsr 	AXIClose
+		rts
+
+; ************************************************************************************************
+;
+;									Pull frame off stack
+;
+; ************************************************************************************************
+
+AXPullFrame:
+		jsr 	AXIOpen
+		clc 								; add frame size to stack, copy to AXTemp0
+		lda 	AXIStack
+		sta 	AXTemp0
+		adc 	#AXFrameSize
+		sta 	AXIStack
+
+		lda 	AXIStack+1
+		sta 	AXTemp0+1
+		adc 	#0
+		sta 	AXIStack+1
+		;
+		ldy 	#AXFrameSize 				; copy frame from stack space.
+_AXPFCopy:
+		dey
+		lda 	(AXTemp0),y
+		sta 	AXStartFrame,y
+		cpy 	#0
+		bne 	_AXPFCopy
+		jsr 	AXIClose
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		getdata.asm
+;		Purpose:	Get address of associated data / Get line.
+;		Created:	31st August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;										Get data address to YX
+;
+; ************************************************************************************************
+
+AXIGetDataAddress:
+		jsr 	AXIOpen 					; start.
+
+		lda 	AXCurrent 					; copy address for access
+		sta 	AXTemp0
+		lda 	AXCurrent+1
+		sta 	AXTemp0+1
+
+		ldy 	#AXID_Identifier 			; point to name
+_AXIFindEnd: 								; find end of name.
+		lda 	(AXTemp0),y 				; get next
+		asl 	a		 					; bit 7 to carry
+		iny
+		bcc 	_AXIFindEnd
+		;
+		tya 								; put address of data in YX.
+		clc
+		adc 	AXTemp0
+		tax
+		lda 	AXTemp0+1
+		adc 	#0
+		tay
+
+		jsr 	AXIClose 					; close access
+		rts
+
+; ************************************************************************************************
+;
+;				Get line from AXMPointer to AXBuffer, CS if EOData, CC if okay
+;
+; ************************************************************************************************
+
+AXIGetDataLine:
+		lda 	AXMPointer 					; copy pointer to AXTemp0
+		sta 	AXTemp0
+		lda 	AXMPointer+1
+		sta 	AXTemp0+1
+		lda 	(AXTemp0) 					; reached the end ?
+		cmp 	#$FF
+		sec 								; if so exit with CS.
+		beq 	_AXIExit
+		;
+		ldy 	#0 							; copy data line to buffer.
+_AXIGDLCopy:
+		lda 	(AXTemp0),y
+		sta 	AXBuffer,y
+		iny
+		cmp 	#0
+		bne 	_AXIGDLCopy
+		;
+		tya 								; Y is step to next line.
+		clc
+		adc 	AXMPointer
+		sta 	AXMPointer
+		bcc 	_AXIExitOkay
+		inc 	AXMPointer+1
+_AXIExitOkay:
+		clc 								; is okay.
+_AXIExit:
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		getset.asm
+;		Purpose:	Access offset data.
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;									Get element Y => A
+;
+; ************************************************************************************************
+
+AXIGet:
+		jsr 	AXIOpen 					; start.
+
+		lda 	AXCurrent 					; copy address for access
+		sta 	AXTemp0
+		lda 	AXCurrent+1
+		sta 	AXTemp0+1
+
+		lda 	(AXTemp0),y 				; read
+		jsr 	AXIClose 					; close access
+
+		rts
+
+; ************************************************************************************************
+;
+;									Set element Y to A
+;
+; ************************************************************************************************
+
+AXIPut:
+		jsr 	AXIOpen 					; start.
+		pha
+		lda 	AXCurrent 					; copy address for access
+		sta 	AXTemp0
+		lda 	AXCurrent+1
+		sta 	AXTemp0+1
+		pla
+		sta 	(AXTemp0),y 				; write
+		jsr 	AXIClose 					; close access
+		rts
+
+; ************************************************************************************************
+;
+;								Put Data YX to DataLow/High, and set flag
+;
+;				  Put can *FAIL* if defined and different - a redefinition error.
+;
+; ************************************************************************************************
+
+AXIPutData:
+		jsr 	AXIOpen 					; start.
+		lda 	AXCurrent 					; copy address for access
+		sta 	AXTemp0
+		lda 	AXCurrent+1
+		sta 	AXTemp0+1
+
+		phy 								; save Y on stack.
+		ldy 	#AXID_Flags
+		lda 	(AXTemp0),y 				; check if defined.
+		bmi 	_AXIPutOkay 				; no, it is always okay to put.
+
+		pla  								; get MSB back
+		pha
+		ldy 	#AXID_DataHigh
+		cmp 	(AXTemp0),y
+		bne 	_AXIPutError 				; if value has changed, that's an error
+		txa 								; check LSB
+		ldy 	#AXID_DataLow
+		cmp 	(AXTemp0),y
+		bne 	_AXIPutError 				; if value has changed, that's an error
+
+_AXIPutOkay:
+		pla
+		ldy 	#AXID_DataHigh 				; write high byte
+		sta 	(AXTemp0),y
+
+		txa
+		ldy 	#AXID_DataLow 				; write low byte
+		sta 	(AXTemp0),y
+
+		ldy 	#AXID_Flags 				; clear the 'defined' flag.
+		lda 	(AXTemp0),y
+		and 	#$7F
+		sta 	(AXTemp0),y
+
+		jsr 	AXIClose 					; close access
+		clc
+		rts
+
+_AXIPutError:
+		pla 								; throw saved Y
+		jsr 	AXIClose 					; return with error redefine.
+		lda 	#AXERRRedefine
+		sec
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		initialise.asm
+;		Purpose:	Initialise the identifier store
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;							Initialise the identifier store and stack
+;
+; ************************************************************************************************
+
+AXIReset:
+		lda 	#AXAPISetup 				; get the start & end
+		jsr 	AXCallAPI
+		sta 	AXIBase
+		sty 	AXIEnd
+		;
+		sty 	AXIStack+1 					; reset stack
+		stz 	AXIStack
+		;
+		jsr 	AXIOpen 					; access id store
+		;
+		lda 	AXIBase 					; erase the user definitions.
+		sta 	AXTemp0+1
+		stz 	AXTemp0
+		lda 	#0
+		sta 	(AXTemp0)
+		stz 	AXIMemory 					; clear out of memory flag.
+		;
+		jsr 	AXIClose 					; release ID store.
+		rts
+
+		.send as16code
+
+		.section as16storage
+AXIBase:									; MSB of identifier base area
+		.fill 	1
+AXIEnd: 									; MSB of identifier end area
+		.fill 	1
+AXIStack: 									; Frame stack pointe.
+		.fill 	2
+AXIMemory: 									; set when out of memory.
+		.fill 	1
+		.send as16storage
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		insert.asm
+;		Purpose:	Insert parameter from previous frame in current buffer
+;		Created:	3rd September 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;		Insert parameter A (0-n-1, one short) at position X in buffer. Parameter is obtained
+;		from the *previous frame*
+;
+; ************************************************************************************************
+
+AXIInsertParameter:
+		stx 	AXIPPosition 				; save position & index
+		sta 	AXIPIndex
+		jsr 	AXIOpen 					; start.
+
+		lda 	AXIStack 					; AXTemp0 points to previous frame.
+		sta 	AXTemp0
+		lda 	AXIStack+1
+		sta 	AXTemp0+1
+
+		lda 	AXIPIndex 					; get the count of parameters
+		ldy 	#(AXMParamCount-AXStartFrame)
+		lda 	AXIPIndex 					; compare index vs count
+		cmp 	(AXTemp0),y
+		bcs 	_AXIPError 					; parameter error
+		;
+		clc 								; point into parameter array
+		adc 	#(AXMParameters-AXStartFrame)
+		tay
+		lda 	(AXTemp0),y 				; copy start and end offset
+		sta 	AXIPStart
+		iny
+		lda 	(AXTemp0),y
+		sta 	AXIPEnd
+		;
+		ldx 	AXIPPosition 				; move to end to check size and insert spaces.
+_AXIPFindEnd:
+		inx
+		lda 	AXBuffer,x
+		bne 	_AXIPFindEnd
+		;
+		sec 								; to position add length to insert
+		txa 								; (end-start)
+		adc 	AXIPEnd
+		sbc 	AXIPStart
+		cmp 	#AXMaxLineSize 				; line is too long ?
+		bcs 	_AXIPError
+		;
+		tay 	 							; now shift it up to make room.
+_AXIPShiftUp:
+		lda 	AXBuffer,x
+		sta 	AXBuffer,y
+		cpx 	AXIPPosition
+		beq 	_AXIPShifted
+		dex
+		dey
+		bra 	_AXIPShiftUp
+_AXIPShifted:
+		;
+		ldy 	AXIPStart 					; copy parameter data in place.
+_AXIPCopy:
+		lda 	(AXTemp0),y
+		sta 	AXBuffer,x
+		inx
+		iny
+		cpy 	AXIPEnd
+		bne 	_AXIPCopy
+		clc		 							; and successful.
+		bra 	_AXIPExit
+
+_AXIPError:
+		lda 	#AXERRParam 				; return bad parameter.
+		sec
+_AXIPExit: 									; exit preserving AP through close.
+		php
+		pha
+		jsr 	AXIClose 					; close access
+		pla
+		plp
+		rts
+
+
+		.send as16code
+
+		.section as16storage
+AXIPPosition: 								; position in buffer
+		.fill 	1
+AXIPIndex:		 							; index-1 (e.g. \1 => 0)
+		.fill 	1
+AXIPStart:									; start position
+		.fill 	1
+AXIPEnd:									; end position.
+		.fill 	1
+		.send as16storage
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		utility.asm
+;		Purpose:	Identifier utility functions
+;		Created:	11th August 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;		Compare current checked (text at AXTemp1, hash in AXHash) with record AXTemp0
+;								CC if match, CS if no match.
+;
+; ************************************************************************************************
+
+AXICompareCurrent:
+		ldy 	#1 							; check the hashes match.
+		lda 	(AXTemp0),y
+		cmp 	AXIHash
+		bne 	_AXICCFail 					; they don't, fail.
+		;
+		ldy 	#AXID_Identifier 			; compare identifier
+_AXICCLoop:
+		lda 	AXLabelBuffer-AXID_Identifier,y 	; get buffer entry
+		cmp 	(AXTemp0),y 				; compare against record entry.
+		bne 	_AXICCFail
+		;
+		iny 								; consume it
+		asl 	a 							; if it's bit 7 was clear, go back.
+		bcc 	_AXICCLoop
+		clc 								; matched !
+		rts
+
+_AXICCFail:
+		sec
+		rts
+
+; ************************************************************************************************
+;
+;						Calculate hash at AXTemp1 return in A/AXIHash
+;
+; ************************************************************************************************
+
+AXICalculateHash:
+		stz 	AXIHash 					; clear hash
+		ldy 	#0
+_AXICHLoop:
+		clc 								; add character, saving it
+		lda 	AXLabelBuffer,y
+		iny
+		pha
+		adc 	AXIHash
+		sta 	AXIHash
+		pla 								; loop back if +ve
+		bpl 	_AXICHLoop
+		lda 	AXIHash 					; return value.
+		rts
+
+		.send as16code
+
+		.section as16storage
+AXIHash:
+		.fill 	1
+		.endsection
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
 ;		Name:		ctypes.asm
 ;		Purpose:	Simple character functions
 ;		Created:	9th August 2023
@@ -5471,86 +5573,6 @@ _AXILNOut:
 		ora 	#48
 		sta 	AXLabelBuffer,y
 		iny
-		rts
-
-		.send as16code
-
-; ************************************************************************************************
-;
-;									Changes and Updates
-;
-; ************************************************************************************************
-;
-;		Date			Notes
-;		==== 			=====
-;
-; ************************************************************************************************
-
-; ************************************************************************************************
-; ************************************************************************************************
-;
-;		Name:		frames.asm
-;		Purpose:	Push/Pull frame off stack
-;		Created:	22nd August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
-;
-; ************************************************************************************************
-; ************************************************************************************************
-
-		.section as16code
-
-; ************************************************************************************************
-;
-;									Push frame on stack
-;
-; ************************************************************************************************
-
-AXPushFrame:
-		sec 								; subtract frame size from stack, copy to AXTemp0
-		lda 	AXIStack
-		sbc 	#AXFrameSize
-		sta 	AXIStack
-		sta 	AXTemp0
-		lda 	AXIStack+1
-		sbc 	#0
-		sta 	AXIStack+1
-		sta 	AXTemp0+1
-		;
-		ldy 	#AXFrameSize 				; copy frame to stack space.
-_AXPFCopy:
-		dey
-		lda 	AXStartFrame,y
-		sta 	(AXTemp0),y
-		cpy 	#0
-		bne 	_AXPFCopy
-		rts
-
-; ************************************************************************************************
-;
-;									Pull frame off stack
-;
-; ************************************************************************************************
-
-AXPullFrame:
-		clc 								; add frame size to stack, copy to AXTemp0
-		lda 	AXIStack
-		sta 	AXTemp0
-		adc 	#AXFrameSize
-		sta 	AXIStack
-
-		lda 	AXIStack+1
-		sta 	AXTemp0+1
-		adc 	#0
-		sta 	AXIStack+1
-		;
-		ldy 	#AXFrameSize 				; copy frame from stack space.
-_AXPFCopy:
-		dey
-		lda 	(AXTemp0),y
-		sta 	AXStartFrame,y
-		cpy 	#0
-		bne 	_AXPFCopy
 		rts
 
 		.send as16code

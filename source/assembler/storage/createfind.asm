@@ -74,7 +74,15 @@ _AXIFindExit:
 ;
 ; ************************************************************************************************
 
-AXICreate:		
+AXICreate:	
+		clc 								; check memory short ?
+		lda 	AXTemp0+1
+		adc 	#2
+		cmp 	AXIStack+1
+		bcc 	_AXINoMemory
+		dec 	AXIMemory 					; set memory flag.
+_AXINoMemory:		
+
 		jsr 	AXIOpen 					; start.
 		ldy 	#0 
 		;

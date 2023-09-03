@@ -34,6 +34,7 @@ AXIReset:
 		stz 	AXTemp0
 		lda 	#0
 		sta 	(AXTemp0)
+		stz 	AXIMemory 					; clear out of memory flag.
 		;
 		jsr 	AXIClose 					; release ID store.
 		rts
@@ -47,6 +48,8 @@ AXIEnd: 									; MSB of identifier end area
 		.fill 	1		
 AXIStack: 									; Frame stack pointe.
 		.fill 	2		
+AXIMemory: 									; set when out of memory.
+		.fill 	1		
 		.send as16storage
 		
 ; ************************************************************************************************
