@@ -45,9 +45,7 @@ e0 	cpx	2	X	X	-	X	-	-	-	-
 b0	bcs 	3														
 d0	bne	3														
 f0	beq	3														
-80 	bra	3														
-0f	bbr	3														
-8f	bbs	3														
+80 	bra	3																								
 ;																
 0 	brk	4														
 08 	php	4														

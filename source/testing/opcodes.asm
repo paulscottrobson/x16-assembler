@@ -2,11 +2,6 @@
 ;
 ;			Test assembly of all standard 65C02 opcodes
 ;
-;		Notes/TODO:
-;				bbrx and bbsx do not yet assemble
-; 				ina and dea are synonyms for INC A and DEC A
-;				stp and wait are WDC65C02 opcodes
-;
 ; *******************************************************************************************
 
 		* = $8000
@@ -34,22 +29,7 @@
 		asl $4c,x
 		asl $89ab
 		asl $89ab,x
-		;bbr0 *
-		;bbr1 *
-		;bbr2 *
-		;bbr3 *
-		;bbr4 *
-		;bbr5 *
-		;bbr6 *
-		;bbr7 *
-		;bbs0 *
-		;bbs1 *
-		;bbs2 *
-		;bbs3 *
-		;bbs4 *
-		;bbs5 *
-		;bbs6 *
-		;bbs7 *
+
 		bcc *
 		bcs *
 		beq *

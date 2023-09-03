@@ -105,7 +105,7 @@ math:prelim
 define check_assembler	
 	$(CCOPY) testing$(S)$(1).asm _code.asm
 	$(ASSEMBLER) -D TESTING=3
-	64tass -c -b -o build/compare.bin -L build/compare.lst _code.asm
+	64tass --mw65c02 -b -o build/compare.bin -L build/compare.lst _code.asm
 	$(EMULATOR)
 	$(PYTHON) testing$(S)compare.py
 endef

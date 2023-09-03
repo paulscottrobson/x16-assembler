@@ -3110,22 +3110,6 @@ AXSystemDictionary:
 	.byte	$42,$52,$c1              ; BRA
 
 	.byte	10
-	.byte	$56
-	.byte	4
-	.byte	0
-	.byte	3,$0f
-	.byte	$00
-	.byte	$42,$42,$d2              ; BBR
-
-	.byte	10
-	.byte	$57
-	.byte	4
-	.byte	0
-	.byte	3,$8f
-	.byte	$00
-	.byte	$42,$42,$d3              ; BBS
-
-	.byte	10
 	.byte	$5f
 	.byte	4
 	.byte	0
