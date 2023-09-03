@@ -1,7 +1,16 @@
 TODO:
 	- continue comparative testing
 		macros (when working)
-	- substitute macro parameters.
 	- .align ?
 	- Check collision of stack / identifiers at instruction end, out of memory error. fatal.
 	- Check defining macro twice ??
+
+
+Forward references that have mandatory 8 bit values generate an error on pass 1.
+
+Add 8bit_only to types ?
+
+only checked on pass 2.
+
+Group 1
+Group 2
