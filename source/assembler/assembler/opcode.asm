@@ -25,7 +25,7 @@ AXPAssembleOpcode:
 		jsr 	AXIGet
 		sta 	AXBaseOpcode
 		;
-		ldy 	#AXID_DataAux 				; get the aux data (selectors for Group 2
+		ldy 	#AXID_DataAux 				; get the aux data (selectors for Group 2)
 		jsr 	AXIGet
 		sta 	AXSelector
 		;

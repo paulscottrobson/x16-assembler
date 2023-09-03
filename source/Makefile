@@ -90,6 +90,7 @@ tests:
 	make include
 	make address
 	make math
+	make macros
 	
 opcodes: prelim
 	$(call check_assembler,opcodes)
@@ -101,6 +102,8 @@ address:prelim
 	$(call check_assembler,address)
 math:prelim
 	$(call check_assembler,math)
+macros:prelim
+	$(call check_assembler,macros)
 
 define check_assembler	
 	$(CCOPY) testing$(S)$(1).asm _code.asm

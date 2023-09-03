@@ -1,27 +1,23 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
 ; 64tass --mw65c02 -b -o build/compare.bin -L build/compare.lst _code.asm
-; Sun Sep  3 10:35:53 2023
+; Sun Sep  3 11:17:43 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
 ;******  Processing input file: _code.asm
 
-=$1234					v1 = $1234
-=$abcd					v2 = $ABCD
-.8000					start:
-.8000	a9 18		lda #$18		lda 	#5+19
-.8002	a9 0f		lda #$0f		lda 	#19-4
-.8004	a9 06		lda #$06		lda 	#2*3
-.8006	a9 06		lda #$06		lda 	#12/2
-.8008	a9 06		lda #$06		lda 	#13/2
-.800a	a9 12		lda #$12		lda 	#>v1
-.800c	a9 34		lda #$34		lda 	#<v1
-.800e	a9 ab		lda #$ab		lda 	#v2 >> 8
-.8010	a9 cd		lda #$cd		lda 	#v2 & $FF
-.8012	a9 14		lda #$14		lda 	#(2+3)*4
-.8014	a9 0e		lda #$0e		lda 	#2+3*4
-.8016	a9 28		lda #$28		lda 	#-4+44
-.8018					end:
+.8000	a2 03		ldx #$03			ldx 	#3
+.8002					_loop
+.8002	a9 2a		lda #$2a			lda 	#42
+.8004	20 d2 ff	jsr $ffd2			jsr 	$FFD2
+.8007	ca		dex				dex
+.8008	d0 f8		bne $8002			bne 	_loop
+.800a	a2 04		ldx #$04			ldx 	#4
+.800c					_loop
+.800c	a9 2b		lda #$2b			lda 	#43
+.800e	20 d2 ff	jsr $ffd2			jsr 	$FFD2
+.8011	ca		dex				dex
+.8012	d0 f8		bne $800c			bne 	_loop
 
 ;******  End of listing

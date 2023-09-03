@@ -29,7 +29,7 @@ AXGroup1:
 		jsr 	AXGroup1Assemble 			; try it with absolute mode.
 
 _AXG1Exit:		
-		rts
+x		rts
 
 ; ************************************************************************************************
 ;
@@ -57,7 +57,7 @@ _AXG1ModeOk:
 		lda 	AXAddrMode 					; does the mode support 3 byte.
 		bpl 	_AXGOperandOk 				; if so, we can't reject for being ZP.
 
-		lda 	AXLeft+1 					; fail if not a zero page instruction.
+		lda 	AXLeft+1 					; fail if not a zero page operand.
 		bne 	_AXG1Fail
 _AXGOperandOk:
 
