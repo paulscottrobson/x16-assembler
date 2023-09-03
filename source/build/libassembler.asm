@@ -1520,10 +1520,12 @@ _AXMSPRemove:
 		plx 								; restore X (position) A (param#-1)
 		pla
 
-		; TODO: Substitute.
+		jsr 	AXIInsertParameter 			; insert parameter from previous frame.
+		bcs		_AXMSExit
 
 		lda 	#$FF 						; and we did a substitution.
 		clc
+_AXMSExit:
 		rts
 
 _AXMSError:
@@ -3999,6 +4001,49 @@ _AXIPutError:
 		lda 	#AXERRRedefine
 		sec
 		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		insert.asm
+;		Purpose:	Insert parameter from previous frame in current buffer
+;		Created:	3rd September 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;		Insert parameter A (0-n-1, one short) at position X in buffer. Parameter is obtained
+;		from the *previous frame*
+;
+; ************************************************************************************************
+
+AXIInsertParameter:
+		jsr 	AXIOpen 					; start.
+
+
+		jsr 	AXIClose 					; close access
+
+		rts
+
 
 		.send as16code
 

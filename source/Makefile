@@ -52,12 +52,12 @@ tools:
 #
 #		Evaluation tests.
 #
-test: prelim
+evaltest: prelim
 	$(PYTHON) expr_testing$(S)expr.py >build$(S)testdata.inc
 	$(ASSEMBLER) -D TESTING=1
 	$(EMULATOR)
 
-expr: prelim
+exprdebug: prelim
 	$(PYTHON) expr_testing$(S)setupexpr.py >build$(S)testdata.inc
 	$(ASSEMBLER) -D TESTING=1
 	$(CDEL) *.bin
