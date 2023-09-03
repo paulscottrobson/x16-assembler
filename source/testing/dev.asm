@@ -1,5 +1,6 @@
 		* = $8000		
-		lda 	#textmsg & $FF
-		ldx 	#textmsg & $FF
+		nop
+		lda 	#<textmsg 
+		ldx 	#<textmsg 
 textmsg:
 

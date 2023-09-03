@@ -7,10 +7,8 @@ TODO:
 
 
 Forward references that have mandatory 8 bit values generate an error on pass 1.
-
-Add 8bit_only to types ?
-
-only checked on pass 2.
+Anything other than immediate split ups of addresses ?
+Immediate undefined on pass 1 *always* passes muster.
 
 Group 1
 Group 2
