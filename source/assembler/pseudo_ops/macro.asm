@@ -30,6 +30,7 @@ AXXMacro:	;; {.macro}
 		;
 		clc 								; append the buffer to the macro.
 		jsr 	AXIAppendMacro
+		bcs 	_AXMExit 					; failed ?
 		bra 	AXXMacro
 		;
 _AXMComplete:								; do nothing on pass 2.

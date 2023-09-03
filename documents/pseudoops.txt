@@ -1,0 +1,17 @@
+Pseudo Operations
+=================
+
+.align 	<n> 		Puts PC on <n> byte boundary
+.bank 				Next Bank
+.bank 	<n> 		Select Bank
+.binary "<file>" 	Include Binary File
+.byte 	<bytes>		Byte Sequence
+.db 	<bytes>		Byte Sequence
+.dw <words>			Word sequence
+.endm 				End Macro definition.
+.fill  <n> 			Allocate <n> bytes, generates no code.
+.incbin "<file>" 	Include Binary File
+.include "<file>" 	Include Source File
+.macro 				Define macro
+.text "<str>",<by>	Mix of ASCII string and bytes
+.word <words>		Word sequence

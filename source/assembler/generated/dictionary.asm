@@ -562,6 +562,14 @@ AXSystemDictionary:
 	.byte	0
 	.byte	$2e,$54,$45,$58,$d4      ; .TEXT
 
+	.byte	13
+	.byte	$19
+	.byte	2
+	.byte	0
+	.word	AXXAlign
+	.byte	0
+	.byte	$2e,$41,$4c,$49,$47,$ce  ; .ALIGN
+
 	.byte	12
 	.byte	$d5
 	.byte	2
