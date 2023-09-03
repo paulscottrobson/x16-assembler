@@ -3,7 +3,6 @@ TODO:
 	- continue comparative testing
 		macros (when working)
 	- substitute macro parameters.
-	- macro needs its own locals.
 	- .align ?
 	- Check collision of stack / identifiers at instruction end, out of memory error. fatal.
 	- Check defining macro twice ??

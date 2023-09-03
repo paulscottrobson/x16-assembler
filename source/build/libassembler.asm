@@ -217,6 +217,12 @@ AXLocalLabelID: 							; local label ID counter.
 ; ************************************************************************************************
 
 AXStartFrame:
+;
+;		The buffer is first so we can access parameters easily using the indices
+;		in AXMParameters.
+;
+AXBuffer:	 								; current line, ASCIIZ.
+		.fill 	AXMaxLineSize+1
 
 AXFileHandle:	 							; file handle
 		.fill 	1
@@ -243,9 +249,6 @@ AXMParameters: 								; offset to parameter in AXBuffer
 
 AXMPointer: 								; macro expansion pointer
 		.fill 	2
-
-AXBuffer:	 								; current line, ASCIIZ.
-		.fill 	AXMaxLineSize+1
 
 AXListCount: 								; byte count in list buffer
 		.fill 	1
@@ -1407,6 +1410,7 @@ _AXMAPError:
 AXPAssembleMacro:
 		jsr 	AXMAnalyseParameters		; work out the parameters limits.
 		bcs 	_AXPAMExit 					; error (probably too many parameters)
+		jsr 	AXIBumpLocal 				; we need new locals.
 
 		jsr 	AXIGetDataAddress 			; get address of macro data => YX
 

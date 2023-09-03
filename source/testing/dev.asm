@@ -1,8 +1,10 @@
 * = $8000
 
 m11 	.macro
-		lda 	#\1
+_loop
+		lda 	#42
 		jsr 	$FFD2
+		bra 	_loop
 		.endm
 
 		m11 42,3

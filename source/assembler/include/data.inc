@@ -78,6 +78,12 @@ AXLocalLabelID: 							; local label ID counter.
 ; ************************************************************************************************
 
 AXStartFrame:
+;
+;		The buffer is first so we can access parameters easily using the indices
+;		in AXMParameters.
+;
+AXBuffer:	 								; current line, ASCIIZ.
+		.fill 	AXMaxLineSize+1 						
 
 AXFileHandle:	 							; file handle			
 		.fill 	1
@@ -105,9 +111,6 @@ AXMParameters: 								; offset to parameter in AXBuffer
 AXMPointer: 								; macro expansion pointer
 		.fill 	2
 		
-AXBuffer:	 								; current line, ASCIIZ.
-		.fill 	AXMaxLineSize+1 						
-
 AXListCount: 								; byte count in list buffer
 		.fill 	1
 AXListBytes: 								; those bytes

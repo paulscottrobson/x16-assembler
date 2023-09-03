@@ -21,6 +21,7 @@
 AXPAssembleMacro:
 		jsr 	AXMAnalyseParameters		; work out the parameters limits.
 		bcs 	_AXPAMExit 					; error (probably too many parameters)
+		jsr 	AXIBumpLocal 				; we need new locals.
 
 		jsr 	AXIGetDataAddress 			; get address of macro data => YX
 
