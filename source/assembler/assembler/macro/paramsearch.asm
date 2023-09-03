@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		errors.inc
-;		Purpose:	Error codes
-;		Created:	9th August 2023
+;		Name:		paramsearch.asm
+;		Purpose:	Search the macro line for parameters and call substitute
+;		Created:	3rd September 2023
 ;		Reviewed:	No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -14,28 +14,59 @@
 
 ; ************************************************************************************************
 ;
-;										Error codes
-;
-;					  lower 6 bits are ID, bit 7 identifies a fatal error.
-;
+;		Scan buffer for parameters. Return A=0 not replaced, A#0 replaced, CS on error
+;		
 ; ************************************************************************************************
 
-AXERREOF = $00 								; end of file, not assembler error.
-AXERRSyntax = $01 							; general syntax error.
-AXERRIdentifier = $02 						; bad identifier, missing/too long.
-AXERRDivZero = $03 							; divide by zero.
-AXERRRedefine = $04 						; value of an identifier has changed.
-AXERRNotFound = $85 						; source file not found.
-AXERRUndefined = $06 						; undefined identifier.
-AXERRRelative = $07 						; relative branch range.
-AXERRMode = $08 							; address mode not supported in 65C02
-AXERRSize = $09 							; bad expression.
-AXERRLength = $8A 							; line too long.
-AXERRMacroParams = $8B 						; too many macro parameters.
-AXERRParam = $8C 							; bad expansion parameter.
+AXMScanParameters:
+		ldx 	#0 							; look for parameter marker.
+_AXMSPLoop:
+		lda 	AXBuffer,x 					; look for \
+		cmp 	#'\'
+		beq 	_AXMSPFound
+		inx
+		cmp 	#0 							; reached end.
+		bne 	_AXMSPLoop
+
+		lda 	#0
+		clc		
+		rts
+
+_AXMSPFound:
+		
+		lda 	AXBuffer+1,x 				; get following character
+		sec 	 							; convert to 0-n-1 for parameter 1..n
+		sbc 	#'1'
+		bmi 	_AXMSError
+		cmp 	#AXMaxParams 				; must be 0..maxparams-1
+		bcs 	_AXMSError
+		;
+		pha 								; save ID and position.
+		phx
+
+_AXMSPRemove:		
+		lda 	AXBuffer+2,x 				; delete the /n.
+		sta 	AXBuffer,x
+		inx
+		cmp 	#0
+		bne 	_AXMSPRemove
+		;
+		plx 								; restore X (position) A (param#-1)
+		pla
+
+		; TODO: Substitute.
+
+		lda 	#$FF 						; and we did a substitution.
+		clc
+		rts
+
+_AXMSError:
+		lda 	#AXERRParam 				; return parameter error.
+		sec
+		rts		
 
 		.send as16code
-
+		
 ; ************************************************************************************************
 ;
 ;									Changes and Updates

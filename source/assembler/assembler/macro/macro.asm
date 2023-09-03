@@ -36,6 +36,13 @@ AXPAssembleMacro:
 _AXPALoop:
 		jsr 	AXIGetDataLine 				; get data line
 		bcs 	_AXPADone 					; end of lines.
+		
+_AXPAParam:
+		jsr 	AXMScanParameters 			; look for parameters
+		bcs 	_AXPAMacroFailed 			; error in expansion ?
+		cmp 	#0 							; if one replaced retry.
+		bne 	_AXPAParam
+
 		jsr 	AXAssembleLine 				; assemble that line
 		bcs 	_AXPAMacroFailed 			; something went wrong.
 		jsr 	AXListLine 					; list the line.

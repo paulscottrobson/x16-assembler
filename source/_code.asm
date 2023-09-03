@@ -1,24 +1,9 @@
-; *******************************************************************************************
-;
-;							Test assembly of address values
-;
-; *******************************************************************************************
+* = $8000
 
-v1 = $1234
-v2 = $ABCD
+m11 	.macro
+		nop		\1
+		jsr 	$FFD2
+		.endm
 
-		* = $8000
-start:
-		adc 	start
-		sta 	end
-		lda 	v1
-		jmp 	v2
-		bcc 	end
-		.word 	start
-another_label		
-		bra 	another_label
-		beq 	start
-		bra 	*
-		bra 	*-2
-		bra 	*+2
-end:		
+		m11 42,3
+		m11 43,4

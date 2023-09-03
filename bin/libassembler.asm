@@ -303,6 +303,7 @@ AXERRMode = $08 							; address mode not supported in 65C02
 AXERRSize = $09 							; bad expression.
 AXERRLength = $8A 							; line too long.
 AXERRMacroParams = $8B 						; too many macro parameters.
+AXERRParam = $8C 							; bad expansion parameter.
 
 		.send as16code
 
@@ -1421,6 +1422,13 @@ AXPAssembleMacro:
 _AXPALoop:
 		jsr 	AXIGetDataLine 				; get data line
 		bcs 	_AXPADone 					; end of lines.
+
+_AXPAParam:
+		jsr 	AXMScanParameters 			; look for parameters
+		bcs 	_AXPAMacroFailed 			; error in expansion ?
+		cmp 	#0 							; if one replaced retry.
+		bne 	_AXPAParam
+
 		jsr 	AXAssembleLine 				; assemble that line
 		bcs 	_AXPAMacroFailed 			; something went wrong.
 		jsr 	AXListLine 					; list the line.
@@ -1436,6 +1444,86 @@ _AXPAMacroFailed:
 		pha 								; save error code
 		jsr 	AXPullFrame 				; restore frame
 		pla 								; get error code back and return error.
+		sec
+		rts
+
+		.send as16code
+
+; ************************************************************************************************
+;
+;									Changes and Updates
+;
+; ************************************************************************************************
+;
+;		Date			Notes
+;		==== 			=====
+;
+; ************************************************************************************************
+
+; ************************************************************************************************
+; ************************************************************************************************
+;
+;		Name:		paramsearch.asm
+;		Purpose:	Search the macro line for parameters and call substitute
+;		Created:	3rd September 2023
+;		Reviewed:	No
+;		Author:		Paul Robson (paul@robsons.org.uk)
+;
+; ************************************************************************************************
+; ************************************************************************************************
+
+		.section as16code
+
+; ************************************************************************************************
+;
+;		Scan buffer for parameters. Return A=0 not replaced, A#0 replaced, CS on error
+;
+; ************************************************************************************************
+
+AXMScanParameters:
+		ldx 	#0 							; look for parameter marker.
+_AXMSPLoop:
+		lda 	AXBuffer,x 					; look for \
+		cmp 	#'\'
+		beq 	_AXMSPFound
+		inx
+		cmp 	#0 							; reached end.
+		bne 	_AXMSPLoop
+
+		lda 	#0
+		clc
+		rts
+
+_AXMSPFound:
+
+		lda 	AXBuffer+1,x 				; get following character
+		sec 	 							; convert to 0-n-1 for parameter 1..n
+		sbc 	#'1'
+		bmi 	_AXMSError
+		cmp 	#AXMaxParams 				; must be 0..maxparams-1
+		bcs 	_AXMSError
+		;
+		pha 								; save ID and position.
+		phx
+
+_AXMSPRemove:
+		lda 	AXBuffer+2,x 				; delete the /n.
+		sta 	AXBuffer,x
+		inx
+		cmp 	#0
+		bne 	_AXMSPRemove
+		;
+		plx 								; restore X (position) A (param#-1)
+		pla
+
+		; TODO: Substitute.
+
+		lda 	#$FF 						; and we did a substitution.
+		clc
+		rts
+
+_AXMSError:
+		lda 	#AXERRParam 				; return parameter error.
 		sec
 		rts
 

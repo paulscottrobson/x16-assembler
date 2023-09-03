@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.58.2974? listing file
-; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=3 main.asm
-; Sat Sep  2 16:14:19 2023
+; 64tass -c -C -D "ZEROPAGE=\$30" -D "STORAGE=\$400" -Wall -L build/asm.lst -o build/asm.prg -D TESTING=2 main.asm
+; Sun Sep  3 05:45:43 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -9,11 +9,11 @@
 
 =$30					ZEROPAGE=$30
 =$400					STORAGE=$400
-=3					TESTING=3
+=2					TESTING=2
 
 ;******  Processing input file: main.asm
 
-.1000	4c 7e 21	jmp $217e			jmp 	Start
+.1000	4c bc 21	jmp $21bc			jmp 	Start
 
 ;******  Processing file: build/libassembler.asm
 
@@ -118,10 +118,11 @@
 =$09					AXERRSize = $09 							; bad expression.
 =$8a					AXERRLength = $8A 							; line too long.
 =$8b					AXERRMacroParams = $8B 						; too many macro parameters.
+=$8c					AXERRParam = $8C 							; bad expansion parameter.
 .1003					AXAssemble:
 .1003	8e 6b 04	stx $046b			stx 	AXAPI 						; save the API.
 .1006	8c 6c 04	sty $046c			sty 	AXAPI+1
-.1009	20 ba 1d	jsr $1dba			jsr 	AXIReset 					; reset the identifier system.
+.1009	20 f8 1d	jsr $1df8			jsr 	AXIReset 					; reset the identifier system.
 .100c	a9 01		lda #$01			lda 	#1
 .100e	20 19 10	jsr $1019			jsr 	AXAssemblerPass
 .1011	b0 05		bcs $1018			bcs 	_AXAExit
@@ -139,7 +140,7 @@
 .1029	20 e0 11	jsr $11e0			jsr 	AXAssembleFile
 .102c	60		rts				rts
 .102d					AXIdentifyAddressMode:
-.102d	20 25 18	jsr $1825			jsr 	AXGet 						; has two formats, ASL and ASL A
+.102d	20 63 18	jsr $1863			jsr 	AXGet 						; has two formats, ASL and ASL A
 .1030	c9 00		cmp #$00			cmp 	#0
 .1032	f0 0b		beq $103f			beq 	_AXIsAccumulator
 .1034	c9 41		cmp #$41			cmp 	#'A'
@@ -159,14 +160,14 @@
 .1048	f0 2e		beq $1078			beq 	_AXIsImmediate
 .104a	c9 28		cmp #$28			cmp	 	#'('						; indirect
 .104c	f0 37		beq $1085			beq 	_AXIsIndirect
-.104e	20 d6 16	jsr $16d6			jsr 	AXPass2Expression 			; evaluate base address
+.104e	20 14 17	jsr $1714			jsr 	AXPass2Expression 			; evaluate base address
 .1051	b0 f2		bcs $1045			bcs 	_AXExit 					; error in that.
-.1053	20 25 18	jsr $1825			jsr 	AXGet 						; what follows
+.1053	20 63 18	jsr $1863			jsr 	AXGet 						; what follows
 .1056	f0 19		beq $1071			beq 	_AXIsDirect 				; nothing, nnnn
 .1058	c9 2c		cmp #$2c			cmp 	#',' 						; if not needs to be ,X ,Y
 .105a	d0 11		bne $106d			bne 	_AXSyntax
 .105c	e8		inx				inx
-.105d	20 25 18	jsr $1825			jsr 	AXGet 						; what follows should be X or Y
+.105d	20 63 18	jsr $1863			jsr 	AXGet 						; what follows should be X or Y
 .1060	a8		tay				tay
 .1061	a9 85		lda #$85			lda 	#AXMZeroX 					; check for ,X ,Y
 .1063	c0 58		cpy #$58			cpy 	#"X"
@@ -186,7 +187,7 @@
 .1077	60		rts				rts
 .1078					_AXIsImmediate:
 .1078	e8		inx				inx 								; consume the #
-.1079	20 d6 16	jsr $16d6			jsr 	AXPass2Expression 			; get operand
+.1079	20 14 17	jsr $1714			jsr 	AXPass2Expression 			; get operand
 .107c	b0 c7		bcs $1045			bcs 	_AXExit 					; bad operand
 .107e	a9 80		lda #$80			lda 	#AXMImmediate 				; return immediate
 .1080	8d d8 04	sta $04d8			sta 	AXAddrMode
@@ -194,19 +195,19 @@
 .1084	60		rts				rts
 .1085					_AXIsIndirect:
 .1085	e8		inx				inx
-.1086	20 d6 16	jsr $16d6			jsr 	AXPass2Expression 			; the address to indirect through
-.1089	20 25 18	jsr $1825			jsr 	AXGet 						; what follows.
+.1086	20 14 17	jsr $1714			jsr 	AXPass2Expression 			; the address to indirect through
+.1089	20 63 18	jsr $1863			jsr 	AXGet 						; what follows.
 .108c	c9 2c		cmp #$2c			cmp 	#"," 						; if , then check for indirect X
 .108e	f0 24		beq $10b4			beq 	_AXIndirectX
 .1090	c9 29		cmp #$29			cmp 	#")" 						; otherwise must be closing bracket
 .1092	d0 d9		bne $106d			bne 	_AXSyntax
 .1094	e8		inx				inx 								; consume )
-.1095	20 25 18	jsr $1825			jsr 	AXGet 						; if nothing follows it is (xxx)
+.1095	20 63 18	jsr $1863			jsr 	AXGet 						; if nothing follows it is (xxx)
 .1098	f0 13		beq $10ad			beq 	_AXIndirect
 .109a	c9 2c		cmp #$2c			cmp 	#","						; otherwise must be ,Y
 .109c	d0 cf		bne $106d			bne 	_AXSyntax
 .109e	e8		inx				inx
-.109f	20 25 18	jsr $1825			jsr 	AXGet
+.109f	20 63 18	jsr $1863			jsr 	AXGet
 .10a2	c9 59		cmp #$59			cmp 	#"Y"
 .10a4	d0 c7		bne $106d			bne 	_AXSyntax
 .10a6	a9 84		lda #$84			lda 	#AXMIndirectY 				; indirect Y
@@ -220,11 +221,11 @@
 .10b3	60		rts				rts
 .10b4					_AXIndirectX:
 .10b4	e8		inx				inx 								; consume comma
-.10b5	20 25 18	jsr $1825			jsr 	AXGet 						; check x
+.10b5	20 63 18	jsr $1863			jsr 	AXGet 						; check x
 .10b8	c9 58		cmp #$58			cmp 	#"X"
 .10ba	d0 b1		bne $106d			bne 	_AXSyntax
 .10bc	e8		inx				inx
-.10bd	20 25 18	jsr $1825			jsr 	AXGet 						; check )
+.10bd	20 63 18	jsr $1863			jsr 	AXGet 						; check )
 .10c0	c9 29		cmp #$29			cmp 	#")"
 .10c2	d0 a9		bne $106d			bne 	_AXSyntax
 .10c4	a9 8d		lda #$8d			lda 	#AXMIndirectX 				; it's indirect X
@@ -243,7 +244,7 @@
 .10dd	9c d3 04	stz $04d3			stz 	AXListCount					; clear the listing bytes.
 .10e0	a2 00		ldx #$00			ldx 	#0 							; start of line
 .10e2					_AXAContinue:
-.10e2	20 25 18	jsr $1825			jsr 	AXGet 						; get first character
+.10e2	20 63 18	jsr $1863			jsr 	AXGet 						; get first character
 .10e5	c9 00		cmp #$00			cmp 	#0
 .10e7	d0 02		bne $10eb			bne 	_AXHasText
 .10e9	18		clc				clc 								; if 0, empty line, exit with carry clear
@@ -251,17 +252,17 @@
 .10eb					_AXHasText:
 .10eb	c9 2a		cmp #$2a			cmp 	#'*' 						; is it * (for * = )
 .10ed	f0 64		beq $1153			beq 	_AXSetPC
-.10ef	20 c9 20	jsr $20c9			jsr 	AXExtractIdentifier 		; get an identifier
+.10ef	20 07 21	jsr $2107			jsr 	AXExtractIdentifier 		; get an identifier
 .10f2	b0 7b		bcs $116f			bcs 	_AXSyntax 					; if none found, report it as a syntax error.
 .10f4	da		phx				phx 								; look in system dictionary (opcodes, pseudo ops etc).
-.10f5	a2 64		ldx #$64			ldx 	#AXSystemDictionary & $FF
+.10f5	a2 a2		ldx #$a2			ldx 	#AXSystemDictionary & $FF
 .10f7	a0 18		ldy #$18			ldy 	#AXSystemDictionary >> 8
-.10f9	20 64 1c	jsr $1c64			jsr 	AXIFind
+.10f9	20 a2 1c	jsr $1ca2			jsr 	AXIFind
 .10fc	fa		plx				plx
 .10fd	b0 32		bcs $1131			bcs 	_AXALabel 					; not found, label check.
 .10ff	da		phx				phx
 .1100	a0 02		ldy #$02			ldy 	#AXID_Type 					; get the type
-.1102	20 1e 1d	jsr $1d1e			jsr 	AXIGet
+.1102	20 5c 1d	jsr $1d5c			jsr 	AXIGet
 .1105	fa		plx				plx
 .1106	c9 04		cmp #$04			cmp 	#AXIT_Opcode 				; different code for opcode, macro, pseudo-op.
 .1108	f0 24		beq $112e			beq 	_AXAOpcode
@@ -271,29 +272,29 @@
 .1110	d0 5d		bne $116f			bne 	_AXSyntax
 .1112	8e d9 04	stx $04d9			stx 	AXOperandPos 				; save the operand position.
 .1115	a0 04		ldy #$04			ldy 	#AXID_DataLow 				; get the code address and jump there.
-.1117	20 1e 1d	jsr $1d1e			jsr 	AXIGet
+.1117	20 5c 1d	jsr $1d5c			jsr 	AXIGet
 .111a	8d da 04	sta $04da			sta 	AXVector
 .111d	a0 05		ldy #$05			ldy 	#AXID_DataHigh
-.111f	20 1e 1d	jsr $1d1e			jsr 	AXIGet
+.111f	20 5c 1d	jsr $1d5c			jsr 	AXIGet
 .1122	8d db 04	sta $04db			sta 	AXVector+1
 .1125	6c da 04	jmp ($04da)			jmp 	(AXVector)
 .1128	4c ff ff	jmp $ffff			jmp 	$FFFF 						; load the address and jump to it.
 .112b					_AXAMacro:
 .112b	4c a8 13	jmp $13a8			jmp 	AXPAssembleMacro
 .112e					_AXAOpcode:
-.112e	4c d8 13	jmp $13d8			jmp 	AXPAssembleOpcode
+.112e	4c 16 14	jmp $1416			jmp 	AXPAssembleOpcode
 .1131					_AXALabel:
 .1131	da		phx				phx
 .1132	ac e7 04	ldy $04e7			ldy 	AXIBase 					; start scanning.
 .1135	a2 00		ldx #$00			ldx 	#0
-.1137	20 5a 1c	jsr $1c5a			jsr 	AXICreateFind 				; find it, or create it if necessary.
+.1137	20 98 1c	jsr $1c98			jsr 	AXICreateFind 				; find it, or create it if necessary.
 .113a	fa		plx				plx
-.113b	20 25 18	jsr $1825			jsr 	AXGet 						; if followed by '.' cannot be macro invocation
+.113b	20 63 18	jsr $1863			jsr 	AXGet 						; if followed by '.' cannot be macro invocation
 .113e	c9 2e		cmp #$2e			cmp 	#"."
 .1140	f0 0b		beq $114d			beq 	_AXANotMacro
 .1142	da		phx				phx
 .1143	a0 02		ldy #$02			ldy 	#AXID_Type  				; get the type.
-.1145	20 1e 1d	jsr $1d1e			jsr 	AXIGet
+.1145	20 5c 1d	jsr $1d5c			jsr 	AXIGet
 .1148	fa		plx				plx
 .1149	c9 03		cmp #$03			cmp 	#AXIT_Macro 				; if macro, go to macro code.
 .114b	f0 de		beq $112b			beq 	_AXAMacro
@@ -303,11 +304,11 @@
 .1152	60		rts				rts 								; return with error.
 .1153					_AXSetPC:
 .1153	e8		inx				inx 	 							; get next.
-.1154	20 25 18	jsr $1825			jsr 	AXGet
+.1154	20 63 18	jsr $1863			jsr 	AXGet
 .1157	c9 3d		cmp #$3d			cmp 	#'=' 						; must be equals.
 .1159	d0 14		bne $116f			bne 	_AXSyntax
 .115b	e8		inx				inx
-.115c	20 c8 16	jsr $16c8			jsr 	AXExpressionDefined 		; get an expression, must be defined.
+.115c	20 06 17	jsr $1706			jsr 	AXExpressionDefined 		; get an expression, must be defined.
 .115f	b0 11		bcs $1172			bcs 	_AXExit 					; error of some sort.
 .1161	ad 00 04	lda $0400			lda 	AXLeft 						; copy result to current PC
 .1164	8d 06 04	sta $0406			sta 	AXProgramCounter
@@ -327,14 +328,14 @@
 .117a	da		phx				phx 								; set type to label/identifiier.
 .117b	a9 01		lda #$01			lda 	#AXIT_Label
 .117d	a0 02		ldy #$02			ldy 	#AXID_Type
-.117f	20 31 1d	jsr $1d31			jsr 	AXIPut
+.117f	20 6f 1d	jsr $1d6f			jsr 	AXIPut
 .1182	fa		plx				plx
 .1183					_AXPLNoSet:
-.1183	20 25 18	jsr $1825			jsr 	AXGet 						; what is next
+.1183	20 63 18	jsr $1863			jsr 	AXGet 						; what is next
 .1186	f0 13		beq $119b			beq 	_AXLabelPC 					; nothing, it's a program counter label
 .1188	c9 3a		cmp #$3a			cmp 	#':'						; if label: then it's a program counter label.
 .118a	f0 0e		beq $119a			beq 	_AXPCTR 					; (we have to consume the :)
-.118c	20 b1 20	jsr $20b1			jsr 	AXIsIdentifierHead 			; some identifier follows.
+.118c	20 ef 20	jsr $20ef			jsr 	AXIsIdentifierHead 			; some identifier follows.
 .118f	90 0a		bcc $119b			bcc 	_AXLabelPC 					; then it's a program counter label.
 .1191	e8		inx				inx 								; consume it anyway.
 .1192	c9 3d		cmp #$3d			cmp 	#'=' 						; must be '=' something
@@ -349,15 +350,15 @@
 .119b	da		phx				phx 								; save position
 .119c	ae 06 04	ldx $0406			ldx 	AXProgramCounter
 .119f	ac 07 04	ldy $0407			ldy 	AXProgramCounter+1
-.11a2	20 46 1d	jsr $1d46			jsr 	AXIPutData 					; write it.
+.11a2	20 84 1d	jsr $1d84			jsr 	AXIPutData 					; write it.
 .11a5	b0 15		bcs $11bc			bcs 	_AXRedefine
 .11a7	ad 08 04	lda $0408			lda 	AXProgramCounter+2 			; write the bank
 .11aa	a0 06		ldy #$06			ldy 	#AXID_DataAux
-.11ac	20 31 1d	jsr $1d31			jsr 	AXIPut
+.11ac	20 6f 1d	jsr $1d6f			jsr 	AXIPut
 .11af	ad 0a 04	lda $040a			lda 	AXLabelBuffer 				; is it a non local label ?
 .11b2	c9 5f		cmp #$5f			cmp 	#"_"
 .11b4	f0 03		beq $11b9			beq 	_AXNotGlobal
-.11b6	20 05 21	jsr $2105			jsr 	AXIBumpLocal 				; we need new locals.
+.11b6	20 43 21	jsr $2143			jsr 	AXIBumpLocal 				; we need new locals.
 .11b9					_AXNotGlobal:
 .11b9	fa		plx				plx 								; restore position
 .11ba	18		clc				clc
@@ -371,7 +372,7 @@
 .11c2	48		pha				pha
 .11c3	ad 6a 04	lda $046a			lda 	AXCurrent+1
 .11c6	48		pha				pha
-.11c7	20 c8 16	jsr $16c8			jsr 	AXExpressionDefined 		; evaluate expression
+.11c7	20 06 17	jsr $1706			jsr 	AXExpressionDefined 		; evaluate expression
 .11ca	68		pla				pla 								; restore current identifier.
 .11cb	8d 6a 04	sta $046a			sta 	AXCurrent+1
 .11ce	68		pla				pla
@@ -380,7 +381,7 @@
 .11d4	da		phx				phx
 .11d5	ae 00 04	ldx $0400			ldx 	AXLeft 						; set to the result
 .11d8	ac 01 04	ldy $0401			ldy 	AXLeft+1 					; preserving X
-.11db	20 46 1d	jsr $1d46			jsr 	AXIPutData
+.11db	20 84 1d	jsr $1d84			jsr 	AXIPutData
 .11de	fa		plx				plx
 .11df	60		rts				rts
 .04d9					AXOperandPos:
@@ -401,11 +402,11 @@
 .11fb	9c 6e 04	stz $046e			stz 	AXLocalLabelID 				; reset the local label ID
 .11fe	9c 6f 04	stz $046f			stz 	AXLocalLabelID+1
 .1201					_AXMainLoop:
-.1201	20 34 14	jsr $1434			jsr 	AXReadLine 					; read the next line
+.1201	20 72 14	jsr $1472			jsr 	AXReadLine 					; read the next line
 .1204	b0 0a		bcs $1210			bcs 	_AXAFError 					; exit if problem (e.g. too long/eof)
 .1206	20 cb 10	jsr $10cb			jsr 	AXAssembleLine 				; assemble it.
 .1209	b0 05		bcs $1210			bcs 	_AXAFError 					; exit if problem there.
-.120b	20 18 1e	jsr $1e18			jsr 	AXListLine 					; list the line.
+.120b	20 56 1e	jsr $1e56			jsr 	AXListLine 					; list the line.
 .120e	80 f1		bra $1201			bra 	_AXMainLoop
 .1210					_AXAFError:
 .1210	c9 00		cmp #$00			cmp 	#AXERREOF 					; was the error EOF, which isn't an error :)
@@ -436,7 +437,7 @@
 .123a	b0 0d		bcs $1249			bcs 	_AXG1Exit 		 			; syntax error.
 .123c	20 4a 12	jsr $124a			jsr 	AXGroup1Assemble 			; assemble group 1 with ZP/# mods.
 .123f	90 08		bcc $1249			bcc 	_AXG1Exit 					; it worked.
-.1241	20 0c 14	jsr $140c			jsr 	AXPromoteMode 				; promote mode.
+.1241	20 4a 14	jsr $144a			jsr 	AXPromoteMode 				; promote mode.
 .1244	b0 03		bcs $1249			bcs 	_AXG1Exit 					; failed to promote.
 .1246	20 4a 12	jsr $124a			jsr 	AXGroup1Assemble 			; try it with absolute mode.
 .1249					_AXG1Exit:
@@ -481,7 +482,7 @@
 .1286	6d dc 04	adc $04dc			adc 	AXBaseOpcode
 .1289	c9 89		cmp #$89			cmp 	#$89 						; cannot sta #
 .128b	f0 08		beq $1295			beq 	_AXG1Fail
-.128d	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte 				; write out the opcode.
+.128d	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte 				; write out the opcode.
 .1290	20 99 12	jsr $1299			jsr 	AXWriteOperand 				; write the operand appropriately
 .1293	18		clc				clc
 .1294	60		rts				rts
@@ -494,11 +495,11 @@
 .129c	c9 02		cmp #$02			cmp 	#AXMAccumulator
 .129e	f0 11		beq $12b1			beq 	_AXWIs2Byte
 .12a0	ad 00 04	lda $0400			lda 	AXLeft 						; output LSB
-.12a3	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte
+.12a3	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte
 .12a6	ad d8 04	lda $04d8			lda 	AXAddrMode
 .12a9	30 06		bmi $12b1			bmi 	_AXWIs2Byte
 .12ab	ad 01 04	lda $0401			lda 	AXLeft+1 					; output MSB if wanted.
-.12ae	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte
+.12ae	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte
 .12b1					_AXWIs2Byte:
 .12b1	60		rts				rts
 .12b2					AXGroup2:
@@ -506,7 +507,7 @@
 .12b5	b0 0d		bcs $12c4			bcs 	_AXG2Exit 		 			; syntax error.
 .12b7	20 c5 12	jsr $12c5			jsr 	AXGroup2Assemble 			; assemble group2
 .12ba	90 08		bcc $12c4			bcc 	_AXG2Exit 					; it worked.
-.12bc	20 0c 14	jsr $140c			jsr 	AXPromoteMode 				; promote mode.
+.12bc	20 4a 14	jsr $144a			jsr 	AXPromoteMode 				; promote mode.
 .12bf	b0 03		bcs $12c4			bcs 	_AXG2Exit 					; failed to promote.
 .12c1	20 c5 12	jsr $12c5			jsr 	AXGroup2Assemble 			; try it with absolute mode.
 .12c4					_AXG2Exit:
@@ -533,7 +534,7 @@
 .12e7	0a		asl a				asl 	a
 .12e8	0a		asl a				asl 	a
 .12e9	6d dc 04	adc $04dc			adc 	AXBaseOpcode
-.12ec	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte 				; write out the opcode.
+.12ec	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte 				; write out the opcode.
 .12ef	20 99 12	jsr $1299			jsr 	AXWriteOperand 				; write the operand appropriately,
 .12f2	18		clc				clc
 .12f3	60		rts				rts
@@ -545,11 +546,11 @@
 .12fe					_AX2CheckFixup:
 .12fe	a2 00		ldx #$00			ldx 	#0
 .1300					_AX2FixupLoop:
-.1300	bd 8b 1b	lda $1b8b,x			lda 	AXGroup2OpcodeFixupTable,x 	; base opcode
+.1300	bd c9 1b	lda $1bc9,x			lda 	AXGroup2OpcodeFixupTable,x 	; base opcode
 .1303	f0 1d		beq $1322			beq 	_AX2Fail
 .1305	cd dc 04	cmp $04dc			cmp 	AXBaseOpcode 				; if opcodes dont match go to next.
 .1308	d0 08		bne $1312			bne 	_AX2Next
-.130a	bd 8c 1b	lda $1b8c,x			lda 	AXGroup2OpcodeFixupTable+1,x; address mode
+.130a	bd ca 1b	lda $1bca,x			lda 	AXGroup2OpcodeFixupTable+1,x; address mode
 .130d	cd d8 04	cmp $04d8			cmp 	AXAddrMode
 .1310	f0 05		beq $1317			beq 	_AX2Found 					; found a match
 .1312					_AX2Next:
@@ -558,8 +559,8 @@
 .1314	e8		inx				inx
 .1315	80 e9		bra $1300			bra 	_AX2FixupLoop
 .1317					_AX2Found:
-.1317	bd 8d 1b	lda $1b8d,x			lda 	AXGroup2OpcodeFixupTable+2,x ; get actual opcode
-.131a	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte
+.1317	bd cb 1b	lda $1bcb,x			lda 	AXGroup2OpcodeFixupTable+2,x ; get actual opcode
+.131a	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte
 .131d	20 99 12	jsr $1299			jsr 	AXWriteOperand 				; write the operand appropriately,
 .1320	18		clc				clc
 .1321	60		rts				rts
@@ -569,8 +570,8 @@
 .1325	60		rts				rts
 .1326					AXGroup3:
 .1326	ad dc 04	lda $04dc			lda 	AXBaseOpcode 				; assemble the base opcode.
-.1329	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte
-.132c	20 d6 16	jsr $16d6			jsr 	AXPass2Expression 			; get expression defined on pass 2.
+.1329	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte
+.132c	20 14 17	jsr $1714			jsr 	AXPass2Expression 			; get expression defined on pass 2.
 .132f	b0 29		bcs $135a			bcs 	_AXG3Exit
 .1331	ad 6d 04	lda $046d			lda 	AXPass 						; pass 1, don't care.
 .1334	c9 01		cmp #$01			cmp 	#1
@@ -593,19 +594,19 @@
 .1353	80 05		bra $135a			bra 	_AXG3Exit
 .1355					_AXOutputOffset:
 .1355	8a		txa				txa
-.1356	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte 				; output the offset
+.1356	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte 				; output the offset
 .1359	18		clc				clc
 .135a					_AXG3Exit:
 .135a	60		rts				rts
 .135b					AXGroup4:
 .135b	ad dc 04	lda $04dc			lda 	AXBaseOpcode 				; just assemble the base opcode.
-.135e	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte
+.135e	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte
 .1361	18		clc				clc
 .1362	60		rts				rts
 .1363					AXMAnalyseParameters:
 .1363	a0 00		ldy #$00			ldy 	#0 							; count the parameters
 .1365					_AXMAPLoop:
-.1365	20 25 18	jsr $1825			jsr 	AXGet 						; get the next.
+.1365	20 63 18	jsr $1863			jsr 	AXGet 						; get the next.
 .1368	c9 00		cmp #$00			cmp 	#0 							; if not zero there is a parameter
 .136a	d0 09		bne $1375			bne 	_AXMAPParameter
 .136c					_AXMAPExit:
@@ -621,7 +622,7 @@
 .137a	99 7b 04	sta $047b,y			sta 	AXMParameters,y
 .137d	c8		iny				iny
 .137e					_AXMAPSkip:
-.137e	20 25 18	jsr $1825			jsr 	AXGet 						; get first non-space character
+.137e	20 63 18	jsr $1863			jsr 	AXGet 						; get first non-space character
 .1381	c9 22		cmp #$22			cmp 	#'"'						; quoted string handled seperately.
 .1383	f0 10		beq $1395			beq 	_AXMAPString
 .1385	c9 00		cmp #$00			cmp 	#0 							; if End found then exit
@@ -634,7 +635,7 @@
 .1393	80 d0		bra $1365			bra 	_AXMAPLoop 					; see if another parameter follows.
 .1395					_AXMAPString:
 .1395	e8		inx				inx 								; get next
-.1396	20 25 18	jsr $1825			jsr 	AXGet
+.1396	20 63 18	jsr $1863			jsr 	AXGet
 .1399	c9 00		cmp #$00			cmp 	#0 							; exit if end of string
 .139b	f0 cf		beq $136c			beq 	_AXMAPExit
 .139d	c9 22		cmp #$22			cmp 	#'"'						; loop back if not closing quote
@@ -647,2283 +648,2324 @@
 .13a7	60		rts				rts
 .13a8					AXPAssembleMacro:
 .13a8	20 63 13	jsr $1363			jsr 	AXMAnalyseParameters		; work out the parameters limits.
-.13ab	b0 23		bcs $13d0			bcs 	_AXPAMExit 					; error (probably too many parameters)
-.13ad	20 cf 1c	jsr $1ccf			jsr 	AXIGetDataAddress 			; get address of macro data => YX
+.13ab	b0 2c		bcs $13d9			bcs 	_AXPAMExit 					; error (probably too many parameters)
+.13ad	20 0d 1d	jsr $1d0d			jsr 	AXIGetDataAddress 			; get address of macro data => YX
 .13b0	da		phx				phx
 .13b1	5a		phy				phy
-.13b2	20 3a 21	jsr $213a			jsr 	AXPushFrame 				; save current frame preserving YX
+.13b2	20 78 21	jsr $2178			jsr 	AXPushFrame 				; save current frame preserving YX
 .13b5	7a		ply				ply
 .13b6	fa		plx				plx
 .13b7	8e 80 04	stx $0480			stx 	AXMPointer 					; save macro expansion pointer in current frame.
 .13ba	8c 81 04	sty $0481			sty 	AXMPointer+1
 .13bd					_AXPALoop:
-.13bd	20 f2 1c	jsr $1cf2			jsr 	AXIGetDataLine 				; get data line
-.13c0	b0 0a		bcs $13cc			bcs 	_AXPADone 					; end of lines.
-.13c2	20 cb 10	jsr $10cb			jsr 	AXAssembleLine 				; assemble that line
-.13c5	b0 0a		bcs $13d1			bcs 	_AXPAMacroFailed 			; something went wrong.
-.13c7	20 18 1e	jsr $1e18			jsr 	AXListLine 					; list the line.
-.13ca	80 f1		bra $13bd			bra 	_AXPALoop
-.13cc					_AXPADone:
-.13cc	20 5c 21	jsr $215c			jsr 	AXPullFrame 				; pull previous frame
-.13cf	18		clc				clc 								; return okay
-.13d0					_AXPAMExit:
-.13d0	60		rts				rts
-.13d1					_AXPAMacroFailed:
-.13d1	48		pha				pha 								; save error code
-.13d2	20 5c 21	jsr $215c			jsr 	AXPullFrame 				; restore frame
-.13d5	68		pla				pla 								; get error code back and return error.
-.13d6	38		sec				sec
-.13d7	60		rts				rts
-.13d8					AXPAssembleOpcode:
-.13d8	da		phx				phx
-.13d9	a0 05		ldy #$05			ldy 	#AXID_DataHigh 				; get the base opcode.
-.13db	20 1e 1d	jsr $1d1e			jsr 	AXIGet
-.13de	8d dc 04	sta $04dc			sta 	AXBaseOpcode
-.13e1	a0 06		ldy #$06			ldy 	#AXID_DataAux 				; get the aux data (selectors for Group 2
-.13e3	20 1e 1d	jsr $1d1e			jsr 	AXIGet
-.13e6	8d dd 04	sta $04dd			sta 	AXSelector
-.13e9	a0 04		ldy #$04			ldy 	#AXID_DataLow 				; get the group number
-.13eb	20 1e 1d	jsr $1d1e			jsr 	AXIGet
-.13ee	fa		plx				plx
-.13ef	c9 01		cmp #$01			cmp 	#1 							; and dispatch.
-.13f1	f0 0d		beq $1400			beq 	_AXPGo1
-.13f3	c9 02		cmp #$02			cmp 	#2
-.13f5	f0 0c		beq $1403			beq 	_AXPGo2
-.13f7	c9 03		cmp #$03			cmp 	#3
-.13f9	f0 0b		beq $1406			beq 	_AXPGo3
-.13fb	c9 04		cmp #$04			cmp 	#4
-.13fd	f0 0a		beq $1409			beq 	_AXPGo4
->13ff	db						.byte 	$DB 					 	; this should not happen !
-.1400					_AXPGo1:
-.1400	4c 37 12	jmp $1237			jmp 	AXGroup1
-.1403					_AXPGo2:
-.1403	4c b2 12	jmp $12b2			jmp 	AXGroup2
-.1406					_AXPGo3:
-.1406	4c 26 13	jmp $1326			jmp 	AXGroup3
-.1409					_AXPGo4:
-.1409	4c 5b 13	jmp $135b			jmp 	AXGroup4
+.13bd	20 30 1d	jsr $1d30			jsr 	AXIGetDataLine 				; get data line
+.13c0	b0 13		bcs $13d5			bcs 	_AXPADone 					; end of lines.
+.13c2					_AXPAParam:
+.13c2	20 e1 13	jsr $13e1			jsr 	AXMScanParameters 			; look for parameters
+.13c5	b0 13		bcs $13da			bcs 	_AXPAMacroFailed 			; error in expansion ?
+.13c7	c9 00		cmp #$00			cmp 	#0 							; if one replaced retry.
+.13c9	d0 f7		bne $13c2			bne 	_AXPAParam
+.13cb	20 cb 10	jsr $10cb			jsr 	AXAssembleLine 				; assemble that line
+.13ce	b0 0a		bcs $13da			bcs 	_AXPAMacroFailed 			; something went wrong.
+.13d0	20 56 1e	jsr $1e56			jsr 	AXListLine 					; list the line.
+.13d3	80 e8		bra $13bd			bra 	_AXPALoop
+.13d5					_AXPADone:
+.13d5	20 9a 21	jsr $219a			jsr 	AXPullFrame 				; pull previous frame
+.13d8	18		clc				clc 								; return okay
+.13d9					_AXPAMExit:
+.13d9	60		rts				rts
+.13da					_AXPAMacroFailed:
+.13da	48		pha				pha 								; save error code
+.13db	20 9a 21	jsr $219a			jsr 	AXPullFrame 				; restore frame
+.13de	68		pla				pla 								; get error code back and return error.
+.13df	38		sec				sec
+.13e0	60		rts				rts
+.13e1					AXMScanParameters:
+.13e1	a2 00		ldx #$00			ldx 	#0 							; look for parameter marker.
+.13e3					_AXMSPLoop:
+.13e3	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; look for \
+.13e6	c9 5c		cmp #$5c			cmp 	#'\'
+.13e8	f0 09		beq $13f3			beq 	_AXMSPFound
+.13ea	e8		inx				inx
+.13eb	c9 00		cmp #$00			cmp 	#0 							; reached end.
+.13ed	d0 f4		bne $13e3			bne 	_AXMSPLoop
+.13ef	a9 00		lda #$00			lda 	#0
+.13f1	18		clc				clc
+.13f2	60		rts				rts
+.13f3					_AXMSPFound:
+.13f3	bd 83 04	lda $0483,x			lda 	AXBuffer+1,x 				; get following character
+.13f6	38		sec				sec 	 							; convert to 0-n-1 for parameter 1..n
+.13f7	e9 31		sbc #$31			sbc 	#'1'
+.13f9	30 17		bmi $1412			bmi 	_AXMSError
+.13fb	c9 04		cmp #$04			cmp 	#AXMaxParams 				; must be 0..maxparams-1
+.13fd	b0 13		bcs $1412			bcs 	_AXMSError
+.13ff	48		pha				pha 								; save ID and position.
+.1400	da		phx				phx
+.1401					_AXMSPRemove:
+.1401	bd 84 04	lda $0484,x			lda 	AXBuffer+2,x 				; delete the /n.
+.1404	9d 82 04	sta $0482,x			sta 	AXBuffer,x
+.1407	e8		inx				inx
+.1408	c9 00		cmp #$00			cmp 	#0
+.140a	d0 f5		bne $1401			bne 	_AXMSPRemove
+.140c	fa		plx				plx 								; restore X (position) A (param#-1)
+.140d	68		pla				pla
+.140e	a9 ff		lda #$ff			lda 	#$FF 						; and we did a substitution.
+.1410	18		clc				clc
+.1411	60		rts				rts
+.1412					_AXMSError:
+.1412	a9 8c		lda #$8c			lda 	#AXERRParam 				; return parameter error.
+.1414	38		sec				sec
+.1415	60		rts				rts
+.1416					AXPAssembleOpcode:
+.1416	da		phx				phx
+.1417	a0 05		ldy #$05			ldy 	#AXID_DataHigh 				; get the base opcode.
+.1419	20 5c 1d	jsr $1d5c			jsr 	AXIGet
+.141c	8d dc 04	sta $04dc			sta 	AXBaseOpcode
+.141f	a0 06		ldy #$06			ldy 	#AXID_DataAux 				; get the aux data (selectors for Group 2
+.1421	20 5c 1d	jsr $1d5c			jsr 	AXIGet
+.1424	8d dd 04	sta $04dd			sta 	AXSelector
+.1427	a0 04		ldy #$04			ldy 	#AXID_DataLow 				; get the group number
+.1429	20 5c 1d	jsr $1d5c			jsr 	AXIGet
+.142c	fa		plx				plx
+.142d	c9 01		cmp #$01			cmp 	#1 							; and dispatch.
+.142f	f0 0d		beq $143e			beq 	_AXPGo1
+.1431	c9 02		cmp #$02			cmp 	#2
+.1433	f0 0c		beq $1441			beq 	_AXPGo2
+.1435	c9 03		cmp #$03			cmp 	#3
+.1437	f0 0b		beq $1444			beq 	_AXPGo3
+.1439	c9 04		cmp #$04			cmp 	#4
+.143b	f0 0a		beq $1447			beq 	_AXPGo4
+>143d	db						.byte 	$DB 					 	; this should not happen !
+.143e					_AXPGo1:
+.143e	4c 37 12	jmp $1237			jmp 	AXGroup1
+.1441					_AXPGo2:
+.1441	4c b2 12	jmp $12b2			jmp 	AXGroup2
+.1444					_AXPGo3:
+.1444	4c 26 13	jmp $1326			jmp 	AXGroup3
+.1447					_AXPGo4:
+.1447	4c 5b 13	jmp $135b			jmp 	AXGroup4
 .04dc					AXBaseOpcode:
 >04dc							.fill 	1
 .04dd					AXSelector:
 >04dd							.fill 	1
-.140c					AXPromoteMode:
-.140c	ad d8 04	lda $04d8			lda 	AXAddrMode
-.140f	a2 03		ldx #$03			ldx 	#AXMAbsolute
-.1411	c9 81		cmp #$81			cmp 	#AXMZero
-.1413	f0 1a		beq $142f			beq 	AXDoPromote
-.1415	a2 07		ldx #$07			ldx 	#AXMAbsoluteX
-.1417	c9 85		cmp #$85			cmp 	#AXMZeroX
-.1419	f0 14		beq $142f			beq 	AXDoPromote
-.141b	a2 06		ldx #$06			ldx 	#AXMAbsoluteY
-.141d	c9 89		cmp #$89			cmp 	#AXMZeroY
-.141f	f0 0e		beq $142f			beq 	AXDoPromote
-.1421	a2 0a		ldx #$0a			ldx 	#AXMAbsoluteIndirect
-.1423	c9 88		cmp #$88			cmp 	#AXMIndirect
-.1425	f0 08		beq $142f			beq 	AXDoPromote
-.1427	a2 0b		ldx #$0b			ldx 	#AXMAbsoluteIndirectX
-.1429	c9 8d		cmp #$8d			cmp 	#AXMIndirectX
-.142b	f0 02		beq $142f			beq 	AXDoPromote
-.142d	38		sec				sec
-.142e	60		rts				rts
-.142f					AXDoPromote:
-.142f	8e d8 04	stx $04d8			stx 	AXAddrMode
-.1432	18		clc				clc
-.1433	60		rts				rts
-.1434					AXReadLine:
-.1434	f8		sed				sed 								; increment the BCD line number.
-.1435	18		clc				clc
-.1436	ad 75 04	lda $0475			lda 	AXLineNumberDecimal
-.1439	69 01		adc #$01			adc 	#1
-.143b	8d 75 04	sta $0475			sta 	AXLineNumberDecimal
-.143e	ad 76 04	lda $0476			lda 	AXLineNumberDecimal+1
-.1441	69 00		adc #$00			adc 	#0
-.1443	8d 76 04	sta $0476			sta 	AXLineNumberDecimal+1
-.1446	d8		cld				cld
-.1447	ee 73 04	inc $0473			inc 	AXLineNumber 				; bump line number (integer)
-.144a	d0 03		bne $144f			bne 	_AXNoCarry
-.144c	ee 74 04	inc $0474			inc 	AXLineNumber+1
-.144f					_AXNoCarry:
-.144f	9c de 04	stz $04de			stz 	AXInQuotes 					; ' " flag reset
-.1452	a2 00		ldx #$00			ldx 	#0 							; read from line start
-.1454	20 dd 1d	jsr $1ddd			jsr 	AXReadCharacter 			; try to read one.
-.1457	b0 44		bcs $149d			bcs		_AXRLEOFExit 				; failed EOF
-.1459					_AXRLLoop:
-.1459	c9 0d		cmp #$0d			cmp 	#13 						; read EOL ? then exit.
-.145b	f0 3b		beq $1498			beq 	_AXRLEndLine
-.145d	ac de 04	ldy $04de			ldy 	AXInQuotes 					; are we in quote mode
-.1460	d0 1f		bne $1481			bne 	_AXInQuotes
-.1462	c9 3b		cmp #$3b			cmp 	#";"						; no, exit if reached comment
-.1464	f0 10		beq $1476			beq 	_AXRLConsumeLine
-.1466	20 8a 20	jsr $208a			jsr 	AXConvertUpper 				; capitalise it.
-.1469	c9 22		cmp #$22			cmp 	#'"'						; check entering quotes
-.146b	f0 04		beq $1471			beq 	_AXEnterQuotes
-.146d	c9 27		cmp #$27			cmp 	#"'"
-.146f	d0 18		bne $1489			bne 	_AXOutChar 					; write otherwise
-.1471					_AXEnterQuotes:
-.1471	8d de 04	sta $04de			sta 	AXInQuotes 					; entering quotes
-.1474	80 13		bra $1489			bra 	_AXOutChar
-.1476					_AXRLConsumeLine:
-.1476	20 dd 1d	jsr $1ddd			jsr 	AXReadCharacter
-.1479	b0 1d		bcs $1498			bcs 	_AXRLEndLine
-.147b	c9 0d		cmp #$0d			cmp 	#13
-.147d	d0 f7		bne $1476			bne 	_AXRLConsumeLine
-.147f	80 17		bra $1498			bra 	_AXRLEndLine
-.1481					_AXInQuotes:
-.1481	cd de 04	cmp $04de			cmp 	AXInQuotes 					; leaving quotes, e.g. matching '" found.
-.1484	d0 03		bne $1489			bne 	_AXOutChar 					; no, just output normally.
-.1486	9c de 04	stz $04de			stz 	AXInQuotes 					; reset the in quotes flag.
-.1489					_AXOutChar:
-.1489	9d 82 04	sta $0482,x			sta 	AXBuffer,x
-.148c	e8		inx				inx
-.148d	e0 4f		cpx #$4f			cpx 	#AXMaxLineSize-1 			; too long.
-.148f	a9 8a		lda #$8a			lda 	#AXERRLength
-.1491	b0 0f		bcs $14a2			bcs 	_AXRLErrExit
-.1493	20 dd 1d	jsr $1ddd			jsr 	AXReadCharacter 			; read next
-.1496	90 c1		bcc $1459			bcc 	_AXRLLoop	 				; loop back if not EOF
-.1498					_AXRLEndLine:
-.1498	9e 82 04	stz $0482,x			stz 	AXBuffer,x 					; make buffer ASCIIZ.
-.149b	18		clc				clc
-.149c					_AXRLExit:
-.149c	60		rts				rts
-.149d					_AXRLEOFExit:
-.149d	9c 82 04	stz $0482			stz 	AXBuffer 					; clear buffer
-.14a0	a9 00		lda #$00			lda 	#AXERREOF 					; return EOF error, which is complete :)
-.14a2					_AXRLErrExit:
-.14a2	38		sec				sec
-.14a3	60		rts				rts
+.144a					AXPromoteMode:
+.144a	ad d8 04	lda $04d8			lda 	AXAddrMode
+.144d	a2 03		ldx #$03			ldx 	#AXMAbsolute
+.144f	c9 81		cmp #$81			cmp 	#AXMZero
+.1451	f0 1a		beq $146d			beq 	AXDoPromote
+.1453	a2 07		ldx #$07			ldx 	#AXMAbsoluteX
+.1455	c9 85		cmp #$85			cmp 	#AXMZeroX
+.1457	f0 14		beq $146d			beq 	AXDoPromote
+.1459	a2 06		ldx #$06			ldx 	#AXMAbsoluteY
+.145b	c9 89		cmp #$89			cmp 	#AXMZeroY
+.145d	f0 0e		beq $146d			beq 	AXDoPromote
+.145f	a2 0a		ldx #$0a			ldx 	#AXMAbsoluteIndirect
+.1461	c9 88		cmp #$88			cmp 	#AXMIndirect
+.1463	f0 08		beq $146d			beq 	AXDoPromote
+.1465	a2 0b		ldx #$0b			ldx 	#AXMAbsoluteIndirectX
+.1467	c9 8d		cmp #$8d			cmp 	#AXMIndirectX
+.1469	f0 02		beq $146d			beq 	AXDoPromote
+.146b	38		sec				sec
+.146c	60		rts				rts
+.146d					AXDoPromote:
+.146d	8e d8 04	stx $04d8			stx 	AXAddrMode
+.1470	18		clc				clc
+.1471	60		rts				rts
+.1472					AXReadLine:
+.1472	f8		sed				sed 								; increment the BCD line number.
+.1473	18		clc				clc
+.1474	ad 75 04	lda $0475			lda 	AXLineNumberDecimal
+.1477	69 01		adc #$01			adc 	#1
+.1479	8d 75 04	sta $0475			sta 	AXLineNumberDecimal
+.147c	ad 76 04	lda $0476			lda 	AXLineNumberDecimal+1
+.147f	69 00		adc #$00			adc 	#0
+.1481	8d 76 04	sta $0476			sta 	AXLineNumberDecimal+1
+.1484	d8		cld				cld
+.1485	ee 73 04	inc $0473			inc 	AXLineNumber 				; bump line number (integer)
+.1488	d0 03		bne $148d			bne 	_AXNoCarry
+.148a	ee 74 04	inc $0474			inc 	AXLineNumber+1
+.148d					_AXNoCarry:
+.148d	9c de 04	stz $04de			stz 	AXInQuotes 					; ' " flag reset
+.1490	a2 00		ldx #$00			ldx 	#0 							; read from line start
+.1492	20 1b 1e	jsr $1e1b			jsr 	AXReadCharacter 			; try to read one.
+.1495	b0 44		bcs $14db			bcs		_AXRLEOFExit 				; failed EOF
+.1497					_AXRLLoop:
+.1497	c9 0d		cmp #$0d			cmp 	#13 						; read EOL ? then exit.
+.1499	f0 3b		beq $14d6			beq 	_AXRLEndLine
+.149b	ac de 04	ldy $04de			ldy 	AXInQuotes 					; are we in quote mode
+.149e	d0 1f		bne $14bf			bne 	_AXInQuotes
+.14a0	c9 3b		cmp #$3b			cmp 	#";"						; no, exit if reached comment
+.14a2	f0 10		beq $14b4			beq 	_AXRLConsumeLine
+.14a4	20 c8 20	jsr $20c8			jsr 	AXConvertUpper 				; capitalise it.
+.14a7	c9 22		cmp #$22			cmp 	#'"'						; check entering quotes
+.14a9	f0 04		beq $14af			beq 	_AXEnterQuotes
+.14ab	c9 27		cmp #$27			cmp 	#"'"
+.14ad	d0 18		bne $14c7			bne 	_AXOutChar 					; write otherwise
+.14af					_AXEnterQuotes:
+.14af	8d de 04	sta $04de			sta 	AXInQuotes 					; entering quotes
+.14b2	80 13		bra $14c7			bra 	_AXOutChar
+.14b4					_AXRLConsumeLine:
+.14b4	20 1b 1e	jsr $1e1b			jsr 	AXReadCharacter
+.14b7	b0 1d		bcs $14d6			bcs 	_AXRLEndLine
+.14b9	c9 0d		cmp #$0d			cmp 	#13
+.14bb	d0 f7		bne $14b4			bne 	_AXRLConsumeLine
+.14bd	80 17		bra $14d6			bra 	_AXRLEndLine
+.14bf					_AXInQuotes:
+.14bf	cd de 04	cmp $04de			cmp 	AXInQuotes 					; leaving quotes, e.g. matching '" found.
+.14c2	d0 03		bne $14c7			bne 	_AXOutChar 					; no, just output normally.
+.14c4	9c de 04	stz $04de			stz 	AXInQuotes 					; reset the in quotes flag.
+.14c7					_AXOutChar:
+.14c7	9d 82 04	sta $0482,x			sta 	AXBuffer,x
+.14ca	e8		inx				inx
+.14cb	e0 4f		cpx #$4f			cpx 	#AXMaxLineSize-1 			; too long.
+.14cd	a9 8a		lda #$8a			lda 	#AXERRLength
+.14cf	b0 0f		bcs $14e0			bcs 	_AXRLErrExit
+.14d1	20 1b 1e	jsr $1e1b			jsr 	AXReadCharacter 			; read next
+.14d4	90 c1		bcc $1497			bcc 	_AXRLLoop	 				; loop back if not EOF
+.14d6					_AXRLEndLine:
+.14d6	9e 82 04	stz $0482,x			stz 	AXBuffer,x 					; make buffer ASCIIZ.
+.14d9	18		clc				clc
+.14da					_AXRLExit:
+.14da	60		rts				rts
+.14db					_AXRLEOFExit:
+.14db	9c 82 04	stz $0482			stz 	AXBuffer 					; clear buffer
+.14de	a9 00		lda #$00			lda 	#AXERREOF 					; return EOF error, which is complete :)
+.14e0					_AXRLErrExit:
+.14e0	38		sec				sec
+.14e1	60		rts				rts
 .04de					AXInQuotes:
 >04de							.fill 	1
-.14a4					AXBinaryDivide:
-.14a4	ad 03 04	lda $0403			lda 	AXRight 					; check divide by zero
-.14a7	0d 04 04	ora $0404			ora 	AXRight+1
-.14aa	f0 34		beq $14e0			beq 	_AXDivZero
-.14ac	9c df 04	stz $04df			stz 	AXDTemp 					; A = 0
-.14af	9c e0 04	stz $04e0			stz 	AXDTemp+1
-.14b2	a0 10		ldy #$10			ldy 	#16 						; iteration count.
-.14b4					_AXDivLoop:
-.14b4	5a		phy				phy
-.14b5	0e 00 04	asl $0400			asl 	AXLeft 						; shift AQ left.
-.14b8	2e 01 04	rol $0401			rol 	AXLeft+1
-.14bb	2e df 04	rol $04df			rol 	AXDTemp
-.14be	2e e0 04	rol $04e0			rol 	AXDTemp+1
-.14c1	38		sec				sec 								; A-M => A:Y
-.14c2	ad df 04	lda $04df			lda 	AXDTemp
-.14c5	ed 03 04	sbc $0403			sbc 	AXRight
-.14c8	a8		tay				tay
-.14c9	ad e0 04	lda $04e0			lda 	AXDTemp+1
-.14cc	ed 04 04	sbc $0404			sbc 	AXRight+1
-.14cf	90 09		bcc $14da			bcc 	_AXDivNext 					; if A < M exit
-.14d1	8d e0 04	sta $04e0			sta 	AXDTemp+1 					; A = A - M
-.14d4	8c df 04	sty $04df			sty 	AXDTemp
-.14d7	ee 00 04	inc $0400			inc 	AXLeft 						; set bit 0 of the result.
-.14da					_AXDivNext:
-.14da	7a		ply				ply
-.14db	88		dey				dey
-.14dc	d0 d6		bne $14b4			bne 	_AXDivLoop
-.14de	18		clc				clc
-.14df	60		rts				rts
-.14e0					_AXDivZero:
-.14e0	a9 03		lda #$03			lda 	#AXERRDivZero
-.14e2	38		sec				sec
-.14e3	60		rts				rts
-.14e4					AXBinaryModulus:
-.14e4	20 a4 14	jsr $14a4			jsr 	AXBinaryDivide
-.14e7	b0 0d		bcs $14f6			bcs 	_AXBMExit
-.14e9	ad df 04	lda $04df			lda 	AXDTemp
-.14ec	8d 00 04	sta $0400			sta 	AXLeft
-.14ef	ad e0 04	lda $04e0			lda 	AXDTemp+1
-.14f2	8d 01 04	sta $0401			sta 	AXLeft+1
-.14f5	18		clc				clc
-.14f6					_AXBMExit:
-.14f6	60		rts				rts
+.14e2					AXBinaryDivide:
+.14e2	ad 03 04	lda $0403			lda 	AXRight 					; check divide by zero
+.14e5	0d 04 04	ora $0404			ora 	AXRight+1
+.14e8	f0 34		beq $151e			beq 	_AXDivZero
+.14ea	9c df 04	stz $04df			stz 	AXDTemp 					; A = 0
+.14ed	9c e0 04	stz $04e0			stz 	AXDTemp+1
+.14f0	a0 10		ldy #$10			ldy 	#16 						; iteration count.
+.14f2					_AXDivLoop:
+.14f2	5a		phy				phy
+.14f3	0e 00 04	asl $0400			asl 	AXLeft 						; shift AQ left.
+.14f6	2e 01 04	rol $0401			rol 	AXLeft+1
+.14f9	2e df 04	rol $04df			rol 	AXDTemp
+.14fc	2e e0 04	rol $04e0			rol 	AXDTemp+1
+.14ff	38		sec				sec 								; A-M => A:Y
+.1500	ad df 04	lda $04df			lda 	AXDTemp
+.1503	ed 03 04	sbc $0403			sbc 	AXRight
+.1506	a8		tay				tay
+.1507	ad e0 04	lda $04e0			lda 	AXDTemp+1
+.150a	ed 04 04	sbc $0404			sbc 	AXRight+1
+.150d	90 09		bcc $1518			bcc 	_AXDivNext 					; if A < M exit
+.150f	8d e0 04	sta $04e0			sta 	AXDTemp+1 					; A = A - M
+.1512	8c df 04	sty $04df			sty 	AXDTemp
+.1515	ee 00 04	inc $0400			inc 	AXLeft 						; set bit 0 of the result.
+.1518					_AXDivNext:
+.1518	7a		ply				ply
+.1519	88		dey				dey
+.151a	d0 d6		bne $14f2			bne 	_AXDivLoop
+.151c	18		clc				clc
+.151d	60		rts				rts
+.151e					_AXDivZero:
+.151e	a9 03		lda #$03			lda 	#AXERRDivZero
+.1520	38		sec				sec
+.1521	60		rts				rts
+.1522					AXBinaryModulus:
+.1522	20 e2 14	jsr $14e2			jsr 	AXBinaryDivide
+.1525	b0 0d		bcs $1534			bcs 	_AXBMExit
+.1527	ad df 04	lda $04df			lda 	AXDTemp
+.152a	8d 00 04	sta $0400			sta 	AXLeft
+.152d	ad e0 04	lda $04e0			lda 	AXDTemp+1
+.1530	8d 01 04	sta $0401			sta 	AXLeft+1
+.1533	18		clc				clc
+.1534					_AXBMExit:
+.1534	60		rts				rts
 .04df					AXDTemp:
 >04df							.fill 	2
-.14f7					AXBinaryMult:
-.14f7	ad 00 04	lda $0400			lda 	AXLeft 						; copy left to temp
-.14fa	8d e1 04	sta $04e1			sta 	AXMTemp
-.14fd	ad 01 04	lda $0401			lda 	AXLeft+1
-.1500	8d e2 04	sta $04e2			sta 	AXMTemp+1
-.1503	9c 00 04	stz $0400			stz 	AXLeft	 					; zero left
-.1506	9c 01 04	stz $0401			stz 	AXLeft+1
-.1509					_AXMultLoop:
-.1509	ad e1 04	lda $04e1			lda 	AXMTemp 					; bit 0 of old left set ?
-.150c	29 01		and #$01			and 	#1
-.150e	f0 03		beq $1513			beq 	_AXNoAdd
-.1510	20 88 15	jsr $1588			jsr 	AXBinaryAdd					; add right to left
-.1513					_AXNoAdd:
-.1513	0e 03 04	asl $0403			asl 	AXRight 					; shift right left
-.1516	2e 04 04	rol $0404			rol 	AXRight+1
-.1519	4e e2 04	lsr $04e2			lsr 	AXMTemp+1 					; shift old left right
-.151c	6e e1 04	ror $04e1			ror 	AXMTemp
-.151f	ad e1 04	lda $04e1			lda 	AXMTemp 					; loop back if old left still non-zero
-.1522	0d e2 04	ora $04e2			ora 	AXMTemp+1
-.1525	d0 e2		bne $1509			bne 	_AXMultLoop
-.1527	18		clc				clc
-.1528	60		rts				rts
+.1535					AXBinaryMult:
+.1535	ad 00 04	lda $0400			lda 	AXLeft 						; copy left to temp
+.1538	8d e1 04	sta $04e1			sta 	AXMTemp
+.153b	ad 01 04	lda $0401			lda 	AXLeft+1
+.153e	8d e2 04	sta $04e2			sta 	AXMTemp+1
+.1541	9c 00 04	stz $0400			stz 	AXLeft	 					; zero left
+.1544	9c 01 04	stz $0401			stz 	AXLeft+1
+.1547					_AXMultLoop:
+.1547	ad e1 04	lda $04e1			lda 	AXMTemp 					; bit 0 of old left set ?
+.154a	29 01		and #$01			and 	#1
+.154c	f0 03		beq $1551			beq 	_AXNoAdd
+.154e	20 c6 15	jsr $15c6			jsr 	AXBinaryAdd					; add right to left
+.1551					_AXNoAdd:
+.1551	0e 03 04	asl $0403			asl 	AXRight 					; shift right left
+.1554	2e 04 04	rol $0404			rol 	AXRight+1
+.1557	4e e2 04	lsr $04e2			lsr 	AXMTemp+1 					; shift old left right
+.155a	6e e1 04	ror $04e1			ror 	AXMTemp
+.155d	ad e1 04	lda $04e1			lda 	AXMTemp 					; loop back if old left still non-zero
+.1560	0d e2 04	ora $04e2			ora 	AXMTemp+1
+.1563	d0 e2		bne $1547			bne 	_AXMultLoop
+.1565	18		clc				clc
+.1566	60		rts				rts
 .04e1					AXMTemp:
 >04e1							.fill 	2
-.1529					AXShiftLeft:
-.1529	a0 00		ldy #$00			ldy 	#0
-.152b	80 02		bra $152f			bra 	AXShiftMain
-.152d					AXShiftRight:
-.152d	a0 ff		ldy #$ff			ldy 	#$FF
-.152f					AXShiftMain:
-.152f	ad 03 04	lda $0403			lda 	AXRight 					; if shift > 15 then zero
-.1532	29 f0		and #$f0			and 	#$F0
-.1534	0d 04 04	ora $0404			ora 	AXRight+1
-.1537	d0 1e		bne $1557			bne 	_AXShiftZero
-.1539	ad 03 04	lda $0403			lda 	AXRight 					; shift zero, exit as unchanged.
-.153c	f0 1f		beq $155d			beq 	_AXExit
-.153e					_AXShiftLoop:
-.153e	c0 00		cpy #$00			cpy 	#0 							; shift depending on direction flag in Y
-.1540	f0 08		beq $154a			beq 	_AXShiftLeft
-.1542	4e 01 04	lsr $0401			lsr 	AXLeft+1
-.1545	6e 00 04	ror $0400			ror 	AXLeft
-.1548	80 06		bra $1550			bra 	_AXShiftNext
-.154a					_AXShiftLeft:
-.154a	0e 00 04	asl $0400			asl 	AXLeft
-.154d	2e 01 04	rol $0401			rol 	AXLeft+1
-.1550					_AXShiftNext:
-.1550	ce 03 04	dec $0403			dec 	AXRight 					; do required # of times
-.1553	d0 e9		bne $153e			bne 	_AXShiftLoop
-.1555	18		clc				clc 								; exit okay.
-.1556	60		rts				rts
-.1557					_AXShiftZero:
-.1557	9c 00 04	stz $0400			stz 	AXLeft
-.155a	9c 01 04	stz $0401			stz 	AXLeft+1
-.155d					_AXExit:
-.155d	18		clc				clc
-.155e	60		rts				rts
-.155f					AXSwap:
-.155f	48		pha				pha
-.1560	da		phx				phx
-.1561	ad 03 04	lda $0403			lda 	AXRight
-.1564	ae 00 04	ldx $0400			ldx 	AXLeft
-.1567	8d 00 04	sta $0400			sta 	AXLeft
-.156a	8e 03 04	stx $0403			stx 	AXRight
-.156d	ad 04 04	lda $0404			lda 	AXRight+1
-.1570	ae 01 04	ldx $0401			ldx 	AXLeft+1
-.1573	8d 01 04	sta $0401			sta 	AXLeft+1
-.1576	8e 04 04	stx $0404			stx 	AXRight+1
-.1579	ad 05 04	lda $0405			lda 	AXRight+2
-.157c	ae 02 04	ldx $0402			ldx 	AXLeft+2
-.157f	8d 02 04	sta $0402			sta 	AXLeft+2
-.1582	8e 05 04	stx $0405			stx 	AXRight+2
-.1585	fa		plx				plx
-.1586	68		pla				pla
-.1587	60		rts				rts
-.1588					AXBinaryAdd:
-.1588	18		clc				clc
-.1589	ad 00 04	lda $0400			lda		AXLeft
-.158c	6d 03 04	adc $0403			adc 		AXRight
-.158f	8d 00 04	sta $0400			sta 	AXLeft
-.1592	ad 01 04	lda $0401			lda		AXLeft+1
-.1595	6d 04 04	adc $0404			adc 		AXRight+1
-.1598	8d 01 04	sta $0401			sta 	AXLeft+1
-.159b	18		clc				clc 								; no error.
+.1567					AXShiftLeft:
+.1567	a0 00		ldy #$00			ldy 	#0
+.1569	80 02		bra $156d			bra 	AXShiftMain
+.156b					AXShiftRight:
+.156b	a0 ff		ldy #$ff			ldy 	#$FF
+.156d					AXShiftMain:
+.156d	ad 03 04	lda $0403			lda 	AXRight 					; if shift > 15 then zero
+.1570	29 f0		and #$f0			and 	#$F0
+.1572	0d 04 04	ora $0404			ora 	AXRight+1
+.1575	d0 1e		bne $1595			bne 	_AXShiftZero
+.1577	ad 03 04	lda $0403			lda 	AXRight 					; shift zero, exit as unchanged.
+.157a	f0 1f		beq $159b			beq 	_AXExit
+.157c					_AXShiftLoop:
+.157c	c0 00		cpy #$00			cpy 	#0 							; shift depending on direction flag in Y
+.157e	f0 08		beq $1588			beq 	_AXShiftLeft
+.1580	4e 01 04	lsr $0401			lsr 	AXLeft+1
+.1583	6e 00 04	ror $0400			ror 	AXLeft
+.1586	80 06		bra $158e			bra 	_AXShiftNext
+.1588					_AXShiftLeft:
+.1588	0e 00 04	asl $0400			asl 	AXLeft
+.158b	2e 01 04	rol $0401			rol 	AXLeft+1
+.158e					_AXShiftNext:
+.158e	ce 03 04	dec $0403			dec 	AXRight 					; do required # of times
+.1591	d0 e9		bne $157c			bne 	_AXShiftLoop
+.1593	18		clc				clc 								; exit okay.
+.1594	60		rts				rts
+.1595					_AXShiftZero:
+.1595	9c 00 04	stz $0400			stz 	AXLeft
+.1598	9c 01 04	stz $0401			stz 	AXLeft+1
+.159b					_AXExit:
+.159b	18		clc				clc
 .159c	60		rts				rts
-.159d					AXBinarySub:
-.159d	38		sec				sec
-.159e	ad 00 04	lda $0400			lda		AXLeft
-.15a1	ed 03 04	sbc $0403			sbc 		AXRight
-.15a4	8d 00 04	sta $0400			sta 	AXLeft
-.15a7	ad 01 04	lda $0401			lda		AXLeft+1
-.15aa	ed 04 04	sbc $0404			sbc 		AXRight+1
-.15ad	8d 01 04	sta $0401			sta 	AXLeft+1
-.15b0	18		clc				clc 								; no error.
-.15b1	60		rts				rts
-.15b2					AXBinaryAnd:
-.15b2	ad 00 04	lda $0400			lda		AXLeft
-.15b5	2d 03 04	and $0403			and 		AXRight
-.15b8	8d 00 04	sta $0400			sta 	AXLeft
-.15bb	ad 01 04	lda $0401			lda		AXLeft+1
-.15be	2d 04 04	and $0404			and 		AXRight+1
-.15c1	8d 01 04	sta $0401			sta 	AXLeft+1
-.15c4	18		clc				clc 								; no error.
+.159d					AXSwap:
+.159d	48		pha				pha
+.159e	da		phx				phx
+.159f	ad 03 04	lda $0403			lda 	AXRight
+.15a2	ae 00 04	ldx $0400			ldx 	AXLeft
+.15a5	8d 00 04	sta $0400			sta 	AXLeft
+.15a8	8e 03 04	stx $0403			stx 	AXRight
+.15ab	ad 04 04	lda $0404			lda 	AXRight+1
+.15ae	ae 01 04	ldx $0401			ldx 	AXLeft+1
+.15b1	8d 01 04	sta $0401			sta 	AXLeft+1
+.15b4	8e 04 04	stx $0404			stx 	AXRight+1
+.15b7	ad 05 04	lda $0405			lda 	AXRight+2
+.15ba	ae 02 04	ldx $0402			ldx 	AXLeft+2
+.15bd	8d 02 04	sta $0402			sta 	AXLeft+2
+.15c0	8e 05 04	stx $0405			stx 	AXRight+2
+.15c3	fa		plx				plx
+.15c4	68		pla				pla
 .15c5	60		rts				rts
-.15c6					AXBinaryOra:
-.15c6	ad 00 04	lda $0400			lda		AXLeft
-.15c9	0d 03 04	ora $0403			ora 		AXRight
-.15cc	8d 00 04	sta $0400			sta 	AXLeft
-.15cf	ad 01 04	lda $0401			lda		AXLeft+1
-.15d2	0d 04 04	ora $0404			ora 		AXRight+1
-.15d5	8d 01 04	sta $0401			sta 	AXLeft+1
-.15d8	18		clc				clc 								; no error.
-.15d9	60		rts				rts
-.15da					AXBinaryEor:
-.15da	ad 00 04	lda $0400			lda		AXLeft
-.15dd	4d 03 04	eor $0403			eor 		AXRight
-.15e0	8d 00 04	sta $0400			sta 	AXLeft
-.15e3	ad 01 04	lda $0401			lda		AXLeft+1
-.15e6	4d 04 04	eor $0404			eor 		AXRight+1
-.15e9	8d 01 04	sta $0401			sta 	AXLeft+1
-.15ec	18		clc				clc 								; no error.
-.15ed	60		rts				rts
-.15ee					AXBinaryNotEqual:
-.15ee	20 da 15	jsr $15da			jsr 	AXBinaryEor
-.15f1	ad 00 04	lda $0400			lda 	AXLeft
-.15f4	0d 01 04	ora $0401			ora 	AXLeft+1
-.15f7	f0 02		beq $15fb			beq 	_AXBEExit
-.15f9	a9 ff		lda #$ff			lda 	#$FF
-.15fb					_AXBEExit:
-.15fb	8d 00 04	sta $0400			sta 	AXLeft
-.15fe	8d 01 04	sta $0401			sta 	AXLeft+1
-.1601	18		clc				clc
-.1602	60		rts				rts
-.1603					AXBinaryEqual:
-.1603	20 ee 15	jsr $15ee			jsr 	AXBinaryNotEqual
-.1606	80 26		bra $162e			bra 	AXNot
-.1608					AXGreater:
-.1608	20 5f 15	jsr $155f			jsr 	AXSwap
-.160b					AXLess:
-.160b	ad 00 04	lda $0400			lda 	AXLeft
-.160e	cd 03 04	cmp $0403			cmp 	AXRight
-.1611	ad 01 04	lda $0401			lda 	AXLeft+1
-.1614	ed 04 04	sbc $0404			sbc 	AXRight+1
-.1617	a9 00		lda #$00			lda 	#$00
-.1619	b0 01		bcs $161c			bcs 	_AXIsGtr
-.161b	3a		dec a				dec 	a
-.161c					_AXIsGtr:
-.161c	8d 00 04	sta $0400			sta 	AXLeft
-.161f	8d 01 04	sta $0401			sta 	AXLeft+1
-.1622	18		clc				clc
-.1623	60		rts				rts
-.1624					AXLessEqual:
-.1624	20 08 16	jsr $1608			jsr 	AXGreater
-.1627	80 05		bra $162e			bra 	AXNot
-.1629					AXGreaterEqual:
-.1629	20 0b 16	jsr $160b			jsr 	AXLess
-.162c	80 00		bra $162e			bra 	AXNot
-.162e					AXNot:
-.162e	ad 00 04	lda $0400			lda 	AXLeft
-.1631	49 ff		eor #$ff			eor 	#$FF
-.1633	8d 00 04	sta $0400			sta 	AXLeft
-.1636	8d 01 04	sta $0401			sta 	AXLeft+1
-.1639	18		clc				clc
-.163a	60		rts				rts
-.163b					AXExpression:
-.163b	a9 00		lda #$00			lda 	#0 							; start at precedence level 0.
-.163d					AXExpressionAtA:
-.163d	48		pha				pha 								; save precedence level.
-.163e	20 f4 16	jsr $16f4			jsr 	AXTerm 						; get a term.
-.1641	90 02		bcc $1645			bcc 	_AXEExpressionLoop
-.1643	7a		ply				ply 								; throw precedence, return error in A.
-.1644	60		rts				rts
-.1645					_AXEExpressionLoop:
-.1645	20 25 18	jsr $1825			jsr 	AXGet 						; get next non space.
-.1648	a0 fe		ldy #$fe			ldy 	#(0-2) & $FF
-.164a	8e e3 04	stx $04e3			stx 	AXOperatorPos				; save operator position in case rejected.
-.164d					_AXFindBinOp:
-.164d	c8		iny				iny 								; pre-increment.
-.164e	c8		iny				iny
-.164f	b9 aa 1b	lda $1baa,y			lda 	AXBinaryOperatorList,y 		; first character to match
-.1652	f0 71		beq $16c5			beq 	_AXExitPop 					; if end of table pop and exit, okay.
-.1654	dd 82 04	cmp $0482,x			cmp 	AXBuffer,x 					; if wrong, go to next
-.1657	d0 f4		bne $164d			bne 	_AXFindBinOp
-.1659	b9 ab 1b	lda $1bab,y			lda 	AXBinaryOperatorList+1,y 	; second character to match
-.165c	f0 06		beq $1664			beq 	_AXConsume1 				; if zero, then matched a single one, and consume 1.
-.165e	dd 83 04	cmp $0483,x			cmp 	AXBuffer+1,x 				; if wrong, go to next.
-.1661	d0 ea		bne $164d			bne 	_AXFindBinOp
-.1663	e8		inx				inx 								; consume 2 character
-.1664					_AXConsume1:
-.1664	e8		inx				inx 								; or 1 if a single character.
-.1665	98		tya				tya 								; halve the operator code.
-.1666	4a		lsr a				lsr 	a
-.1667	a8		tay				tay
-.1668	68		pla				pla 								; required precedence
-.1669	d9 cb 1b	cmp $1bcb,y			cmp 	AXPrecedence,y 				; if >= then exit
-.166c	b0 52		bcs $16c0			bcs 	_AXPrecFail
-.166e	48		pha				pha 								; save the levels precedence.
-.166f	5a		phy				phy 								; save the operator ID
-.1670	ad 00 04	lda $0400			lda 	AXLeft 						; push AXLeft on the stack
-.1673	48		pha				pha
-.1674	ad 01 04	lda $0401			lda 	AXLeft+1
-.1677	48		pha				pha
-.1678	ad 02 04	lda $0402			lda 	AXLeft+2
-.167b	48		pha				pha
-.167c	b9 cb 1b	lda $1bcb,y			lda 	AXPrecedence,y 				; evaluate the RHS at the precedence of the operator or higher.
-.167f	20 3d 16	jsr $163d			jsr 	AXExpressionAtA
-.1682	b0 35		bcs $16b9			bcs 	_AXFailedRHS
-.1684	20 5f 15	jsr $155f			jsr 	AXSwap 						; put the RHS into the right side.
-.1687	68		pla				pla 								; and restore AXLeft
-.1688	8d 02 04	sta $0402			sta 	AXLeft+2
-.168b	68		pla				pla
-.168c	8d 01 04	sta $0401			sta 	AXLeft+1
-.168f	68		pla				pla
-.1690	8d 00 04	sta $0400			sta 	AXLeft
-.1693	68		pla				pla 								; operator ID
-.1694	0a		asl a				asl 	a 							; now index into vector table
-.1695	da		phx				phx 								; save buffer pos so we can use indexing
-.1696	aa		tax				tax
-.1697	ad 02 04	lda $0402			lda 	AXLeft+2 					; check both are defined values (e.g. bit 7 clear)
-.169a	0d 05 04	ora $0405			ora 	AXRight+2
-.169d	30 09		bmi $16a8			bmi 	_AXNoValue
-.169f	20 b6 16	jsr $16b6			jsr 	_AXDoOperator 				; call the operator code.
-.16a2	fa		plx				plx 								; restore buffer position.
-.16a3	90 a0		bcc $1645			bcc 	_AXEExpressionLoop 			; and go round again if no error
-.16a5	7a		ply				ply 								; throw the precedence on the stack.
-.16a6	38		sec				sec
-.16a7	60		rts				rts
-.16a8					_AXNoValue:
-.16a8	9c 00 04	stz $0400			stz 	AXLeft
-.16ab	9c 01 04	stz $0401			stz 	AXLeft+1
-.16ae	a9 80		lda #$80			lda	 	#$80
-.16b0	8d 02 04	sta $0402			sta 	AXLeft+2
-.16b3	fa		plx				plx
-.16b4	80 8f		bra $1645			bra 	_AXEExpressionLoop
-.16b6					_AXDoOperator:
-.16b6	7c db 1b	jmp ($1bdb,x)			jmp 	(AXBinaryVectors,x)
-.16b9					_AXFailedRHS:
-.16b9	7a		ply				ply
-.16ba	7a		ply				ply
-.16bb	7a		ply				ply
-.16bc	7a		ply				ply
-.16bd	7a		ply				ply
-.16be	38		sec				sec
-.16bf	60		rts				rts
-.16c0					_AXPrecFail:
-.16c0	ae e3 04	ldx $04e3			ldx 	AXOperatorPos 				; precedence fail, undo operator consume
-.16c3	18		clc				clc
-.16c4	60		rts				rts
-.16c5					_AXExitPop:
-.16c5	68		pla				pla
-.16c6	18		clc				clc
-.16c7	60		rts				rts
+.15c6					AXBinaryAdd:
+.15c6	18		clc				clc
+.15c7	ad 00 04	lda $0400			lda		AXLeft
+.15ca	6d 03 04	adc $0403			adc 		AXRight
+.15cd	8d 00 04	sta $0400			sta 	AXLeft
+.15d0	ad 01 04	lda $0401			lda		AXLeft+1
+.15d3	6d 04 04	adc $0404			adc 		AXRight+1
+.15d6	8d 01 04	sta $0401			sta 	AXLeft+1
+.15d9	18		clc				clc 								; no error.
+.15da	60		rts				rts
+.15db					AXBinarySub:
+.15db	38		sec				sec
+.15dc	ad 00 04	lda $0400			lda		AXLeft
+.15df	ed 03 04	sbc $0403			sbc 		AXRight
+.15e2	8d 00 04	sta $0400			sta 	AXLeft
+.15e5	ad 01 04	lda $0401			lda		AXLeft+1
+.15e8	ed 04 04	sbc $0404			sbc 		AXRight+1
+.15eb	8d 01 04	sta $0401			sta 	AXLeft+1
+.15ee	18		clc				clc 								; no error.
+.15ef	60		rts				rts
+.15f0					AXBinaryAnd:
+.15f0	ad 00 04	lda $0400			lda		AXLeft
+.15f3	2d 03 04	and $0403			and 		AXRight
+.15f6	8d 00 04	sta $0400			sta 	AXLeft
+.15f9	ad 01 04	lda $0401			lda		AXLeft+1
+.15fc	2d 04 04	and $0404			and 		AXRight+1
+.15ff	8d 01 04	sta $0401			sta 	AXLeft+1
+.1602	18		clc				clc 								; no error.
+.1603	60		rts				rts
+.1604					AXBinaryOra:
+.1604	ad 00 04	lda $0400			lda		AXLeft
+.1607	0d 03 04	ora $0403			ora 		AXRight
+.160a	8d 00 04	sta $0400			sta 	AXLeft
+.160d	ad 01 04	lda $0401			lda		AXLeft+1
+.1610	0d 04 04	ora $0404			ora 		AXRight+1
+.1613	8d 01 04	sta $0401			sta 	AXLeft+1
+.1616	18		clc				clc 								; no error.
+.1617	60		rts				rts
+.1618					AXBinaryEor:
+.1618	ad 00 04	lda $0400			lda		AXLeft
+.161b	4d 03 04	eor $0403			eor 		AXRight
+.161e	8d 00 04	sta $0400			sta 	AXLeft
+.1621	ad 01 04	lda $0401			lda		AXLeft+1
+.1624	4d 04 04	eor $0404			eor 		AXRight+1
+.1627	8d 01 04	sta $0401			sta 	AXLeft+1
+.162a	18		clc				clc 								; no error.
+.162b	60		rts				rts
+.162c					AXBinaryNotEqual:
+.162c	20 18 16	jsr $1618			jsr 	AXBinaryEor
+.162f	ad 00 04	lda $0400			lda 	AXLeft
+.1632	0d 01 04	ora $0401			ora 	AXLeft+1
+.1635	f0 02		beq $1639			beq 	_AXBEExit
+.1637	a9 ff		lda #$ff			lda 	#$FF
+.1639					_AXBEExit:
+.1639	8d 00 04	sta $0400			sta 	AXLeft
+.163c	8d 01 04	sta $0401			sta 	AXLeft+1
+.163f	18		clc				clc
+.1640	60		rts				rts
+.1641					AXBinaryEqual:
+.1641	20 2c 16	jsr $162c			jsr 	AXBinaryNotEqual
+.1644	80 26		bra $166c			bra 	AXNot
+.1646					AXGreater:
+.1646	20 9d 15	jsr $159d			jsr 	AXSwap
+.1649					AXLess:
+.1649	ad 00 04	lda $0400			lda 	AXLeft
+.164c	cd 03 04	cmp $0403			cmp 	AXRight
+.164f	ad 01 04	lda $0401			lda 	AXLeft+1
+.1652	ed 04 04	sbc $0404			sbc 	AXRight+1
+.1655	a9 00		lda #$00			lda 	#$00
+.1657	b0 01		bcs $165a			bcs 	_AXIsGtr
+.1659	3a		dec a				dec 	a
+.165a					_AXIsGtr:
+.165a	8d 00 04	sta $0400			sta 	AXLeft
+.165d	8d 01 04	sta $0401			sta 	AXLeft+1
+.1660	18		clc				clc
+.1661	60		rts				rts
+.1662					AXLessEqual:
+.1662	20 46 16	jsr $1646			jsr 	AXGreater
+.1665	80 05		bra $166c			bra 	AXNot
+.1667					AXGreaterEqual:
+.1667	20 49 16	jsr $1649			jsr 	AXLess
+.166a	80 00		bra $166c			bra 	AXNot
+.166c					AXNot:
+.166c	ad 00 04	lda $0400			lda 	AXLeft
+.166f	49 ff		eor #$ff			eor 	#$FF
+.1671	8d 00 04	sta $0400			sta 	AXLeft
+.1674	8d 01 04	sta $0401			sta 	AXLeft+1
+.1677	18		clc				clc
+.1678	60		rts				rts
+.1679					AXExpression:
+.1679	a9 00		lda #$00			lda 	#0 							; start at precedence level 0.
+.167b					AXExpressionAtA:
+.167b	48		pha				pha 								; save precedence level.
+.167c	20 32 17	jsr $1732			jsr 	AXTerm 						; get a term.
+.167f	90 02		bcc $1683			bcc 	_AXEExpressionLoop
+.1681	7a		ply				ply 								; throw precedence, return error in A.
+.1682	60		rts				rts
+.1683					_AXEExpressionLoop:
+.1683	20 63 18	jsr $1863			jsr 	AXGet 						; get next non space.
+.1686	a0 fe		ldy #$fe			ldy 	#(0-2) & $FF
+.1688	8e e3 04	stx $04e3			stx 	AXOperatorPos				; save operator position in case rejected.
+.168b					_AXFindBinOp:
+.168b	c8		iny				iny 								; pre-increment.
+.168c	c8		iny				iny
+.168d	b9 e8 1b	lda $1be8,y			lda 	AXBinaryOperatorList,y 		; first character to match
+.1690	f0 71		beq $1703			beq 	_AXExitPop 					; if end of table pop and exit, okay.
+.1692	dd 82 04	cmp $0482,x			cmp 	AXBuffer,x 					; if wrong, go to next
+.1695	d0 f4		bne $168b			bne 	_AXFindBinOp
+.1697	b9 e9 1b	lda $1be9,y			lda 	AXBinaryOperatorList+1,y 	; second character to match
+.169a	f0 06		beq $16a2			beq 	_AXConsume1 				; if zero, then matched a single one, and consume 1.
+.169c	dd 83 04	cmp $0483,x			cmp 	AXBuffer+1,x 				; if wrong, go to next.
+.169f	d0 ea		bne $168b			bne 	_AXFindBinOp
+.16a1	e8		inx				inx 								; consume 2 character
+.16a2					_AXConsume1:
+.16a2	e8		inx				inx 								; or 1 if a single character.
+.16a3	98		tya				tya 								; halve the operator code.
+.16a4	4a		lsr a				lsr 	a
+.16a5	a8		tay				tay
+.16a6	68		pla				pla 								; required precedence
+.16a7	d9 09 1c	cmp $1c09,y			cmp 	AXPrecedence,y 				; if >= then exit
+.16aa	b0 52		bcs $16fe			bcs 	_AXPrecFail
+.16ac	48		pha				pha 								; save the levels precedence.
+.16ad	5a		phy				phy 								; save the operator ID
+.16ae	ad 00 04	lda $0400			lda 	AXLeft 						; push AXLeft on the stack
+.16b1	48		pha				pha
+.16b2	ad 01 04	lda $0401			lda 	AXLeft+1
+.16b5	48		pha				pha
+.16b6	ad 02 04	lda $0402			lda 	AXLeft+2
+.16b9	48		pha				pha
+.16ba	b9 09 1c	lda $1c09,y			lda 	AXPrecedence,y 				; evaluate the RHS at the precedence of the operator or higher.
+.16bd	20 7b 16	jsr $167b			jsr 	AXExpressionAtA
+.16c0	b0 35		bcs $16f7			bcs 	_AXFailedRHS
+.16c2	20 9d 15	jsr $159d			jsr 	AXSwap 						; put the RHS into the right side.
+.16c5	68		pla				pla 								; and restore AXLeft
+.16c6	8d 02 04	sta $0402			sta 	AXLeft+2
+.16c9	68		pla				pla
+.16ca	8d 01 04	sta $0401			sta 	AXLeft+1
+.16cd	68		pla				pla
+.16ce	8d 00 04	sta $0400			sta 	AXLeft
+.16d1	68		pla				pla 								; operator ID
+.16d2	0a		asl a				asl 	a 							; now index into vector table
+.16d3	da		phx				phx 								; save buffer pos so we can use indexing
+.16d4	aa		tax				tax
+.16d5	ad 02 04	lda $0402			lda 	AXLeft+2 					; check both are defined values (e.g. bit 7 clear)
+.16d8	0d 05 04	ora $0405			ora 	AXRight+2
+.16db	30 09		bmi $16e6			bmi 	_AXNoValue
+.16dd	20 f4 16	jsr $16f4			jsr 	_AXDoOperator 				; call the operator code.
+.16e0	fa		plx				plx 								; restore buffer position.
+.16e1	90 a0		bcc $1683			bcc 	_AXEExpressionLoop 			; and go round again if no error
+.16e3	7a		ply				ply 								; throw the precedence on the stack.
+.16e4	38		sec				sec
+.16e5	60		rts				rts
+.16e6					_AXNoValue:
+.16e6	9c 00 04	stz $0400			stz 	AXLeft
+.16e9	9c 01 04	stz $0401			stz 	AXLeft+1
+.16ec	a9 80		lda #$80			lda	 	#$80
+.16ee	8d 02 04	sta $0402			sta 	AXLeft+2
+.16f1	fa		plx				plx
+.16f2	80 8f		bra $1683			bra 	_AXEExpressionLoop
+.16f4					_AXDoOperator:
+.16f4	7c 19 1c	jmp ($1c19,x)			jmp 	(AXBinaryVectors,x)
+.16f7					_AXFailedRHS:
+.16f7	7a		ply				ply
+.16f8	7a		ply				ply
+.16f9	7a		ply				ply
+.16fa	7a		ply				ply
+.16fb	7a		ply				ply
+.16fc	38		sec				sec
+.16fd	60		rts				rts
+.16fe					_AXPrecFail:
+.16fe	ae e3 04	ldx $04e3			ldx 	AXOperatorPos 				; precedence fail, undo operator consume
+.1701	18		clc				clc
+.1702	60		rts				rts
+.1703					_AXExitPop:
+.1703	68		pla				pla
+.1704	18		clc				clc
+.1705	60		rts				rts
 .04e3					AXOperatorPos:
 >04e3							.fill 	1
-.16c8					AXExpressionDefined:
-.16c8	20 3b 16	jsr $163b			jsr 	AXExpression 				; evaluate
-.16cb	b0 08		bcs $16d5			bcs 	_AXDExit 					; some other error.
-.16cd	ad 02 04	lda $0402			lda 	AXLeft+2 					; check defined.
-.16d0	10 03		bpl $16d5			bpl 	_AXDExit 					; okay.
-.16d2	38		sec				sec 								; return undefined error
-.16d3	a9 06		lda #$06			lda 	#AXERRUndefined
-.16d5					_AXDExit:
-.16d5	60		rts				rts
-.16d6					AXPass2Expression:
-.16d6	20 3b 16	jsr $163b			jsr 	AXExpression 				; evaluate
-.16d9	b0 18		bcs $16f3			bcs 	_AXDExit 					; some other error.
-.16db	ad 02 04	lda $0402			lda 	AXLeft+2 					; check defined.
-.16de	10 13		bpl $16f3			bpl 	_AXDExit 					; okay.
-.16e0	a9 ee		lda #$ee			lda 	#$EE 						; set the default value to $EEEE
-.16e2	8d 00 04	sta $0400			sta 	AXLeft
-.16e5	8d 01 04	sta $0401			sta 	AXLeft+1
-.16e8	ad 6d 04	lda $046d			lda 	AXPass 						; if pass 1, that's okay even if undefined.
-.16eb	c9 01		cmp #$01			cmp 	#1
-.16ed	18		clc				clc
-.16ee	f0 03		beq $16f3			beq 	_AXDExit
-.16f0	38		sec				sec 								; return undefined error
-.16f1	a9 06		lda #$06			lda 	#AXERRUndefined
-.16f3					_AXDExit:
-.16f3	60		rts				rts
-.16f4	20 25 18	jsr $1825	AXTerm:	jsr		AXGet
-.16f7	9c 02 04	stz $0402			stz 	AXLeft+2 					; clear the undefined flag & value
-.16fa	9c 00 04	stz $0400			stz 	AXLeft
-.16fd	9c 01 04	stz $0401			stz 	AXLeft+1
-.1700	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; get first character
-.1703	a0 0a		ldy #$0a			ldy 	#10 						; default decimal if digit
-.1705	20 a0 20	jsr $20a0			jsr 	AXIsNumeric 				; if digit numeric , then constant.
-.1708	90 0d		bcc $1717			bcc 	_AXIsConstant
-.170a	e8		inx				inx 								; temporarily consume base modifier
-.170b	a0 10		ldy #$10			ldy 	#16 						; hex check.
-.170d	c9 24		cmp #$24			cmp 	#"$"
-.170f	f0 06		beq $1717			beq 	_AXIsConstant
-.1711	a0 02		ldy #$02			ldy 	#2 							; binary check
-.1713	c9 25		cmp #$25			cmp 	#"%"
-.1715	d0 4f		bne $1766			bne 	_AXNotConstant
-.1717					_AXIsConstant:
-.1717	9c e4 04	stz $04e4			stz 	AXDigitCount 				; clear count of digits
-.171a	8c e5 04	sty $04e5			sty 	AXBase 						; save base.
-.171d					_AXConstantLoop:
-.171d	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; get the next character of the constant.
-.1720	20 ab 20	jsr $20ab			jsr 	AXIsAlphaNumeric 			; must be 0-9A-Z
-.1723	b0 25		bcs $174a			bcs 	_AXConstantDone 			; no, then end of constant.
-.1725	c9 3a		cmp #$3a			cmp 	#"9"+1 						; shift A-Z so they follow 0-9.
-.1727	90 02		bcc $172b			bcc 	_AXNotAlpha
-.1729	e9 07		sbc #$07			sbc 	#7
-.172b					_AXNotAlpha:
-.172b	38		sec				sec 								; make it a digit 0..15
-.172c	e9 30		sbc #$30			sbc 	#"0"
-.172e	cd e5 04	cmp $04e5			cmp 	AXBase 						; if higher than the base, then end of constant
-.1731	b0 17		bcs $174a			bcs 	_AXConstantDone
-.1733	e8		inx				inx 								; consume as legal.
-.1734	ee e4 04	inc $04e4			inc 	AXDigitCount 				; bump consumed count.
-.1737	48		pha				pha 								; save the new digit.
-.1738	20 f0 17	jsr $17f0			jsr 	_AXMultiplyBase 			; multiply left by base.
-.173b	68		pla				pla 								; add new digit
-.173c	18		clc				clc
-.173d	6d 00 04	adc $0400			adc 	AXLeft
-.1740	8d 00 04	sta $0400			sta 	AXLeft
-.1743	90 d8		bcc $171d			bcc 	_AXConstantLoop
-.1745	ee 01 04	inc $0401			inc 	AXLeft+1
-.1748	80 d3		bra $171d			bra 	_AXConstantLoop
-.174a					_AXConstantDone:
-.174a	18		clc				clc
-.174b	ad e4 04	lda $04e4			lda		AXDigitCount 				; exit okay if a digit received
-.174e	d0 03		bne $1753			bne 	_AXCExit
-.1750	38		sec				sec 								; return error-syntax
-.1751	a9 01		lda #$01			lda 	#AXERRSyntax
-.1753					_AXCExit:
-.1753	60		rts				rts
-.1754					_AXParenthesis:
-.1754	20 3b 16	jsr $163b			jsr 	AXExpression 				; body of parenthesis expression.
-.1757	b0 0c		bcs $1765			bcs 	_AXPExit 					; error ?
-.1759					_AXFindParent:
-.1759	20 25 18	jsr $1825			jsr 	AXGet 						; next non-space
-.175c	e8		inx				inx 								; consume
-.175d	c9 29		cmp #$29			cmp 	#')'
-.175f	18		clc				clc
-.1760	f0 03		beq $1765			beq 	_AXPExit
-.1762	a9 01		lda #$01			lda 	#AXERRSyntax 				; failed
-.1764	38		sec				sec
-.1765					_AXPExit:
-.1765	60		rts				rts
-.1766					_AXNotConstant:
-.1766	c9 2d		cmp #$2d			cmp 	#"-"						; check for negation.
-.1768	f0 6e		beq $17d8			beq 	_AXNegate
-.176a	c9 3c		cmp #$3c			cmp 	#"<"						; low byte
-.176c	f0 61		beq $17cf			beq 	_AXLowByte
-.176e	c9 3e		cmp #$3e			cmp 	#">"						; high byte
-.1770	f0 4e		beq $17c0			beq 	_AXHighByte
-.1772	c9 2a		cmp #$2a			cmp 	#"*" 						; start of instruction
-.1774	f0 3c		beq $17b2			beq 	_AXProgramCounter
-.1776	c9 27		cmp #$27			cmp 	#"'" 						; character code
-.1778	f0 12		beq $178c			beq 	_AXCharacter
-.177a	c9 40		cmp #$40			cmp 	#"@"						; label page
-.177c	f0 24		beq $17a2			beq 	_AXLabelPage
-.177e	c9 28		cmp #$28			cmp 	#"("						; parenthesis
-.1780	f0 d2		beq $1754			beq 	_AXParenthesis
-.1782	20 b1 20	jsr $20b1			jsr 	AXIsIdentifierHead 			; identifier start character
-.1785	b0 17		bcs $179e			bcs 	_AXCFail
-.1787	ca		dex				dex 								; back to first character.
-.1788	20 31 18	jsr $1831			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
-.178b	60		rts				rts
-.178c					_AXCharacter:
-.178c	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; get the character code.
-.178f	f0 0d		beq $179e			beq 	_AXCFail 					; can't be EOS.
-.1791	8d 00 04	sta $0400			sta 	AXLeft
-.1794	bd 83 04	lda $0483,x			lda 	AXBuffer+1,x 				; get the character after and consume both
-.1797	e8		inx				inx
-.1798	e8		inx				inx
-.1799	c9 27		cmp #$27			cmp 	#"'"						; okay if '
-.179b	18		clc				clc
-.179c	f0 51		beq $17ef			beq 	_AXNExit
-.179e					_AXCFail:
-.179e	38		sec				sec
-.179f	a9 01		lda #$01			lda 	#AXERRSyntax
-.17a1	60		rts				rts
-.17a2					_AXLabelPage:
-.17a2	20 31 18	jsr $1831			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
-.17a5	b0 0a		bcs $17b1			bcs 	_AXLPExit 					; something failed, probably no label.
-.17a7	ad 09 04	lda $0409			lda 	AXEvaluatePage 				; copy page #
-.17aa	8d 00 04	sta $0400			sta 	AXLeft
-.17ad	9c 01 04	stz $0401			stz 	AXLeft+1
-.17b0	18		clc				clc
-.17b1					_AXLPExit:
-.17b1	60		rts				rts
-.17b2					_AXProgramCounter:
-.17b2	ad 77 04	lda $0477			lda 	AXProgramCounterStart
-.17b5	8d 00 04	sta $0400			sta 	AXLeft
-.17b8	ad 78 04	lda $0478			lda 	AXProgramCounterStart+1
-.17bb	8d 01 04	sta $0401			sta 	AXLeft+1
-.17be	18		clc				clc
-.17bf	60		rts				rts
-.17c0					_AXHighByte:
-.17c0	20 f4 16	jsr $16f4			jsr 	AXTerm
-.17c3	b0 2a		bcs $17ef			bcs 	_AXNExit
-.17c5	ad 01 04	lda $0401			lda 	AXLeft+1
-.17c8	8d 00 04	sta $0400			sta 	AXLeft
-.17cb	9c 01 04	stz $0401			stz 	AXLeft+1
-.17ce	60		rts				rts
-.17cf					_AXLowByte:
-.17cf	20 f4 16	jsr $16f4			jsr 	AXTerm
-.17d2	b0 1b		bcs $17ef			bcs 	_AXNExit
-.17d4	9c 01 04	stz $0401			stz 	AXLeft+1
-.17d7	60		rts				rts
-.17d8					_AXNegate:
-.17d8	20 f4 16	jsr $16f4			jsr 	AXTerm						; get term
-.17db	b0 12		bcs $17ef			bcs 	_AXNExit
-.17dd	38		sec				sec
-.17de	a9 00		lda #$00			lda 	#0
-.17e0	ed 00 04	sbc $0400			sbc 	AXLeft
-.17e3	8d 00 04	sta $0400			sta 	AXLeft
-.17e6	a9 00		lda #$00			lda 	#0
-.17e8	ed 01 04	sbc $0401			sbc 	AXLeft+1
-.17eb	8d 01 04	sta $0401			sta 	AXLeft+1
-.17ee	18		clc				clc 								; success.
-.17ef					_AXNExit:
+.1706					AXExpressionDefined:
+.1706	20 79 16	jsr $1679			jsr 	AXExpression 				; evaluate
+.1709	b0 08		bcs $1713			bcs 	_AXDExit 					; some other error.
+.170b	ad 02 04	lda $0402			lda 	AXLeft+2 					; check defined.
+.170e	10 03		bpl $1713			bpl 	_AXDExit 					; okay.
+.1710	38		sec				sec 								; return undefined error
+.1711	a9 06		lda #$06			lda 	#AXERRUndefined
+.1713					_AXDExit:
+.1713	60		rts				rts
+.1714					AXPass2Expression:
+.1714	20 79 16	jsr $1679			jsr 	AXExpression 				; evaluate
+.1717	b0 18		bcs $1731			bcs 	_AXDExit 					; some other error.
+.1719	ad 02 04	lda $0402			lda 	AXLeft+2 					; check defined.
+.171c	10 13		bpl $1731			bpl 	_AXDExit 					; okay.
+.171e	a9 ee		lda #$ee			lda 	#$EE 						; set the default value to $EEEE
+.1720	8d 00 04	sta $0400			sta 	AXLeft
+.1723	8d 01 04	sta $0401			sta 	AXLeft+1
+.1726	ad 6d 04	lda $046d			lda 	AXPass 						; if pass 1, that's okay even if undefined.
+.1729	c9 01		cmp #$01			cmp 	#1
+.172b	18		clc				clc
+.172c	f0 03		beq $1731			beq 	_AXDExit
+.172e	38		sec				sec 								; return undefined error
+.172f	a9 06		lda #$06			lda 	#AXERRUndefined
+.1731					_AXDExit:
+.1731	60		rts				rts
+.1732	20 63 18	jsr $1863	AXTerm:	jsr		AXGet
+.1735	9c 02 04	stz $0402			stz 	AXLeft+2 					; clear the undefined flag & value
+.1738	9c 00 04	stz $0400			stz 	AXLeft
+.173b	9c 01 04	stz $0401			stz 	AXLeft+1
+.173e	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; get first character
+.1741	a0 0a		ldy #$0a			ldy 	#10 						; default decimal if digit
+.1743	20 de 20	jsr $20de			jsr 	AXIsNumeric 				; if digit numeric , then constant.
+.1746	90 0d		bcc $1755			bcc 	_AXIsConstant
+.1748	e8		inx				inx 								; temporarily consume base modifier
+.1749	a0 10		ldy #$10			ldy 	#16 						; hex check.
+.174b	c9 24		cmp #$24			cmp 	#"$"
+.174d	f0 06		beq $1755			beq 	_AXIsConstant
+.174f	a0 02		ldy #$02			ldy 	#2 							; binary check
+.1751	c9 25		cmp #$25			cmp 	#"%"
+.1753	d0 4f		bne $17a4			bne 	_AXNotConstant
+.1755					_AXIsConstant:
+.1755	9c e4 04	stz $04e4			stz 	AXDigitCount 				; clear count of digits
+.1758	8c e5 04	sty $04e5			sty 	AXBase 						; save base.
+.175b					_AXConstantLoop:
+.175b	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; get the next character of the constant.
+.175e	20 e9 20	jsr $20e9			jsr 	AXIsAlphaNumeric 			; must be 0-9A-Z
+.1761	b0 25		bcs $1788			bcs 	_AXConstantDone 			; no, then end of constant.
+.1763	c9 3a		cmp #$3a			cmp 	#"9"+1 						; shift A-Z so they follow 0-9.
+.1765	90 02		bcc $1769			bcc 	_AXNotAlpha
+.1767	e9 07		sbc #$07			sbc 	#7
+.1769					_AXNotAlpha:
+.1769	38		sec				sec 								; make it a digit 0..15
+.176a	e9 30		sbc #$30			sbc 	#"0"
+.176c	cd e5 04	cmp $04e5			cmp 	AXBase 						; if higher than the base, then end of constant
+.176f	b0 17		bcs $1788			bcs 	_AXConstantDone
+.1771	e8		inx				inx 								; consume as legal.
+.1772	ee e4 04	inc $04e4			inc 	AXDigitCount 				; bump consumed count.
+.1775	48		pha				pha 								; save the new digit.
+.1776	20 2e 18	jsr $182e			jsr 	_AXMultiplyBase 			; multiply left by base.
+.1779	68		pla				pla 								; add new digit
+.177a	18		clc				clc
+.177b	6d 00 04	adc $0400			adc 	AXLeft
+.177e	8d 00 04	sta $0400			sta 	AXLeft
+.1781	90 d8		bcc $175b			bcc 	_AXConstantLoop
+.1783	ee 01 04	inc $0401			inc 	AXLeft+1
+.1786	80 d3		bra $175b			bra 	_AXConstantLoop
+.1788					_AXConstantDone:
+.1788	18		clc				clc
+.1789	ad e4 04	lda $04e4			lda		AXDigitCount 				; exit okay if a digit received
+.178c	d0 03		bne $1791			bne 	_AXCExit
+.178e	38		sec				sec 								; return error-syntax
+.178f	a9 01		lda #$01			lda 	#AXERRSyntax
+.1791					_AXCExit:
+.1791	60		rts				rts
+.1792					_AXParenthesis:
+.1792	20 79 16	jsr $1679			jsr 	AXExpression 				; body of parenthesis expression.
+.1795	b0 0c		bcs $17a3			bcs 	_AXPExit 					; error ?
+.1797					_AXFindParent:
+.1797	20 63 18	jsr $1863			jsr 	AXGet 						; next non-space
+.179a	e8		inx				inx 								; consume
+.179b	c9 29		cmp #$29			cmp 	#')'
+.179d	18		clc				clc
+.179e	f0 03		beq $17a3			beq 	_AXPExit
+.17a0	a9 01		lda #$01			lda 	#AXERRSyntax 				; failed
+.17a2	38		sec				sec
+.17a3					_AXPExit:
+.17a3	60		rts				rts
+.17a4					_AXNotConstant:
+.17a4	c9 2d		cmp #$2d			cmp 	#"-"						; check for negation.
+.17a6	f0 6e		beq $1816			beq 	_AXNegate
+.17a8	c9 3c		cmp #$3c			cmp 	#"<"						; low byte
+.17aa	f0 61		beq $180d			beq 	_AXLowByte
+.17ac	c9 3e		cmp #$3e			cmp 	#">"						; high byte
+.17ae	f0 4e		beq $17fe			beq 	_AXHighByte
+.17b0	c9 2a		cmp #$2a			cmp 	#"*" 						; start of instruction
+.17b2	f0 3c		beq $17f0			beq 	_AXProgramCounter
+.17b4	c9 27		cmp #$27			cmp 	#"'" 						; character code
+.17b6	f0 12		beq $17ca			beq 	_AXCharacter
+.17b8	c9 40		cmp #$40			cmp 	#"@"						; label page
+.17ba	f0 24		beq $17e0			beq 	_AXLabelPage
+.17bc	c9 28		cmp #$28			cmp 	#"("						; parenthesis
+.17be	f0 d2		beq $1792			beq 	_AXParenthesis
+.17c0	20 ef 20	jsr $20ef			jsr 	AXIsIdentifierHead 			; identifier start character
+.17c3	b0 17		bcs $17dc			bcs 	_AXCFail
+.17c5	ca		dex				dex 								; back to first character.
+.17c6	20 6f 18	jsr $186f			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
+.17c9	60		rts				rts
+.17ca					_AXCharacter:
+.17ca	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; get the character code.
+.17cd	f0 0d		beq $17dc			beq 	_AXCFail 					; can't be EOS.
+.17cf	8d 00 04	sta $0400			sta 	AXLeft
+.17d2	bd 83 04	lda $0483,x			lda 	AXBuffer+1,x 				; get the character after and consume both
+.17d5	e8		inx				inx
+.17d6	e8		inx				inx
+.17d7	c9 27		cmp #$27			cmp 	#"'"						; okay if '
+.17d9	18		clc				clc
+.17da	f0 51		beq $182d			beq 	_AXNExit
+.17dc					_AXCFail:
+.17dc	38		sec				sec
+.17dd	a9 01		lda #$01			lda 	#AXERRSyntax
+.17df	60		rts				rts
+.17e0					_AXLabelPage:
+.17e0	20 6f 18	jsr $186f			jsr 	AXEvaluateLabel 			; consume and evaluate a label.
+.17e3	b0 0a		bcs $17ef			bcs 	_AXLPExit 					; something failed, probably no label.
+.17e5	ad 09 04	lda $0409			lda 	AXEvaluatePage 				; copy page #
+.17e8	8d 00 04	sta $0400			sta 	AXLeft
+.17eb	9c 01 04	stz $0401			stz 	AXLeft+1
+.17ee	18		clc				clc
+.17ef					_AXLPExit:
 .17ef	60		rts				rts
-.17f0					_AXMultiplyBase:
-.17f0	c0 02		cpy #$02			cpy 	#2 							; if binary then exit.
-.17f2	f0 2a		beq $181e			beq 	_AXMDouble
-.17f4	c0 10		cpy #$10			cpy 	#16 						; if hexadecimal
-.17f6	f0 1d		beq $1815			beq 	_AXMMultiply16
-.17f8	ad 01 04	lda $0401			lda 	AXLeft+1 					; keep original value.
-.17fb	48		pha				pha
-.17fc	ad 00 04	lda $0400			lda 	AXLeft
-.17ff	20 1e 18	jsr $181e			jsr 	_AXMDouble 					; x 2
-.1802	20 1e 18	jsr $181e			jsr 	_AXMDouble 					; x 4
-.1805	18		clc				clc
-.1806	6d 00 04	adc $0400			adc 	AXLeft 						; add original value, e.g. x 5
-.1809	8d 00 04	sta $0400			sta 	AXLeft
-.180c	68		pla				pla
-.180d	6d 01 04	adc $0401			adc 	AXLeft+1
-.1810	8d 01 04	sta $0401			sta 	AXLeft+1
-.1813	80 09		bra $181e			bra 	_AXMDouble 					; double to x10
-.1815					_AXMMultiply16:
-.1815	20 1e 18	jsr $181e			jsr 	_AXMDouble 					; x 2
-.1818	20 1e 18	jsr $181e			jsr 	_AXMDouble 					; x 4
-.181b	20 1e 18	jsr $181e			jsr 	_AXMDouble 					; x 8, fall through to x 16
-.181e					_AXMDouble:
-.181e	0e 00 04	asl $0400			asl 	AXLeft 						; everyone does left.
-.1821	2e 01 04	rol $0401			rol 	AXLeft+1
-.1824					_AXMExit:
-.1824	60		rts				rts
-.1825					AXGet:
-.1825	bd 82 04	lda $0482,x			lda 	AXBuffer,x
-.1828	e8		inx				inx
-.1829	c9 20		cmp #$20			cmp 	#' '
-.182b	f0 f8		beq $1825			beq 	AXGet
-.182d	ca		dex				dex
-.182e	c9 00		cmp #$00			cmp 	#0
-.1830	60		rts				rts
-.1831					AXEvaluateLabel:
-.1831	20 c9 20	jsr $20c9			jsr 	AXExtractIdentifier 		; get a label.
-.1834	b0 2d		bcs $1863			bcs 	_AXEExit 					; we couldn't.
-.1836	da		phx				phx 								; save current position
-.1837	a2 00		ldx #$00			ldx 	#0							; create or find the value.
-.1839	ac e7 04	ldy $04e7			ldy 	AXIBase
-.183c	20 5a 1c	jsr $1c5a			jsr 	AXICreateFind
-.183f	a0 04		ldy #$04			ldy 	#AXID_DataLow 				; copy data
-.1841	20 1e 1d	jsr $1d1e			jsr		AXIGet
-.1844	8d 00 04	sta $0400			sta 	AXLeft+0
-.1847	a0 05		ldy #$05			ldy 	#AXID_DataHigh
-.1849	20 1e 1d	jsr $1d1e			jsr 	AXIGet
-.184c	8d 01 04	sta $0401			sta 	AXLeft+1
-.184f	a0 03		ldy #$03			ldy 	#AXID_Flags 				; just the undefined flag.
-.1851	20 1e 1d	jsr $1d1e			jsr 	AXIGet
-.1854	29 80		and #$80			and 	#$80
-.1856	8d 02 04	sta $0402			sta 	AXLeft+2
-.1859	a9 06		lda #$06			lda 	#AXID_DataAux 				; get bank page of label.
-.185b	20 1e 1d	jsr $1d1e			jsr 	AXIGet
-.185e	8d 09 04	sta $0409			sta 	AXEvaluatePage
-.1861	fa		plx				plx 								; restore current position.
-.1862	18		clc				clc
-.1863					_AXEExit:
-.1863	60		rts				rts
+.17f0					_AXProgramCounter:
+.17f0	ad 77 04	lda $0477			lda 	AXProgramCounterStart
+.17f3	8d 00 04	sta $0400			sta 	AXLeft
+.17f6	ad 78 04	lda $0478			lda 	AXProgramCounterStart+1
+.17f9	8d 01 04	sta $0401			sta 	AXLeft+1
+.17fc	18		clc				clc
+.17fd	60		rts				rts
+.17fe					_AXHighByte:
+.17fe	20 32 17	jsr $1732			jsr 	AXTerm
+.1801	b0 2a		bcs $182d			bcs 	_AXNExit
+.1803	ad 01 04	lda $0401			lda 	AXLeft+1
+.1806	8d 00 04	sta $0400			sta 	AXLeft
+.1809	9c 01 04	stz $0401			stz 	AXLeft+1
+.180c	60		rts				rts
+.180d					_AXLowByte:
+.180d	20 32 17	jsr $1732			jsr 	AXTerm
+.1810	b0 1b		bcs $182d			bcs 	_AXNExit
+.1812	9c 01 04	stz $0401			stz 	AXLeft+1
+.1815	60		rts				rts
+.1816					_AXNegate:
+.1816	20 32 17	jsr $1732			jsr 	AXTerm						; get term
+.1819	b0 12		bcs $182d			bcs 	_AXNExit
+.181b	38		sec				sec
+.181c	a9 00		lda #$00			lda 	#0
+.181e	ed 00 04	sbc $0400			sbc 	AXLeft
+.1821	8d 00 04	sta $0400			sta 	AXLeft
+.1824	a9 00		lda #$00			lda 	#0
+.1826	ed 01 04	sbc $0401			sbc 	AXLeft+1
+.1829	8d 01 04	sta $0401			sta 	AXLeft+1
+.182c	18		clc				clc 								; success.
+.182d					_AXNExit:
+.182d	60		rts				rts
+.182e					_AXMultiplyBase:
+.182e	c0 02		cpy #$02			cpy 	#2 							; if binary then exit.
+.1830	f0 2a		beq $185c			beq 	_AXMDouble
+.1832	c0 10		cpy #$10			cpy 	#16 						; if hexadecimal
+.1834	f0 1d		beq $1853			beq 	_AXMMultiply16
+.1836	ad 01 04	lda $0401			lda 	AXLeft+1 					; keep original value.
+.1839	48		pha				pha
+.183a	ad 00 04	lda $0400			lda 	AXLeft
+.183d	20 5c 18	jsr $185c			jsr 	_AXMDouble 					; x 2
+.1840	20 5c 18	jsr $185c			jsr 	_AXMDouble 					; x 4
+.1843	18		clc				clc
+.1844	6d 00 04	adc $0400			adc 	AXLeft 						; add original value, e.g. x 5
+.1847	8d 00 04	sta $0400			sta 	AXLeft
+.184a	68		pla				pla
+.184b	6d 01 04	adc $0401			adc 	AXLeft+1
+.184e	8d 01 04	sta $0401			sta 	AXLeft+1
+.1851	80 09		bra $185c			bra 	_AXMDouble 					; double to x10
+.1853					_AXMMultiply16:
+.1853	20 5c 18	jsr $185c			jsr 	_AXMDouble 					; x 2
+.1856	20 5c 18	jsr $185c			jsr 	_AXMDouble 					; x 4
+.1859	20 5c 18	jsr $185c			jsr 	_AXMDouble 					; x 8, fall through to x 16
+.185c					_AXMDouble:
+.185c	0e 00 04	asl $0400			asl 	AXLeft 						; everyone does left.
+.185f	2e 01 04	rol $0401			rol 	AXLeft+1
+.1862					_AXMExit:
+.1862	60		rts				rts
+.1863					AXGet:
+.1863	bd 82 04	lda $0482,x			lda 	AXBuffer,x
+.1866	e8		inx				inx
+.1867	c9 20		cmp #$20			cmp 	#' '
+.1869	f0 f8		beq $1863			beq 	AXGet
+.186b	ca		dex				dex
+.186c	c9 00		cmp #$00			cmp 	#0
+.186e	60		rts				rts
+.186f					AXEvaluateLabel:
+.186f	20 07 21	jsr $2107			jsr 	AXExtractIdentifier 		; get a label.
+.1872	b0 2d		bcs $18a1			bcs 	_AXEExit 					; we couldn't.
+.1874	da		phx				phx 								; save current position
+.1875	a2 00		ldx #$00			ldx 	#0							; create or find the value.
+.1877	ac e7 04	ldy $04e7			ldy 	AXIBase
+.187a	20 98 1c	jsr $1c98			jsr 	AXICreateFind
+.187d	a0 04		ldy #$04			ldy 	#AXID_DataLow 				; copy data
+.187f	20 5c 1d	jsr $1d5c			jsr		AXIGet
+.1882	8d 00 04	sta $0400			sta 	AXLeft+0
+.1885	a0 05		ldy #$05			ldy 	#AXID_DataHigh
+.1887	20 5c 1d	jsr $1d5c			jsr 	AXIGet
+.188a	8d 01 04	sta $0401			sta 	AXLeft+1
+.188d	a0 03		ldy #$03			ldy 	#AXID_Flags 				; just the undefined flag.
+.188f	20 5c 1d	jsr $1d5c			jsr 	AXIGet
+.1892	29 80		and #$80			and 	#$80
+.1894	8d 02 04	sta $0402			sta 	AXLeft+2
+.1897	a9 06		lda #$06			lda 	#AXID_DataAux 				; get bank page of label.
+.1899	20 5c 1d	jsr $1d5c			jsr 	AXIGet
+.189c	8d 09 04	sta $0409			sta 	AXEvaluatePage
+.189f	fa		plx				plx 								; restore current position.
+.18a0	18		clc				clc
+.18a1					_AXEExit:
+.18a1	60		rts				rts
 .04e4					AXDigitCount:
 >04e4							.fill 	1
 .04e5					AXBase:
 >04e5							.fill 	1
-.1864					AXSystemDictionary:
->1864	0a					.byte	10
->1865	62					.byte	$62
->1866	04					.byte	4
->1867	00					.byte	0
->1868	01 01					.byte	1,$01
->186a	00					.byte	$00
->186b	4f 52 c1				.byte	$4f,$52,$c1              ; ORA
->186e	0a					.byte	10
->186f	53					.byte	$53
->1870	04					.byte	4
->1871	00					.byte	0
->1872	01 21					.byte	1,$21
->1874	00					.byte	$00
->1875	41 4e c4				.byte	$41,$4e,$c4              ; AND
->1878	0a					.byte	10
->1879	66					.byte	$66
->187a	04					.byte	4
->187b	00					.byte	0
->187c	01 41					.byte	1,$41
->187e	00					.byte	$00
->187f	45 4f d2				.byte	$45,$4f,$d2              ; EOR
->1882	0a					.byte	10
->1883	48					.byte	$48
->1884	04					.byte	4
->1885	00					.byte	0
->1886	01 61					.byte	1,$61
->1888	00					.byte	$00
->1889	41 44 c3				.byte	$41,$44,$c3              ; ADC
->188c	0a					.byte	10
->188d	68					.byte	$68
->188e	04					.byte	4
->188f	00					.byte	0
->1890	01 81					.byte	1,$81
->1892	00					.byte	$00
->1893	53 54 c1				.byte	$53,$54,$c1              ; STA
->1896	0a					.byte	10
->1897	51					.byte	$51
->1898	04					.byte	4
->1899	00					.byte	0
->189a	01 a1					.byte	1,$a1
->189c	00					.byte	$00
->189d	4c 44 c1				.byte	$4c,$44,$c1              ; LDA
->18a0	0a					.byte	10
->18a1	60					.byte	$60
->18a2	04					.byte	4
->18a3	00					.byte	0
->18a4	01 c1					.byte	1,$c1
->18a6	00					.byte	$00
->18a7	43 4d d0				.byte	$43,$4d,$d0              ; CMP
->18aa	0a					.byte	10
->18ab	58					.byte	$58
->18ac	04					.byte	4
->18ad	00					.byte	0
->18ae	01 e1					.byte	1,$e1
->18b0	00					.byte	$00
->18b1	53 42 c3				.byte	$53,$42,$c3              ; SBC
->18b4	0a					.byte	10
->18b5	60					.byte	$60
->18b6	04					.byte	4
->18b7	00					.byte	0
->18b8	02 02					.byte	2,$02
->18ba	75					.byte	$75
->18bb	41 53 cc				.byte	$41,$53,$cc              ; ASL
->18be	0a					.byte	10
->18bf	6d					.byte	$6d
->18c0	04					.byte	4
->18c1	00					.byte	0
->18c2	02 22					.byte	2,$22
->18c4	75					.byte	$75
->18c5	52 4f cc				.byte	$52,$4f,$cc              ; ROL
->18c8	0a					.byte	10
->18c9	71					.byte	$71
->18ca	04					.byte	4
->18cb	00					.byte	0
->18cc	02 42					.byte	2,$42
->18ce	75					.byte	$75
->18cf	4c 53 d2				.byte	$4c,$53,$d2              ; LSR
->18d2	0a					.byte	10
->18d3	73					.byte	$73
->18d4	04					.byte	4
->18d5	00					.byte	0
->18d6	02 62					.byte	2,$62
->18d8	75					.byte	$75
->18d9	52 4f d2				.byte	$52,$4f,$d2              ; ROR
->18dc	0a					.byte	10
->18dd	7f					.byte	$7f
->18de	04					.byte	4
->18df	00					.byte	0
->18e0	02 82					.byte	2,$82
->18e2	50					.byte	$50
->18e3	53 54 d8				.byte	$53,$54,$d8              ; STX
->18e6	0a					.byte	10
->18e7	68					.byte	$68
->18e8	04					.byte	4
->18e9	00					.byte	0
->18ea	02 a2					.byte	2,$a2
->18ec	d0					.byte	$d0
->18ed	4c 44 d8				.byte	$4c,$44,$d8              ; LDX
->18f0	0a					.byte	10
->18f1	4c					.byte	$4c
->18f2	04					.byte	4
->18f3	00					.byte	0
->18f4	02 c2					.byte	2,$c2
->18f6	55					.byte	$55
->18f7	44 45 c3				.byte	$44,$45,$c3              ; DEC
->18fa	0a					.byte	10
->18fb	5a					.byte	$5a
->18fc	04					.byte	4
->18fd	00					.byte	0
->18fe	02 e2					.byte	2,$e2
->1900	55					.byte	$55
->1901	49 4e c3				.byte	$49,$4e,$c3              ; INC
->1904	0a					.byte	10
->1905	81					.byte	$81
->1906	04					.byte	4
->1907	00					.byte	0
->1908	02 60					.byte	2,$60
->190a	44					.byte	$44
->190b	53 54 da				.byte	$53,$54,$da              ; STZ
->190e	0a					.byte	10
->190f	5f					.byte	$5f
->1910	04					.byte	4
->1911	00					.byte	0
->1912	02 20					.byte	2,$20
->1914	55					.byte	$55
->1915	42 49 d4				.byte	$42,$49,$d4              ; BIT
->1918	0a					.byte	10
->1919	80					.byte	$80
->191a	04					.byte	4
->191b	00					.byte	0
->191c	02 80					.byte	2,$80
->191e	54					.byte	$54
->191f	53 54 d9				.byte	$53,$54,$d9              ; STY
->1922	0a					.byte	10
->1923	69					.byte	$69
->1924	04					.byte	4
->1925	00					.byte	0
->1926	02 a0					.byte	2,$a0
->1928	d5					.byte	$d5
->1929	4c 44 d9				.byte	$4c,$44,$d9              ; LDY
->192c	0a					.byte	10
->192d	6c					.byte	$6c
->192e	04					.byte	4
->192f	00					.byte	0
->1930	02 c0					.byte	2,$c0
->1932	d4					.byte	$d4
->1933	43 50 d9				.byte	$43,$50,$d9              ; CPY
->1936	0a					.byte	10
->1937	6b					.byte	$6b
->1938	04					.byte	4
->1939	00					.byte	0
->193a	02 e0					.byte	2,$e0
->193c	d0					.byte	$d0
->193d	43 50 d8				.byte	$43,$50,$d8              ; CPX
->1940	0a					.byte	10
->1941	69					.byte	$69
->1942	04					.byte	4
->1943	00					.byte	0
->1944	02 00					.byte	2,$00
->1946	50					.byte	$50
->1947	54 53 c2				.byte	$54,$53,$c2              ; TSB
->194a	0a					.byte	10
->194b	68					.byte	$68
->194c	04					.byte	4
->194d	00					.byte	0
->194e	02 10					.byte	2,$10
->1950	50					.byte	$50
->1951	54 52 c2				.byte	$54,$52,$c2              ; TRB
->1954	0a					.byte	10
->1955	6f					.byte	$6f
->1956	04					.byte	4
->1957	00					.byte	0
->1958	02 14					.byte	2,$14
->195a	10					.byte	$10
->195b	4a 53 d2				.byte	$4a,$53,$d2              ; JSR
->195e	0a					.byte	10
->195f	67					.byte	$67
->1960	04					.byte	4
->1961	00					.byte	0
->1962	02 40					.byte	2,$40
->1964	10					.byte	$10
->1965	4a 4d d0				.byte	$4a,$4d,$d0              ; JMP
->1968	0a					.byte	10
->1969	5e					.byte	$5e
->196a	04					.byte	4
->196b	00					.byte	0
->196c	03 10					.byte	3,$10
->196e	00					.byte	$00
->196f	42 50 cc				.byte	$42,$50,$cc              ; BPL
->1972	0a					.byte	10
->1973	58					.byte	$58
->1974	04					.byte	4
->1975	00					.byte	0
->1976	03 30					.byte	3,$30
->1978	00					.byte	$00
->1979	42 4d c9				.byte	$42,$4d,$c9              ; BMI
->197c	0a					.byte	10
->197d	5b					.byte	$5b
->197e	04					.byte	4
->197f	00					.byte	0
->1980	03 50					.byte	3,$50
->1982	00					.byte	$00
->1983	42 56 c3				.byte	$42,$56,$c3              ; BVC
->1986	0a					.byte	10
->1987	6b					.byte	$6b
->1988	04					.byte	4
->1989	00					.byte	0
->198a	03 70					.byte	3,$70
->198c	00					.byte	$00
->198d	42 56 d3				.byte	$42,$56,$d3              ; BVS
->1990	0a					.byte	10
->1991	48					.byte	$48
->1992	04					.byte	4
->1993	00					.byte	0
->1994	03 90					.byte	3,$90
->1996	00					.byte	$00
->1997	42 43 c3				.byte	$42,$43,$c3              ; BCC
->199a	0a					.byte	10
->199b	58					.byte	$58
->199c	04					.byte	4
->199d	00					.byte	0
->199e	03 b0					.byte	3,$b0
->19a0	00					.byte	$00
->19a1	42 43 d3				.byte	$42,$43,$d3              ; BCS
->19a4	0a					.byte	10
->19a5	55					.byte	$55
->19a6	04					.byte	4
->19a7	00					.byte	0
->19a8	03 d0					.byte	3,$d0
->19aa	00					.byte	$00
->19ab	42 4e c5				.byte	$42,$4e,$c5              ; BNE
->19ae	0a					.byte	10
->19af	58					.byte	$58
->19b0	04					.byte	4
->19b1	00					.byte	0
->19b2	03 f0					.byte	3,$f0
->19b4	00					.byte	$00
->19b5	42 45 d1				.byte	$42,$45,$d1              ; BEQ
->19b8	0a					.byte	10
->19b9	55					.byte	$55
->19ba	04					.byte	4
->19bb	00					.byte	0
->19bc	03 80					.byte	3,$80
->19be	00					.byte	$00
->19bf	42 52 c1				.byte	$42,$52,$c1              ; BRA
->19c2	0a					.byte	10
->19c3	56					.byte	$56
->19c4	04					.byte	4
->19c5	00					.byte	0
->19c6	03 0f					.byte	3,$0f
->19c8	00					.byte	$00
->19c9	42 42 d2				.byte	$42,$42,$d2              ; BBR
->19cc	0a					.byte	10
->19cd	57					.byte	$57
->19ce	04					.byte	4
->19cf	00					.byte	0
->19d0	03 8f					.byte	3,$8f
->19d2	00					.byte	$00
->19d3	42 42 d3				.byte	$42,$42,$d3              ; BBS
->19d6	0a					.byte	10
->19d7	5f					.byte	$5f
->19d8	04					.byte	4
->19d9	00					.byte	0
->19da	04 00					.byte	4,$00
->19dc	00					.byte	$00
->19dd	42 52 cb				.byte	$42,$52,$cb              ; BRK
->19e0	0a					.byte	10
->19e1	68					.byte	$68
->19e2	04					.byte	4
->19e3	00					.byte	0
->19e4	04 08					.byte	4,$08
->19e6	00					.byte	$00
->19e7	50 48 d0				.byte	$50,$48,$d0              ; PHP
->19ea	0a					.byte	10
->19eb	52					.byte	$52
->19ec	04					.byte	4
->19ed	00					.byte	0
->19ee	04 18					.byte	4,$18
->19f0	00					.byte	$00
->19f1	43 4c c3				.byte	$43,$4c,$c3              ; CLC
->19f4	0a					.byte	10
->19f5	6c					.byte	$6c
->19f6	04					.byte	4
->19f7	00					.byte	0
->19f8	04 28					.byte	4,$28
->19fa	00					.byte	$00
->19fb	50 4c d0				.byte	$50,$4c,$d0              ; PLP
->19fe	0a					.byte	10
->19ff	5b					.byte	$5b
->1a00	04					.byte	4
->1a01	00					.byte	0
->1a02	04 38					.byte	4,$38
->1a04	00					.byte	$00
->1a05	53 45 c3				.byte	$53,$45,$c3              ; SEC
->1a08	0a					.byte	10
->1a09	6f					.byte	$6f
->1a0a	04					.byte	4
->1a0b	00					.byte	0
->1a0c	04 40					.byte	4,$40
->1a0e	00					.byte	$00
->1a0f	52 54 c9				.byte	$52,$54,$c9              ; RTI
->1a12	0a					.byte	10
->1a13	59					.byte	$59
->1a14	04					.byte	4
->1a15	00					.byte	0
->1a16	04 48					.byte	4,$48
->1a18	00					.byte	$00
->1a19	50 48 c1				.byte	$50,$48,$c1              ; PHA
->1a1c	0a					.byte	10
->1a1d	58					.byte	$58
->1a1e	04					.byte	4
->1a1f	00					.byte	0
->1a20	04 58					.byte	4,$58
->1a22	00					.byte	$00
->1a23	43 4c c9				.byte	$43,$4c,$c9              ; CLI
->1a26	0a					.byte	10
->1a27	71					.byte	$71
->1a28	04					.byte	4
->1a29	00					.byte	0
->1a2a	04 5a					.byte	4,$5a
->1a2c	00					.byte	$00
->1a2d	50 48 d9				.byte	$50,$48,$d9              ; PHY
->1a30	0a					.byte	10
->1a31	79					.byte	$79
->1a32	04					.byte	4
->1a33	00					.byte	0
->1a34	04 60					.byte	4,$60
->1a36	00					.byte	$00
->1a37	52 54 d3				.byte	$52,$54,$d3              ; RTS
->1a3a	0a					.byte	10
->1a3b	5d					.byte	$5d
->1a3c	04					.byte	4
->1a3d	00					.byte	0
->1a3e	04 68					.byte	4,$68
->1a40	00					.byte	$00
->1a41	50 4c c1				.byte	$50,$4c,$c1              ; PLA
->1a44	0a					.byte	10
->1a45	61					.byte	$61
->1a46	04					.byte	4
->1a47	00					.byte	0
->1a48	04 78					.byte	4,$78
->1a4a	00					.byte	$00
->1a4b	53 45 c9				.byte	$53,$45,$c9              ; SEI
->1a4e	0a					.byte	10
->1a4f	75					.byte	$75
->1a50	04					.byte	4
->1a51	00					.byte	0
->1a52	04 7a					.byte	4,$7a
->1a54	00					.byte	$00
->1a55	50 4c d9				.byte	$50,$4c,$d9              ; PLY
->1a58	0a					.byte	10
->1a59	62					.byte	$62
->1a5a	04					.byte	4
->1a5b	00					.byte	0
->1a5c	04 88					.byte	4,$88
->1a5e	00					.byte	$00
->1a5f	44 45 d9				.byte	$44,$45,$d9              ; DEY
->1a62	0a					.byte	10
->1a63	6d					.byte	$6d
->1a64	04					.byte	4
->1a65	00					.byte	0
->1a66	04 8a					.byte	4,$8a
->1a68	00					.byte	$00
->1a69	54 58 c1				.byte	$54,$58,$c1              ; TXA
->1a6c	0a					.byte	10
->1a6d	6e					.byte	$6e
->1a6e	04					.byte	4
->1a6f	00					.byte	0
->1a70	04 98					.byte	4,$98
->1a72	00					.byte	$00
->1a73	54 59 c1				.byte	$54,$59,$c1              ; TYA
->1a76	0a					.byte	10
->1a77	7f					.byte	$7f
->1a78	04					.byte	4
->1a79	00					.byte	0
->1a7a	04 9a					.byte	4,$9a
->1a7c	00					.byte	$00
->1a7d	54 58 d3				.byte	$54,$58,$d3              ; TXS
->1a80	0a					.byte	10
->1a81	6e					.byte	$6e
->1a82	04					.byte	4
->1a83	00					.byte	0
->1a84	04 a8					.byte	4,$a8
->1a86	00					.byte	$00
->1a87	54 41 d9				.byte	$54,$41,$d9              ; TAY
->1a8a	0a					.byte	10
->1a8b	6d					.byte	$6d
->1a8c	04					.byte	4
->1a8d	00					.byte	0
->1a8e	04 aa					.byte	4,$aa
->1a90	00					.byte	$00
->1a91	54 41 d8				.byte	$54,$41,$d8              ; TAX
->1a94	0a					.byte	10
->1a95	65					.byte	$65
->1a96	04					.byte	4
->1a97	00					.byte	0
->1a98	04 b8					.byte	4,$b8
->1a9a	00					.byte	$00
->1a9b	43 4c d6				.byte	$43,$4c,$d6              ; CLV
->1a9e	0a					.byte	10
->1a9f	7f					.byte	$7f
->1aa0	04					.byte	4
->1aa1	00					.byte	0
->1aa2	04 ba					.byte	4,$ba
->1aa4	00					.byte	$00
->1aa5	54 53 d8				.byte	$54,$53,$d8              ; TSX
->1aa8	0a					.byte	10
->1aa9	70					.byte	$70
->1aaa	04					.byte	4
->1aab	00					.byte	0
->1aac	04 c8					.byte	4,$c8
->1aae	00					.byte	$00
->1aaf	49 4e d9				.byte	$49,$4e,$d9              ; INY
->1ab2	0a					.byte	10
->1ab3	61					.byte	$61
->1ab4	04					.byte	4
->1ab5	00					.byte	0
->1ab6	04 ca					.byte	4,$ca
->1ab8	00					.byte	$00
->1ab9	44 45 d8				.byte	$44,$45,$d8              ; DEX
->1abc	0a					.byte	10
->1abd	53					.byte	$53
->1abe	04					.byte	4
->1abf	00					.byte	0
->1ac0	04 d8					.byte	4,$d8
->1ac2	00					.byte	$00
->1ac3	43 4c c4				.byte	$43,$4c,$c4              ; CLD
->1ac6	0a					.byte	10
->1ac7	70					.byte	$70
->1ac8	04					.byte	4
->1ac9	00					.byte	0
->1aca	04 da					.byte	4,$da
->1acc	00					.byte	$00
->1acd	50 48 d8				.byte	$50,$48,$d8              ; PHX
->1ad0	0a					.byte	10
->1ad1	6f					.byte	$6f
->1ad2	04					.byte	4
->1ad3	00					.byte	0
->1ad4	04 e8					.byte	4,$e8
->1ad6	00					.byte	$00
->1ad7	49 4e d8				.byte	$49,$4e,$d8              ; INX
->1ada	0a					.byte	10
->1adb	6d					.byte	$6d
->1adc	04					.byte	4
->1add	00					.byte	0
->1ade	04 ea					.byte	4,$ea
->1ae0	00					.byte	$00
->1ae1	4e 4f d0				.byte	$4e,$4f,$d0              ; NOP
->1ae4	0a					.byte	10
->1ae5	5c					.byte	$5c
->1ae6	04					.byte	4
->1ae7	00					.byte	0
->1ae8	04 f8					.byte	4,$f8
->1aea	00					.byte	$00
->1aeb	53 45 c4				.byte	$53,$45,$c4              ; SED
->1aee	0a					.byte	10
->1aef	74					.byte	$74
->1af0	04					.byte	4
->1af1	00					.byte	0
->1af2	04 fa					.byte	4,$fa
->1af4	00					.byte	$00
->1af5	50 4c d8				.byte	$50,$4c,$d8              ; PLX
->1af8	0c					.byte	12
->1af9	ea					.byte	$ea
->1afa	02					.byte	2
->1afb	00					.byte	0
->1afc	64 20					.word	AXWordCmd
->1afe	00					.byte	0
->1aff	2e 57 4f 52 c4				.byte	$2e,$57,$4f,$52,$c4      ; .WORD
+.18a2					AXSystemDictionary:
+>18a2	0a					.byte	10
+>18a3	62					.byte	$62
+>18a4	04					.byte	4
+>18a5	00					.byte	0
+>18a6	01 01					.byte	1,$01
+>18a8	00					.byte	$00
+>18a9	4f 52 c1				.byte	$4f,$52,$c1              ; ORA
+>18ac	0a					.byte	10
+>18ad	53					.byte	$53
+>18ae	04					.byte	4
+>18af	00					.byte	0
+>18b0	01 21					.byte	1,$21
+>18b2	00					.byte	$00
+>18b3	41 4e c4				.byte	$41,$4e,$c4              ; AND
+>18b6	0a					.byte	10
+>18b7	66					.byte	$66
+>18b8	04					.byte	4
+>18b9	00					.byte	0
+>18ba	01 41					.byte	1,$41
+>18bc	00					.byte	$00
+>18bd	45 4f d2				.byte	$45,$4f,$d2              ; EOR
+>18c0	0a					.byte	10
+>18c1	48					.byte	$48
+>18c2	04					.byte	4
+>18c3	00					.byte	0
+>18c4	01 61					.byte	1,$61
+>18c6	00					.byte	$00
+>18c7	41 44 c3				.byte	$41,$44,$c3              ; ADC
+>18ca	0a					.byte	10
+>18cb	68					.byte	$68
+>18cc	04					.byte	4
+>18cd	00					.byte	0
+>18ce	01 81					.byte	1,$81
+>18d0	00					.byte	$00
+>18d1	53 54 c1				.byte	$53,$54,$c1              ; STA
+>18d4	0a					.byte	10
+>18d5	51					.byte	$51
+>18d6	04					.byte	4
+>18d7	00					.byte	0
+>18d8	01 a1					.byte	1,$a1
+>18da	00					.byte	$00
+>18db	4c 44 c1				.byte	$4c,$44,$c1              ; LDA
+>18de	0a					.byte	10
+>18df	60					.byte	$60
+>18e0	04					.byte	4
+>18e1	00					.byte	0
+>18e2	01 c1					.byte	1,$c1
+>18e4	00					.byte	$00
+>18e5	43 4d d0				.byte	$43,$4d,$d0              ; CMP
+>18e8	0a					.byte	10
+>18e9	58					.byte	$58
+>18ea	04					.byte	4
+>18eb	00					.byte	0
+>18ec	01 e1					.byte	1,$e1
+>18ee	00					.byte	$00
+>18ef	53 42 c3				.byte	$53,$42,$c3              ; SBC
+>18f2	0a					.byte	10
+>18f3	60					.byte	$60
+>18f4	04					.byte	4
+>18f5	00					.byte	0
+>18f6	02 02					.byte	2,$02
+>18f8	75					.byte	$75
+>18f9	41 53 cc				.byte	$41,$53,$cc              ; ASL
+>18fc	0a					.byte	10
+>18fd	6d					.byte	$6d
+>18fe	04					.byte	4
+>18ff	00					.byte	0
+>1900	02 22					.byte	2,$22
+>1902	75					.byte	$75
+>1903	52 4f cc				.byte	$52,$4f,$cc              ; ROL
+>1906	0a					.byte	10
+>1907	71					.byte	$71
+>1908	04					.byte	4
+>1909	00					.byte	0
+>190a	02 42					.byte	2,$42
+>190c	75					.byte	$75
+>190d	4c 53 d2				.byte	$4c,$53,$d2              ; LSR
+>1910	0a					.byte	10
+>1911	73					.byte	$73
+>1912	04					.byte	4
+>1913	00					.byte	0
+>1914	02 62					.byte	2,$62
+>1916	75					.byte	$75
+>1917	52 4f d2				.byte	$52,$4f,$d2              ; ROR
+>191a	0a					.byte	10
+>191b	7f					.byte	$7f
+>191c	04					.byte	4
+>191d	00					.byte	0
+>191e	02 82					.byte	2,$82
+>1920	50					.byte	$50
+>1921	53 54 d8				.byte	$53,$54,$d8              ; STX
+>1924	0a					.byte	10
+>1925	68					.byte	$68
+>1926	04					.byte	4
+>1927	00					.byte	0
+>1928	02 a2					.byte	2,$a2
+>192a	d0					.byte	$d0
+>192b	4c 44 d8				.byte	$4c,$44,$d8              ; LDX
+>192e	0a					.byte	10
+>192f	4c					.byte	$4c
+>1930	04					.byte	4
+>1931	00					.byte	0
+>1932	02 c2					.byte	2,$c2
+>1934	55					.byte	$55
+>1935	44 45 c3				.byte	$44,$45,$c3              ; DEC
+>1938	0a					.byte	10
+>1939	5a					.byte	$5a
+>193a	04					.byte	4
+>193b	00					.byte	0
+>193c	02 e2					.byte	2,$e2
+>193e	55					.byte	$55
+>193f	49 4e c3				.byte	$49,$4e,$c3              ; INC
+>1942	0a					.byte	10
+>1943	81					.byte	$81
+>1944	04					.byte	4
+>1945	00					.byte	0
+>1946	02 60					.byte	2,$60
+>1948	44					.byte	$44
+>1949	53 54 da				.byte	$53,$54,$da              ; STZ
+>194c	0a					.byte	10
+>194d	5f					.byte	$5f
+>194e	04					.byte	4
+>194f	00					.byte	0
+>1950	02 20					.byte	2,$20
+>1952	55					.byte	$55
+>1953	42 49 d4				.byte	$42,$49,$d4              ; BIT
+>1956	0a					.byte	10
+>1957	80					.byte	$80
+>1958	04					.byte	4
+>1959	00					.byte	0
+>195a	02 80					.byte	2,$80
+>195c	54					.byte	$54
+>195d	53 54 d9				.byte	$53,$54,$d9              ; STY
+>1960	0a					.byte	10
+>1961	69					.byte	$69
+>1962	04					.byte	4
+>1963	00					.byte	0
+>1964	02 a0					.byte	2,$a0
+>1966	d5					.byte	$d5
+>1967	4c 44 d9				.byte	$4c,$44,$d9              ; LDY
+>196a	0a					.byte	10
+>196b	6c					.byte	$6c
+>196c	04					.byte	4
+>196d	00					.byte	0
+>196e	02 c0					.byte	2,$c0
+>1970	d4					.byte	$d4
+>1971	43 50 d9				.byte	$43,$50,$d9              ; CPY
+>1974	0a					.byte	10
+>1975	6b					.byte	$6b
+>1976	04					.byte	4
+>1977	00					.byte	0
+>1978	02 e0					.byte	2,$e0
+>197a	d0					.byte	$d0
+>197b	43 50 d8				.byte	$43,$50,$d8              ; CPX
+>197e	0a					.byte	10
+>197f	69					.byte	$69
+>1980	04					.byte	4
+>1981	00					.byte	0
+>1982	02 00					.byte	2,$00
+>1984	50					.byte	$50
+>1985	54 53 c2				.byte	$54,$53,$c2              ; TSB
+>1988	0a					.byte	10
+>1989	68					.byte	$68
+>198a	04					.byte	4
+>198b	00					.byte	0
+>198c	02 10					.byte	2,$10
+>198e	50					.byte	$50
+>198f	54 52 c2				.byte	$54,$52,$c2              ; TRB
+>1992	0a					.byte	10
+>1993	6f					.byte	$6f
+>1994	04					.byte	4
+>1995	00					.byte	0
+>1996	02 14					.byte	2,$14
+>1998	10					.byte	$10
+>1999	4a 53 d2				.byte	$4a,$53,$d2              ; JSR
+>199c	0a					.byte	10
+>199d	67					.byte	$67
+>199e	04					.byte	4
+>199f	00					.byte	0
+>19a0	02 40					.byte	2,$40
+>19a2	10					.byte	$10
+>19a3	4a 4d d0				.byte	$4a,$4d,$d0              ; JMP
+>19a6	0a					.byte	10
+>19a7	5e					.byte	$5e
+>19a8	04					.byte	4
+>19a9	00					.byte	0
+>19aa	03 10					.byte	3,$10
+>19ac	00					.byte	$00
+>19ad	42 50 cc				.byte	$42,$50,$cc              ; BPL
+>19b0	0a					.byte	10
+>19b1	58					.byte	$58
+>19b2	04					.byte	4
+>19b3	00					.byte	0
+>19b4	03 30					.byte	3,$30
+>19b6	00					.byte	$00
+>19b7	42 4d c9				.byte	$42,$4d,$c9              ; BMI
+>19ba	0a					.byte	10
+>19bb	5b					.byte	$5b
+>19bc	04					.byte	4
+>19bd	00					.byte	0
+>19be	03 50					.byte	3,$50
+>19c0	00					.byte	$00
+>19c1	42 56 c3				.byte	$42,$56,$c3              ; BVC
+>19c4	0a					.byte	10
+>19c5	6b					.byte	$6b
+>19c6	04					.byte	4
+>19c7	00					.byte	0
+>19c8	03 70					.byte	3,$70
+>19ca	00					.byte	$00
+>19cb	42 56 d3				.byte	$42,$56,$d3              ; BVS
+>19ce	0a					.byte	10
+>19cf	48					.byte	$48
+>19d0	04					.byte	4
+>19d1	00					.byte	0
+>19d2	03 90					.byte	3,$90
+>19d4	00					.byte	$00
+>19d5	42 43 c3				.byte	$42,$43,$c3              ; BCC
+>19d8	0a					.byte	10
+>19d9	58					.byte	$58
+>19da	04					.byte	4
+>19db	00					.byte	0
+>19dc	03 b0					.byte	3,$b0
+>19de	00					.byte	$00
+>19df	42 43 d3				.byte	$42,$43,$d3              ; BCS
+>19e2	0a					.byte	10
+>19e3	55					.byte	$55
+>19e4	04					.byte	4
+>19e5	00					.byte	0
+>19e6	03 d0					.byte	3,$d0
+>19e8	00					.byte	$00
+>19e9	42 4e c5				.byte	$42,$4e,$c5              ; BNE
+>19ec	0a					.byte	10
+>19ed	58					.byte	$58
+>19ee	04					.byte	4
+>19ef	00					.byte	0
+>19f0	03 f0					.byte	3,$f0
+>19f2	00					.byte	$00
+>19f3	42 45 d1				.byte	$42,$45,$d1              ; BEQ
+>19f6	0a					.byte	10
+>19f7	55					.byte	$55
+>19f8	04					.byte	4
+>19f9	00					.byte	0
+>19fa	03 80					.byte	3,$80
+>19fc	00					.byte	$00
+>19fd	42 52 c1				.byte	$42,$52,$c1              ; BRA
+>1a00	0a					.byte	10
+>1a01	56					.byte	$56
+>1a02	04					.byte	4
+>1a03	00					.byte	0
+>1a04	03 0f					.byte	3,$0f
+>1a06	00					.byte	$00
+>1a07	42 42 d2				.byte	$42,$42,$d2              ; BBR
+>1a0a	0a					.byte	10
+>1a0b	57					.byte	$57
+>1a0c	04					.byte	4
+>1a0d	00					.byte	0
+>1a0e	03 8f					.byte	3,$8f
+>1a10	00					.byte	$00
+>1a11	42 42 d3				.byte	$42,$42,$d3              ; BBS
+>1a14	0a					.byte	10
+>1a15	5f					.byte	$5f
+>1a16	04					.byte	4
+>1a17	00					.byte	0
+>1a18	04 00					.byte	4,$00
+>1a1a	00					.byte	$00
+>1a1b	42 52 cb				.byte	$42,$52,$cb              ; BRK
+>1a1e	0a					.byte	10
+>1a1f	68					.byte	$68
+>1a20	04					.byte	4
+>1a21	00					.byte	0
+>1a22	04 08					.byte	4,$08
+>1a24	00					.byte	$00
+>1a25	50 48 d0				.byte	$50,$48,$d0              ; PHP
+>1a28	0a					.byte	10
+>1a29	52					.byte	$52
+>1a2a	04					.byte	4
+>1a2b	00					.byte	0
+>1a2c	04 18					.byte	4,$18
+>1a2e	00					.byte	$00
+>1a2f	43 4c c3				.byte	$43,$4c,$c3              ; CLC
+>1a32	0a					.byte	10
+>1a33	6c					.byte	$6c
+>1a34	04					.byte	4
+>1a35	00					.byte	0
+>1a36	04 28					.byte	4,$28
+>1a38	00					.byte	$00
+>1a39	50 4c d0				.byte	$50,$4c,$d0              ; PLP
+>1a3c	0a					.byte	10
+>1a3d	5b					.byte	$5b
+>1a3e	04					.byte	4
+>1a3f	00					.byte	0
+>1a40	04 38					.byte	4,$38
+>1a42	00					.byte	$00
+>1a43	53 45 c3				.byte	$53,$45,$c3              ; SEC
+>1a46	0a					.byte	10
+>1a47	6f					.byte	$6f
+>1a48	04					.byte	4
+>1a49	00					.byte	0
+>1a4a	04 40					.byte	4,$40
+>1a4c	00					.byte	$00
+>1a4d	52 54 c9				.byte	$52,$54,$c9              ; RTI
+>1a50	0a					.byte	10
+>1a51	59					.byte	$59
+>1a52	04					.byte	4
+>1a53	00					.byte	0
+>1a54	04 48					.byte	4,$48
+>1a56	00					.byte	$00
+>1a57	50 48 c1				.byte	$50,$48,$c1              ; PHA
+>1a5a	0a					.byte	10
+>1a5b	58					.byte	$58
+>1a5c	04					.byte	4
+>1a5d	00					.byte	0
+>1a5e	04 58					.byte	4,$58
+>1a60	00					.byte	$00
+>1a61	43 4c c9				.byte	$43,$4c,$c9              ; CLI
+>1a64	0a					.byte	10
+>1a65	71					.byte	$71
+>1a66	04					.byte	4
+>1a67	00					.byte	0
+>1a68	04 5a					.byte	4,$5a
+>1a6a	00					.byte	$00
+>1a6b	50 48 d9				.byte	$50,$48,$d9              ; PHY
+>1a6e	0a					.byte	10
+>1a6f	79					.byte	$79
+>1a70	04					.byte	4
+>1a71	00					.byte	0
+>1a72	04 60					.byte	4,$60
+>1a74	00					.byte	$00
+>1a75	52 54 d3				.byte	$52,$54,$d3              ; RTS
+>1a78	0a					.byte	10
+>1a79	5d					.byte	$5d
+>1a7a	04					.byte	4
+>1a7b	00					.byte	0
+>1a7c	04 68					.byte	4,$68
+>1a7e	00					.byte	$00
+>1a7f	50 4c c1				.byte	$50,$4c,$c1              ; PLA
+>1a82	0a					.byte	10
+>1a83	61					.byte	$61
+>1a84	04					.byte	4
+>1a85	00					.byte	0
+>1a86	04 78					.byte	4,$78
+>1a88	00					.byte	$00
+>1a89	53 45 c9				.byte	$53,$45,$c9              ; SEI
+>1a8c	0a					.byte	10
+>1a8d	75					.byte	$75
+>1a8e	04					.byte	4
+>1a8f	00					.byte	0
+>1a90	04 7a					.byte	4,$7a
+>1a92	00					.byte	$00
+>1a93	50 4c d9				.byte	$50,$4c,$d9              ; PLY
+>1a96	0a					.byte	10
+>1a97	62					.byte	$62
+>1a98	04					.byte	4
+>1a99	00					.byte	0
+>1a9a	04 88					.byte	4,$88
+>1a9c	00					.byte	$00
+>1a9d	44 45 d9				.byte	$44,$45,$d9              ; DEY
+>1aa0	0a					.byte	10
+>1aa1	6d					.byte	$6d
+>1aa2	04					.byte	4
+>1aa3	00					.byte	0
+>1aa4	04 8a					.byte	4,$8a
+>1aa6	00					.byte	$00
+>1aa7	54 58 c1				.byte	$54,$58,$c1              ; TXA
+>1aaa	0a					.byte	10
+>1aab	6e					.byte	$6e
+>1aac	04					.byte	4
+>1aad	00					.byte	0
+>1aae	04 98					.byte	4,$98
+>1ab0	00					.byte	$00
+>1ab1	54 59 c1				.byte	$54,$59,$c1              ; TYA
+>1ab4	0a					.byte	10
+>1ab5	7f					.byte	$7f
+>1ab6	04					.byte	4
+>1ab7	00					.byte	0
+>1ab8	04 9a					.byte	4,$9a
+>1aba	00					.byte	$00
+>1abb	54 58 d3				.byte	$54,$58,$d3              ; TXS
+>1abe	0a					.byte	10
+>1abf	6e					.byte	$6e
+>1ac0	04					.byte	4
+>1ac1	00					.byte	0
+>1ac2	04 a8					.byte	4,$a8
+>1ac4	00					.byte	$00
+>1ac5	54 41 d9				.byte	$54,$41,$d9              ; TAY
+>1ac8	0a					.byte	10
+>1ac9	6d					.byte	$6d
+>1aca	04					.byte	4
+>1acb	00					.byte	0
+>1acc	04 aa					.byte	4,$aa
+>1ace	00					.byte	$00
+>1acf	54 41 d8				.byte	$54,$41,$d8              ; TAX
+>1ad2	0a					.byte	10
+>1ad3	65					.byte	$65
+>1ad4	04					.byte	4
+>1ad5	00					.byte	0
+>1ad6	04 b8					.byte	4,$b8
+>1ad8	00					.byte	$00
+>1ad9	43 4c d6				.byte	$43,$4c,$d6              ; CLV
+>1adc	0a					.byte	10
+>1add	7f					.byte	$7f
+>1ade	04					.byte	4
+>1adf	00					.byte	0
+>1ae0	04 ba					.byte	4,$ba
+>1ae2	00					.byte	$00
+>1ae3	54 53 d8				.byte	$54,$53,$d8              ; TSX
+>1ae6	0a					.byte	10
+>1ae7	70					.byte	$70
+>1ae8	04					.byte	4
+>1ae9	00					.byte	0
+>1aea	04 c8					.byte	4,$c8
+>1aec	00					.byte	$00
+>1aed	49 4e d9				.byte	$49,$4e,$d9              ; INY
+>1af0	0a					.byte	10
+>1af1	61					.byte	$61
+>1af2	04					.byte	4
+>1af3	00					.byte	0
+>1af4	04 ca					.byte	4,$ca
+>1af6	00					.byte	$00
+>1af7	44 45 d8				.byte	$44,$45,$d8              ; DEX
+>1afa	0a					.byte	10
+>1afb	53					.byte	$53
+>1afc	04					.byte	4
+>1afd	00					.byte	0
+>1afe	04 d8					.byte	4,$d8
+>1b00	00					.byte	$00
+>1b01	43 4c c4				.byte	$43,$4c,$c4              ; CLD
 >1b04	0a					.byte	10
->1b05	49					.byte	$49
->1b06	02					.byte	2
+>1b05	70					.byte	$70
+>1b06	04					.byte	4
 >1b07	00					.byte	0
->1b08	64 20					.word	AXWordCmd2
->1b0a	00					.byte	0
->1b0b	2e 44 d7				.byte	$2e,$44,$d7              ; .DW
->1b0e	0c					.byte	12
->1b0f	e2					.byte	$e2
->1b10	02					.byte	2
+>1b08	04 da					.byte	4,$da
+>1b0a	00					.byte	$00
+>1b0b	50 48 d8				.byte	$50,$48,$d8              ; PHX
+>1b0e	0a					.byte	10
+>1b0f	6f					.byte	$6f
+>1b10	04					.byte	4
 >1b11	00					.byte	0
->1b12	43 1f					.word	AXByteCmd
->1b14	00					.byte	0
->1b15	2e 42 59 54 c5				.byte	$2e,$42,$59,$54,$c5      ; .BYTE
->1b1a	0a					.byte	10
->1b1b	34					.byte	$34
->1b1c	02					.byte	2
->1b1d	00					.byte	0
->1b1e	43 1f					.word	AXByteCmd2
->1b20	00					.byte	0
->1b21	2e 44 c2				.byte	$2e,$44,$c2              ; .DB
->1b24	0c					.byte	12
->1b25	ca					.byte	$ca
->1b26	02					.byte	2
->1b27	00					.byte	0
->1b28	e6 1e					.word	AXBankCmd
->1b2a	00					.byte	0
->1b2b	2e 42 41 4e cb				.byte	$2e,$42,$41,$4e,$cb      ; .BANK
->1b30	0c					.byte	12
->1b31	f3					.byte	$f3
->1b32	02					.byte	2
->1b33	00					.byte	0
->1b34	f6 1f					.word	AXTextCmd
->1b36	00					.byte	0
->1b37	2e 54 45 58 d4				.byte	$2e,$54,$45,$58,$d4      ; .TEXT
->1b3c	0c					.byte	12
->1b3d	d5					.byte	$d5
->1b3e	02					.byte	2
->1b3f	00					.byte	0
->1b40	73 1f					.word	AXFillCmd
->1b42	00					.byte	0
->1b43	2e 46 49 4c cc				.byte	$2e,$46,$49,$4c,$cc      ; .FILL
->1b48	0a					.byte	10
->1b49	45					.byte	$45
->1b4a	02					.byte	2
->1b4b	00					.byte	0
->1b4c	73 1f					.word	AXFillCmd2
->1b4e	00					.byte	0
->1b4f	2e 44 d3				.byte	$2e,$44,$d3              ; .DS
->1b52	0d					.byte	13
->1b53	20					.byte	$20
->1b54	02					.byte	2
->1b55	00					.byte	0
->1b56	b4 1f					.word	AXXMacro
->1b58	00					.byte	0
->1b59	2e 4d 41 43 52 cf			.byte	$2e,$4d,$41,$43,$52,$cf  ; .MACRO
->1b5f	0f					.byte	15
->1b60	b2					.byte	$b2
->1b61	02					.byte	2
->1b62	00					.byte	0
->1b63	90 1f					.word	AXInclude
+>1b12	04 e8					.byte	4,$e8
+>1b14	00					.byte	$00
+>1b15	49 4e d8				.byte	$49,$4e,$d8              ; INX
+>1b18	0a					.byte	10
+>1b19	6d					.byte	$6d
+>1b1a	04					.byte	4
+>1b1b	00					.byte	0
+>1b1c	04 ea					.byte	4,$ea
+>1b1e	00					.byte	$00
+>1b1f	4e 4f d0				.byte	$4e,$4f,$d0              ; NOP
+>1b22	0a					.byte	10
+>1b23	5c					.byte	$5c
+>1b24	04					.byte	4
+>1b25	00					.byte	0
+>1b26	04 f8					.byte	4,$f8
+>1b28	00					.byte	$00
+>1b29	53 45 c4				.byte	$53,$45,$c4              ; SED
+>1b2c	0a					.byte	10
+>1b2d	74					.byte	$74
+>1b2e	04					.byte	4
+>1b2f	00					.byte	0
+>1b30	04 fa					.byte	4,$fa
+>1b32	00					.byte	$00
+>1b33	50 4c d8				.byte	$50,$4c,$d8              ; PLX
+>1b36	0c					.byte	12
+>1b37	ea					.byte	$ea
+>1b38	02					.byte	2
+>1b39	00					.byte	0
+>1b3a	a2 20					.word	AXWordCmd
+>1b3c	00					.byte	0
+>1b3d	2e 57 4f 52 c4				.byte	$2e,$57,$4f,$52,$c4      ; .WORD
+>1b42	0a					.byte	10
+>1b43	49					.byte	$49
+>1b44	02					.byte	2
+>1b45	00					.byte	0
+>1b46	a2 20					.word	AXWordCmd2
+>1b48	00					.byte	0
+>1b49	2e 44 d7				.byte	$2e,$44,$d7              ; .DW
+>1b4c	0c					.byte	12
+>1b4d	e2					.byte	$e2
+>1b4e	02					.byte	2
+>1b4f	00					.byte	0
+>1b50	81 1f					.word	AXByteCmd
+>1b52	00					.byte	0
+>1b53	2e 42 59 54 c5				.byte	$2e,$42,$59,$54,$c5      ; .BYTE
+>1b58	0a					.byte	10
+>1b59	34					.byte	$34
+>1b5a	02					.byte	2
+>1b5b	00					.byte	0
+>1b5c	81 1f					.word	AXByteCmd2
+>1b5e	00					.byte	0
+>1b5f	2e 44 c2				.byte	$2e,$44,$c2              ; .DB
+>1b62	0c					.byte	12
+>1b63	ca					.byte	$ca
+>1b64	02					.byte	2
 >1b65	00					.byte	0
->1b66	2e 49 4e 43 4c 55 44 c5			.byte	$2e,$49,$4e,$43,$4c,$55,$44,$c5 ; .INCLUDE
->1b6e	0e					.byte	14
->1b6f	73					.byte	$73
+>1b66	24 1f					.word	AXBankCmd
+>1b68	00					.byte	0
+>1b69	2e 42 41 4e cb				.byte	$2e,$42,$41,$4e,$cb      ; .BANK
+>1b6e	0c					.byte	12
+>1b6f	f3					.byte	$f3
 >1b70	02					.byte	2
 >1b71	00					.byte	0
->1b72	02 1f					.word	AXBInclude
+>1b72	34 20					.word	AXTextCmd
 >1b74	00					.byte	0
->1b75	2e 42 49 4e 41 52 d9			.byte	$2e,$42,$49,$4e,$41,$52,$d9 ; .BINARY
->1b7c	0e					.byte	14
->1b7d	61					.byte	$61
->1b7e	02					.byte	2
->1b7f	00					.byte	0
->1b80	02 1f					.word	AXBInclude2
->1b82	00					.byte	0
->1b83	2e 49 4e 43 42 49 ce			.byte	$2e,$49,$4e,$43,$42,$49,$ce ; .INCBIN
->1b8a	00					.byte	0
-.1b8b					AXGroup2OpcodeFixupTable:
->1b8b	60 07 9e				.byte	$60,7,			$9e ; STZ ABS,X
->1b8e	60 03 9c				.byte	$60,3,			$9c ; STZ ABS
->1b91	20 80 89				.byte	$20,128,			$89 ; BIT #
->1b94	c2 02 3a				.byte	$c2,2,			$3a ; DEC ACC
->1b97	e2 02 1a				.byte	$e2,2,			$1a ; INC ACC
->1b9a	82 89 96				.byte	$82,137,			$96 ; STX ZP,Y
->1b9d	a2 89 b6				.byte	$a2,137,			$b6 ; LDX ZP,Y
->1ba0	a2 06 be				.byte	$a2,6,			$be ; LDX ABS,Y
->1ba3	40 0b 7c				.byte	$40,11,			$7c ; JMP (ABS,X)
->1ba6	40 0a 6c				.byte	$40,10,			$6c ; JMP (ABS)
->1ba9	00					.byte	0
-.1baa					AXBinaryOperatorList:
->1baa	3c 3e					.byte	$3c,$3e ; <>
->1bac	3e 3d					.byte	$3e,$3d ; >=
->1bae	3c 3d					.byte	$3c,$3d ; <=
->1bb0	3e 3e					.byte	$3e,$3e ; >>
->1bb2	3c 3c					.byte	$3c,$3c ; <<
->1bb4	26 00					.byte	$26,$00 ; &
->1bb6	7c 00					.byte	$7c,$00 ; |
->1bb8	5e 00					.byte	$5e,$00 ; ^
->1bba	3e 00					.byte	$3e,$00 ; >
->1bbc	3d 00					.byte	$3d,$00 ; =
->1bbe	3c 00					.byte	$3c,$00 ; <
->1bc0	2b 00					.byte	$2b,$00 ; +
->1bc2	2d 00					.byte	$2d,$00 ; -
->1bc4	2a 00					.byte	$2a,$00 ; *
->1bc6	2f 00					.byte	$2f,$00 ; /
->1bc8	25 00					.byte	$25,$00 ; %
->1bca	00					.byte	$00
-.1bcb					AXPrecedence:
->1bcb	02					.byte	2 ; <>
->1bcc	02					.byte	2 ; >=
->1bcd	02					.byte	2 ; <=
->1bce	04					.byte	4 ; >>
->1bcf	04					.byte	4 ; <<
->1bd0	01					.byte	1 ; &
->1bd1	01					.byte	1 ; |
->1bd2	01					.byte	1 ; ^
->1bd3	02					.byte	2 ; >
->1bd4	02					.byte	2 ; =
->1bd5	02					.byte	2 ; <
->1bd6	03					.byte	3 ; +
->1bd7	03					.byte	3 ; -
->1bd8	04					.byte	4 ; *
->1bd9	04					.byte	4 ; /
->1bda	04					.byte	4 ; %
-.1bdb					AXBinaryVectors:
->1bdb	ee 15					.word	AXBinaryNotEqual                 ; <>
->1bdd	29 16					.word	AXGreaterEqual                   ; >=
->1bdf	24 16					.word	AXLessEqual                      ; <=
->1be1	2d 15					.word	AXShiftRight                     ; >>
->1be3	29 15					.word	AXShiftLeft                      ; <<
->1be5	b2 15					.word	AXBinaryAnd                      ; &
->1be7	c6 15					.word	AXBinaryOra                      ; |
->1be9	da 15					.word	AXBinaryEor                      ; ^
->1beb	08 16					.word	AXGreater                        ; >
->1bed	03 16					.word	AXBinaryEqual                    ; =
->1bef	0b 16					.word	AXLess                           ; <
->1bf1	88 15					.word	AXBinaryAdd                      ; +
->1bf3	9d 15					.word	AXBinarySub                      ; -
->1bf5	f7 14					.word	AXBinaryMult                     ; *
->1bf7	a4 14					.word	AXBinaryDivide                   ; /
->1bf9	e4 14					.word	AXBinaryModulus                  ; %
-.1bfb					AXIOpen:
-.1bfb	48		pha				pha
-.1bfc	a9 07		lda #$07			lda 	#AXAPILock
-.1bfe	20 34 12	jsr $1234			jsr 	AXCallAPI
-.1c01	68		pla				pla
-.1c02	60		rts				rts
-.1c03					AXIClose:
-.1c03	48		pha				pha
-.1c04	a9 08		lda #$08			lda 	#AXAPIUnlock
-.1c06	20 34 12	jsr $1234			jsr 	AXCallAPI
-.1c09	68		pla				pla
-.1c0a	60		rts				rts
-.1c0b					AXIAppendMacro:
-.1c0b	08		php				php 								; save end marker/line flag.
-.1c0c	20 fb 1b	jsr $1bfb			jsr 	AXIOpen 					; start.
-.1c0f	ad e7 04	lda $04e7			lda 	AXIBase
-.1c12	85 31		sta $31				sta 	AXTemp0+1
-.1c14	64 30		stz $30				stz 	AXTemp0 					; save address at zTemp0
-.1c16					_AXIFindLast:
-.1c16	b2 30		lda ($30)			lda 	(AXTemp0)					; read the *next* link
-.1c18	a8		tay				tay
-.1c19	b1 30		lda ($30),y			lda 	(AXTemp0),y
-.1c1b	f0 0c		beq $1c29			beq 	_AXIFoundLast 				; if zero, we're at the last defined.
-.1c1d	98		tya				tya 								; move to next.
-.1c1e	18		clc				clc
-.1c1f	65 30		adc $30				adc 	AXTemp0
-.1c21	85 30		sta $30				sta 	AXTemp0
-.1c23	90 f1		bcc $1c16			bcc 	_AXIFindLast
-.1c25	e6 31		inc $31				inc 	AXTemp0+1
-.1c27	80 ed		bra $1c16			bra 	_AXIFindLast
-.1c29					_AXIFoundLast:
-.1c29	a0 02		ldy #$02			ldy 	#AXID_Type 					; set the type to macro.
-.1c2b	a9 03		lda #$03			lda 	#AXIT_Macro
-.1c2d	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1c2f	28		plp				plp 								; type of operation required.
-.1c30	b0 0d		bcs $1c3f			bcs 	_AXIInsertNull
-.1c32	a2 00		ldx #$00			ldx 	#0 							; insert the buffer
-.1c34					_AXIInsertBuffer:
-.1c34	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; if end of line insert $00 and exit
-.1c37	f0 08		beq $1c41			beq 	_AXIInsertA
-.1c39	20 49 1c	jsr $1c49			jsr 	_AXIInsert 					; insert character
-.1c3c	e8		inx				inx 								; do next
-.1c3d	80 f5		bra $1c34			bra 	_AXIInsertBuffer
-.1c3f					_AXIInsertNull:
-.1c3f	a9 ff		lda #$ff			lda 	#$FF 						; insert a $FF marking macro end.
-.1c41					_AXIInsertA:
-.1c41	20 49 1c	jsr $1c49			jsr 	_AXIInsert
-.1c44	20 03 1c	jsr $1c03			jsr 	AXIClose 					; close access
-.1c47	18		clc				clc
+>1b75	2e 54 45 58 d4				.byte	$2e,$54,$45,$58,$d4      ; .TEXT
+>1b7a	0c					.byte	12
+>1b7b	d5					.byte	$d5
+>1b7c	02					.byte	2
+>1b7d	00					.byte	0
+>1b7e	b1 1f					.word	AXFillCmd
+>1b80	00					.byte	0
+>1b81	2e 46 49 4c cc				.byte	$2e,$46,$49,$4c,$cc      ; .FILL
+>1b86	0a					.byte	10
+>1b87	45					.byte	$45
+>1b88	02					.byte	2
+>1b89	00					.byte	0
+>1b8a	b1 1f					.word	AXFillCmd2
+>1b8c	00					.byte	0
+>1b8d	2e 44 d3				.byte	$2e,$44,$d3              ; .DS
+>1b90	0d					.byte	13
+>1b91	20					.byte	$20
+>1b92	02					.byte	2
+>1b93	00					.byte	0
+>1b94	f2 1f					.word	AXXMacro
+>1b96	00					.byte	0
+>1b97	2e 4d 41 43 52 cf			.byte	$2e,$4d,$41,$43,$52,$cf  ; .MACRO
+>1b9d	0f					.byte	15
+>1b9e	b2					.byte	$b2
+>1b9f	02					.byte	2
+>1ba0	00					.byte	0
+>1ba1	ce 1f					.word	AXInclude
+>1ba3	00					.byte	0
+>1ba4	2e 49 4e 43 4c 55 44 c5			.byte	$2e,$49,$4e,$43,$4c,$55,$44,$c5 ; .INCLUDE
+>1bac	0e					.byte	14
+>1bad	73					.byte	$73
+>1bae	02					.byte	2
+>1baf	00					.byte	0
+>1bb0	40 1f					.word	AXBInclude
+>1bb2	00					.byte	0
+>1bb3	2e 42 49 4e 41 52 d9			.byte	$2e,$42,$49,$4e,$41,$52,$d9 ; .BINARY
+>1bba	0e					.byte	14
+>1bbb	61					.byte	$61
+>1bbc	02					.byte	2
+>1bbd	00					.byte	0
+>1bbe	40 1f					.word	AXBInclude2
+>1bc0	00					.byte	0
+>1bc1	2e 49 4e 43 42 49 ce			.byte	$2e,$49,$4e,$43,$42,$49,$ce ; .INCBIN
+>1bc8	00					.byte	0
+.1bc9					AXGroup2OpcodeFixupTable:
+>1bc9	60 07 9e				.byte	$60,7,			$9e ; STZ ABS,X
+>1bcc	60 03 9c				.byte	$60,3,			$9c ; STZ ABS
+>1bcf	20 80 89				.byte	$20,128,			$89 ; BIT #
+>1bd2	c2 02 3a				.byte	$c2,2,			$3a ; DEC ACC
+>1bd5	e2 02 1a				.byte	$e2,2,			$1a ; INC ACC
+>1bd8	82 89 96				.byte	$82,137,			$96 ; STX ZP,Y
+>1bdb	a2 89 b6				.byte	$a2,137,			$b6 ; LDX ZP,Y
+>1bde	a2 06 be				.byte	$a2,6,			$be ; LDX ABS,Y
+>1be1	40 0b 7c				.byte	$40,11,			$7c ; JMP (ABS,X)
+>1be4	40 0a 6c				.byte	$40,10,			$6c ; JMP (ABS)
+>1be7	00					.byte	0
+.1be8					AXBinaryOperatorList:
+>1be8	3c 3e					.byte	$3c,$3e ; <>
+>1bea	3e 3d					.byte	$3e,$3d ; >=
+>1bec	3c 3d					.byte	$3c,$3d ; <=
+>1bee	3e 3e					.byte	$3e,$3e ; >>
+>1bf0	3c 3c					.byte	$3c,$3c ; <<
+>1bf2	26 00					.byte	$26,$00 ; &
+>1bf4	7c 00					.byte	$7c,$00 ; |
+>1bf6	5e 00					.byte	$5e,$00 ; ^
+>1bf8	3e 00					.byte	$3e,$00 ; >
+>1bfa	3d 00					.byte	$3d,$00 ; =
+>1bfc	3c 00					.byte	$3c,$00 ; <
+>1bfe	2b 00					.byte	$2b,$00 ; +
+>1c00	2d 00					.byte	$2d,$00 ; -
+>1c02	2a 00					.byte	$2a,$00 ; *
+>1c04	2f 00					.byte	$2f,$00 ; /
+>1c06	25 00					.byte	$25,$00 ; %
+>1c08	00					.byte	$00
+.1c09					AXPrecedence:
+>1c09	02					.byte	2 ; <>
+>1c0a	02					.byte	2 ; >=
+>1c0b	02					.byte	2 ; <=
+>1c0c	04					.byte	4 ; >>
+>1c0d	04					.byte	4 ; <<
+>1c0e	01					.byte	1 ; &
+>1c0f	01					.byte	1 ; |
+>1c10	01					.byte	1 ; ^
+>1c11	02					.byte	2 ; >
+>1c12	02					.byte	2 ; =
+>1c13	02					.byte	2 ; <
+>1c14	03					.byte	3 ; +
+>1c15	03					.byte	3 ; -
+>1c16	04					.byte	4 ; *
+>1c17	04					.byte	4 ; /
+>1c18	04					.byte	4 ; %
+.1c19					AXBinaryVectors:
+>1c19	2c 16					.word	AXBinaryNotEqual                 ; <>
+>1c1b	67 16					.word	AXGreaterEqual                   ; >=
+>1c1d	62 16					.word	AXLessEqual                      ; <=
+>1c1f	6b 15					.word	AXShiftRight                     ; >>
+>1c21	67 15					.word	AXShiftLeft                      ; <<
+>1c23	f0 15					.word	AXBinaryAnd                      ; &
+>1c25	04 16					.word	AXBinaryOra                      ; |
+>1c27	18 16					.word	AXBinaryEor                      ; ^
+>1c29	46 16					.word	AXGreater                        ; >
+>1c2b	41 16					.word	AXBinaryEqual                    ; =
+>1c2d	49 16					.word	AXLess                           ; <
+>1c2f	c6 15					.word	AXBinaryAdd                      ; +
+>1c31	db 15					.word	AXBinarySub                      ; -
+>1c33	35 15					.word	AXBinaryMult                     ; *
+>1c35	e2 14					.word	AXBinaryDivide                   ; /
+>1c37	22 15					.word	AXBinaryModulus                  ; %
+.1c39					AXIOpen:
+.1c39	48		pha				pha
+.1c3a	a9 07		lda #$07			lda 	#AXAPILock
+.1c3c	20 34 12	jsr $1234			jsr 	AXCallAPI
+.1c3f	68		pla				pla
+.1c40	60		rts				rts
+.1c41					AXIClose:
+.1c41	48		pha				pha
+.1c42	a9 08		lda #$08			lda 	#AXAPIUnlock
+.1c44	20 34 12	jsr $1234			jsr 	AXCallAPI
+.1c47	68		pla				pla
 .1c48	60		rts				rts
-.1c49					_AXIInsert:
-.1c49	48		pha				pha 								; save insertable.
-.1c4a	b2 30		lda ($30)			lda 	(AXTemp0) 					; get offset to end.
-.1c4c	a8		tay				tay 								; now points to next free character
-.1c4d	68		pla				pla 								; write new character out.
-.1c4e	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1c50	c8		iny				iny 								; write new end-next-link-zero
-.1c51	a9 00		lda #$00			lda 	#0
-.1c53	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1c55	98		tya				tya 								; bump length by one.
-.1c56	c8		iny				iny
-.1c57	92 30		sta ($30)			sta 	(AXTemp0)
-.1c59	60		rts				rts
-.1c5a					AXICreateFind:
-.1c5a	20 64 1c	jsr $1c64			jsr 	AXIFind 					; find it ?
-.1c5d	90 04		bcc $1c63			bcc 	_AXFound 					; found so do nothing
-.1c5f	20 8f 1c	jsr $1c8f			jsr 	AXICreate 					; create new record
-.1c62	38		sec				sec
-.1c63					_AXFound:
-.1c63	60		rts				rts
-.1c64					AXIFind:
-.1c64	86 30		stx $30				stx 	AXTemp0 					; save address at zTemp0
-.1c66	84 31		sty $31				sty 	AXTemp0+1
-.1c68	20 a2 1d	jsr $1da2			jsr 	AXICalculateHash 			; calculate hash
-.1c6b	20 fb 1b	jsr $1bfb			jsr 	AXIOpen 					; start.
-.1c6e					_AXIFindEnd:
-.1c6e	b2 30		lda ($30)			lda 	(AXTemp0)
-.1c70	38		sec				sec
-.1c71	f0 16		beq $1c89			beq 	_AXIFindExit
-.1c73	20 88 1d	jsr $1d88			jsr 	AXICompareCurrent 			; compare AXTemp1 ident vs AXTemp0 record
-.1c76	90 0d		bcc $1c85			bcc 	_AXIFoundExit 				; it's been found.
-.1c78	18		clc				clc 								; go to next
-.1c79	b2 30		lda ($30)			lda 	(AXTemp0)
-.1c7b	65 30		adc $30				adc 	AXTemp0
-.1c7d	85 30		sta $30				sta 	AXTemp0
-.1c7f	90 ed		bcc $1c6e			bcc 	_AXIFindEnd
-.1c81	e6 31		inc $31				inc 	AXTemp0+1
-.1c83	80 e9		bra $1c6e			bra 	_AXIFindEnd
-.1c85					_AXIFoundExit:
-.1c85	20 c4 1c	jsr $1cc4			jsr 	AXISetCurrent
-.1c88	18		clc				clc
-.1c89					_AXIFindExit:
-.1c89	08		php				php
-.1c8a	20 03 1c	jsr $1c03			jsr 	AXIClose
-.1c8d	28		plp				plp
-.1c8e	60		rts				rts
-.1c8f					AXICreate:
-.1c8f	20 fb 1b	jsr $1bfb			jsr 	AXIOpen 					; start.
-.1c92	a0 00		ldy #$00			ldy 	#0
-.1c94					_AXIFill:
-.1c94	a9 00		lda #$00			lda 	#0
-.1c96	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1c98	c8		iny				iny
-.1c99	c0 07		cpy #$07			cpy 	#AXID_Identifier
-.1c9b	d0 f7		bne $1c94			bne 	_AXIFill
-.1c9d					_AXICopy:
-.1c9d	b9 03 04	lda $0403,y			lda 	AXLabelBuffer-AXID_Identifier,y 	; copy name in from buffer.
-.1ca0	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1ca2	c8		iny				iny 								; next character
-.1ca3	0a		asl a				asl 	a 							; keep going till bit 7 set.
-.1ca4	90 f7		bcc $1c9d			bcc 	_AXICopy
-.1ca6	a9 00		lda #$00			lda 	#0 							; write zero at end (end of list)
-.1ca8	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1caa	98		tya				tya 								; set the offset link.
-.1cab	92 30		sta ($30)			sta 	(AXTemp0)
-.1cad	a0 01		ldy #$01			ldy 	#AXID_Hash 					; fill the data in. +1 is the hash
-.1caf	ad e6 04	lda $04e6			lda 	AXIHash
-.1cb2	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1cb4	a0 03		ldy #$03			ldy 	#AXID_Flags 				; set the undefined flag.
-.1cb6	a9 80		lda #$80			lda 	#$80
-.1cb8	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1cba	38		sec				sec 								; return CS, created
-.1cbb					_AXICFound:
-.1cbb	08		php				php 								; save carry
-.1cbc	20 c4 1c	jsr $1cc4			jsr 	AXISetCurrent
-.1cbf	20 03 1c	jsr $1c03			jsr 	AXIClose 					; close access
-.1cc2	28		plp				plp 								; restore carry.
-.1cc3	60		rts				rts
-.1cc4					AXISetCurrent:
-.1cc4	a5 30		lda $30				lda 	AXTemp0 					; save as current record
-.1cc6	8d 69 04	sta $0469			sta 	AXCurrent
-.1cc9	a5 31		lda $31				lda 	AXTemp0+1
-.1ccb	8d 6a 04	sta $046a			sta 	AXCurrent+1
-.1cce	60		rts				rts
-.1ccf					AXIGetDataAddress:
-.1ccf	20 fb 1b	jsr $1bfb			jsr 	AXIOpen 					; start.
-.1cd2	ad 69 04	lda $0469			lda 	AXCurrent 					; copy address for access
-.1cd5	85 30		sta $30				sta 	AXTemp0
-.1cd7	ad 6a 04	lda $046a			lda 	AXCurrent+1
-.1cda	85 31		sta $31				sta 	AXTemp0+1
-.1cdc	a0 07		ldy #$07			ldy 	#AXID_Identifier 			; point to name
-.1cde					_AXIFindEnd:
-.1cde	b1 30		lda ($30),y			lda 	(AXTemp0),y 				; get next
-.1ce0	0a		asl a				asl 	a		 					; bit 7 to carry
-.1ce1	c8		iny				iny
-.1ce2	90 fa		bcc $1cde			bcc 	_AXIFindEnd
-.1ce4	98		tya				tya 								; put address of data in YX.
-.1ce5	18		clc				clc
-.1ce6	65 30		adc $30				adc 	AXTemp0
-.1ce8	aa		tax				tax
-.1ce9	a5 31		lda $31				lda 	AXTemp0+1
-.1ceb	69 00		adc #$00			adc 	#0
-.1ced	a8		tay				tay
-.1cee	20 03 1c	jsr $1c03			jsr 	AXIClose 					; close access
-.1cf1	60		rts				rts
-.1cf2					AXIGetDataLine:
-.1cf2	ad 80 04	lda $0480			lda 	AXMPointer 					; copy pointer to AXTemp0
-.1cf5	85 30		sta $30				sta 	AXTemp0
-.1cf7	ad 81 04	lda $0481			lda 	AXMPointer+1
-.1cfa	85 31		sta $31				sta 	AXTemp0+1
-.1cfc	b2 30		lda ($30)			lda 	(AXTemp0) 					; reached the end ?
-.1cfe	c9 ff		cmp #$ff			cmp 	#$FF
-.1d00	38		sec				sec 								; if so exit with CS.
-.1d01	f0 1a		beq $1d1d			beq 	_AXIExit
-.1d03	a0 00		ldy #$00			ldy 	#0 							; copy data line to buffer.
-.1d05					_AXIGDLCopy:
-.1d05	b1 30		lda ($30),y			lda 	(AXTemp0),y
-.1d07	99 82 04	sta $0482,y			sta 	AXBuffer,y
-.1d0a	c8		iny				iny
-.1d0b	c9 00		cmp #$00			cmp 	#0
-.1d0d	d0 f6		bne $1d05			bne 	_AXIGDLCopy
-.1d0f	98		tya				tya 								; Y is step to next line.
-.1d10	18		clc				clc
-.1d11	6d 80 04	adc $0480			adc 	AXMPointer
-.1d14	8d 80 04	sta $0480			sta 	AXMPointer
-.1d17	90 03		bcc $1d1c			bcc 	_AXIExitOkay
-.1d19	ee 81 04	inc $0481			inc 	AXMPointer+1
-.1d1c					_AXIExitOkay:
-.1d1c	18		clc				clc 								; is okay.
-.1d1d					_AXIExit:
-.1d1d	60		rts				rts
-.1d1e					AXIGet:
-.1d1e	20 fb 1b	jsr $1bfb			jsr 	AXIOpen 					; start.
-.1d21	ad 69 04	lda $0469			lda 	AXCurrent 					; copy address for access
-.1d24	85 30		sta $30				sta 	AXTemp0
-.1d26	ad 6a 04	lda $046a			lda 	AXCurrent+1
-.1d29	85 31		sta $31				sta 	AXTemp0+1
-.1d2b	b1 30		lda ($30),y			lda 	(AXTemp0),y 				; read
-.1d2d	20 03 1c	jsr $1c03			jsr 	AXIClose 					; close access
-.1d30	60		rts				rts
-.1d31					AXIPut:
-.1d31	20 fb 1b	jsr $1bfb			jsr 	AXIOpen 					; start.
-.1d34	48		pha				pha
-.1d35	ad 69 04	lda $0469			lda 	AXCurrent 					; copy address for access
-.1d38	85 30		sta $30				sta 	AXTemp0
-.1d3a	ad 6a 04	lda $046a			lda 	AXCurrent+1
-.1d3d	85 31		sta $31				sta 	AXTemp0+1
-.1d3f	68		pla				pla
-.1d40	91 30		sta ($30),y			sta 	(AXTemp0),y 				; write
-.1d42	20 03 1c	jsr $1c03			jsr 	AXIClose 					; close access
-.1d45	60		rts				rts
-.1d46					AXIPutData:
-.1d46	20 fb 1b	jsr $1bfb			jsr 	AXIOpen 					; start.
-.1d49	ad 69 04	lda $0469			lda 	AXCurrent 					; copy address for access
-.1d4c	85 30		sta $30				sta 	AXTemp0
-.1d4e	ad 6a 04	lda $046a			lda 	AXCurrent+1
-.1d51	85 31		sta $31				sta 	AXTemp0+1
-.1d53	5a		phy				phy 								; save Y on stack.
-.1d54	a0 03		ldy #$03			ldy 	#AXID_Flags
-.1d56	b1 30		lda ($30),y			lda 	(AXTemp0),y 				; check if defined.
-.1d58	30 0f		bmi $1d69			bmi 	_AXIPutOkay 				; no, it is always okay to put.
-.1d5a	68		pla				pla  								; get MSB back
-.1d5b	48		pha				pha
-.1d5c	a0 05		ldy #$05			ldy 	#AXID_DataHigh
-.1d5e	d1 30		cmp ($30),y			cmp 	(AXTemp0),y
-.1d60	d0 1e		bne $1d80			bne 	_AXIPutError 				; if value has changed, that's an error
-.1d62	8a		txa				txa 								; check LSB
-.1d63	a0 04		ldy #$04			ldy 	#AXID_DataLow
-.1d65	d1 30		cmp ($30),y			cmp 	(AXTemp0),y
-.1d67	d0 17		bne $1d80			bne 	_AXIPutError 				; if value has changed, that's an error
-.1d69					_AXIPutOkay:
-.1d69	68		pla				pla
-.1d6a	a0 05		ldy #$05			ldy 	#AXID_DataHigh 				; write high byte
-.1d6c	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1d6e	8a		txa				txa
-.1d6f	a0 04		ldy #$04			ldy 	#AXID_DataLow 				; write low byte
-.1d71	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1d73	a0 03		ldy #$03			ldy 	#AXID_Flags 				; clear the 'defined' flag.
-.1d75	b1 30		lda ($30),y			lda 	(AXTemp0),y
-.1d77	29 7f		and #$7f			and 	#$7F
-.1d79	91 30		sta ($30),y			sta 	(AXTemp0),y
-.1d7b	20 03 1c	jsr $1c03			jsr 	AXIClose 					; close access
-.1d7e	18		clc				clc
-.1d7f	60		rts				rts
-.1d80					_AXIPutError:
-.1d80	68		pla				pla 								; throw saved Y
-.1d81	20 03 1c	jsr $1c03			jsr 	AXIClose 					; return with error redefine.
-.1d84	a9 04		lda #$04			lda 	#AXERRRedefine
-.1d86	38		sec				sec
-.1d87	60		rts				rts
-.1d88					AXICompareCurrent:
-.1d88	a0 01		ldy #$01			ldy 	#1 							; check the hashes match.
-.1d8a	b1 30		lda ($30),y			lda 	(AXTemp0),y
-.1d8c	cd e6 04	cmp $04e6			cmp 	AXIHash
-.1d8f	d0 0f		bne $1da0			bne 	_AXICCFail 					; they don't, fail.
-.1d91	a0 07		ldy #$07			ldy 	#AXID_Identifier 			; compare identifier
-.1d93					_AXICCLoop:
-.1d93	b9 03 04	lda $0403,y			lda 	AXLabelBuffer-AXID_Identifier,y 	; get buffer entry
-.1d96	d1 30		cmp ($30),y			cmp 	(AXTemp0),y 				; compare against record entry.
-.1d98	d0 06		bne $1da0			bne 	_AXICCFail
-.1d9a	c8		iny				iny 								; consume it
-.1d9b	0a		asl a				asl 	a 							; if it's bit 7 was clear, go back.
-.1d9c	90 f5		bcc $1d93			bcc 	_AXICCLoop
-.1d9e	18		clc				clc 								; matched !
-.1d9f	60		rts				rts
-.1da0					_AXICCFail:
-.1da0	38		sec				sec
-.1da1	60		rts				rts
-.1da2					AXICalculateHash:
-.1da2	9c e6 04	stz $04e6			stz 	AXIHash 					; clear hash
-.1da5	a0 00		ldy #$00			ldy 	#0
-.1da7					_AXICHLoop:
-.1da7	18		clc				clc 								; add character, saving it
-.1da8	b9 0a 04	lda $040a,y			lda 	AXLabelBuffer,y
-.1dab	c8		iny				iny
-.1dac	48		pha				pha
-.1dad	6d e6 04	adc $04e6			adc 	AXIHash
-.1db0	8d e6 04	sta $04e6			sta 	AXIHash
-.1db3	68		pla				pla 								; loop back if +ve
-.1db4	10 f1		bpl $1da7			bpl 	_AXICHLoop
-.1db6	ad e6 04	lda $04e6			lda 	AXIHash 					; return value.
-.1db9	60		rts				rts
+.1c49					AXIAppendMacro:
+.1c49	08		php				php 								; save end marker/line flag.
+.1c4a	20 39 1c	jsr $1c39			jsr 	AXIOpen 					; start.
+.1c4d	ad e7 04	lda $04e7			lda 	AXIBase
+.1c50	85 31		sta $31				sta 	AXTemp0+1
+.1c52	64 30		stz $30				stz 	AXTemp0 					; save address at zTemp0
+.1c54					_AXIFindLast:
+.1c54	b2 30		lda ($30)			lda 	(AXTemp0)					; read the *next* link
+.1c56	a8		tay				tay
+.1c57	b1 30		lda ($30),y			lda 	(AXTemp0),y
+.1c59	f0 0c		beq $1c67			beq 	_AXIFoundLast 				; if zero, we're at the last defined.
+.1c5b	98		tya				tya 								; move to next.
+.1c5c	18		clc				clc
+.1c5d	65 30		adc $30				adc 	AXTemp0
+.1c5f	85 30		sta $30				sta 	AXTemp0
+.1c61	90 f1		bcc $1c54			bcc 	_AXIFindLast
+.1c63	e6 31		inc $31				inc 	AXTemp0+1
+.1c65	80 ed		bra $1c54			bra 	_AXIFindLast
+.1c67					_AXIFoundLast:
+.1c67	a0 02		ldy #$02			ldy 	#AXID_Type 					; set the type to macro.
+.1c69	a9 03		lda #$03			lda 	#AXIT_Macro
+.1c6b	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1c6d	28		plp				plp 								; type of operation required.
+.1c6e	b0 0d		bcs $1c7d			bcs 	_AXIInsertNull
+.1c70	a2 00		ldx #$00			ldx 	#0 							; insert the buffer
+.1c72					_AXIInsertBuffer:
+.1c72	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; if end of line insert $00 and exit
+.1c75	f0 08		beq $1c7f			beq 	_AXIInsertA
+.1c77	20 87 1c	jsr $1c87			jsr 	_AXIInsert 					; insert character
+.1c7a	e8		inx				inx 								; do next
+.1c7b	80 f5		bra $1c72			bra 	_AXIInsertBuffer
+.1c7d					_AXIInsertNull:
+.1c7d	a9 ff		lda #$ff			lda 	#$FF 						; insert a $FF marking macro end.
+.1c7f					_AXIInsertA:
+.1c7f	20 87 1c	jsr $1c87			jsr 	_AXIInsert
+.1c82	20 41 1c	jsr $1c41			jsr 	AXIClose 					; close access
+.1c85	18		clc				clc
+.1c86	60		rts				rts
+.1c87					_AXIInsert:
+.1c87	48		pha				pha 								; save insertable.
+.1c88	b2 30		lda ($30)			lda 	(AXTemp0) 					; get offset to end.
+.1c8a	a8		tay				tay 								; now points to next free character
+.1c8b	68		pla				pla 								; write new character out.
+.1c8c	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1c8e	c8		iny				iny 								; write new end-next-link-zero
+.1c8f	a9 00		lda #$00			lda 	#0
+.1c91	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1c93	98		tya				tya 								; bump length by one.
+.1c94	c8		iny				iny
+.1c95	92 30		sta ($30)			sta 	(AXTemp0)
+.1c97	60		rts				rts
+.1c98					AXICreateFind:
+.1c98	20 a2 1c	jsr $1ca2			jsr 	AXIFind 					; find it ?
+.1c9b	90 04		bcc $1ca1			bcc 	_AXFound 					; found so do nothing
+.1c9d	20 cd 1c	jsr $1ccd			jsr 	AXICreate 					; create new record
+.1ca0	38		sec				sec
+.1ca1					_AXFound:
+.1ca1	60		rts				rts
+.1ca2					AXIFind:
+.1ca2	86 30		stx $30				stx 	AXTemp0 					; save address at zTemp0
+.1ca4	84 31		sty $31				sty 	AXTemp0+1
+.1ca6	20 e0 1d	jsr $1de0			jsr 	AXICalculateHash 			; calculate hash
+.1ca9	20 39 1c	jsr $1c39			jsr 	AXIOpen 					; start.
+.1cac					_AXIFindEnd:
+.1cac	b2 30		lda ($30)			lda 	(AXTemp0)
+.1cae	38		sec				sec
+.1caf	f0 16		beq $1cc7			beq 	_AXIFindExit
+.1cb1	20 c6 1d	jsr $1dc6			jsr 	AXICompareCurrent 			; compare AXTemp1 ident vs AXTemp0 record
+.1cb4	90 0d		bcc $1cc3			bcc 	_AXIFoundExit 				; it's been found.
+.1cb6	18		clc				clc 								; go to next
+.1cb7	b2 30		lda ($30)			lda 	(AXTemp0)
+.1cb9	65 30		adc $30				adc 	AXTemp0
+.1cbb	85 30		sta $30				sta 	AXTemp0
+.1cbd	90 ed		bcc $1cac			bcc 	_AXIFindEnd
+.1cbf	e6 31		inc $31				inc 	AXTemp0+1
+.1cc1	80 e9		bra $1cac			bra 	_AXIFindEnd
+.1cc3					_AXIFoundExit:
+.1cc3	20 02 1d	jsr $1d02			jsr 	AXISetCurrent
+.1cc6	18		clc				clc
+.1cc7					_AXIFindExit:
+.1cc7	08		php				php
+.1cc8	20 41 1c	jsr $1c41			jsr 	AXIClose
+.1ccb	28		plp				plp
+.1ccc	60		rts				rts
+.1ccd					AXICreate:
+.1ccd	20 39 1c	jsr $1c39			jsr 	AXIOpen 					; start.
+.1cd0	a0 00		ldy #$00			ldy 	#0
+.1cd2					_AXIFill:
+.1cd2	a9 00		lda #$00			lda 	#0
+.1cd4	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1cd6	c8		iny				iny
+.1cd7	c0 07		cpy #$07			cpy 	#AXID_Identifier
+.1cd9	d0 f7		bne $1cd2			bne 	_AXIFill
+.1cdb					_AXICopy:
+.1cdb	b9 03 04	lda $0403,y			lda 	AXLabelBuffer-AXID_Identifier,y 	; copy name in from buffer.
+.1cde	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1ce0	c8		iny				iny 								; next character
+.1ce1	0a		asl a				asl 	a 							; keep going till bit 7 set.
+.1ce2	90 f7		bcc $1cdb			bcc 	_AXICopy
+.1ce4	a9 00		lda #$00			lda 	#0 							; write zero at end (end of list)
+.1ce6	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1ce8	98		tya				tya 								; set the offset link.
+.1ce9	92 30		sta ($30)			sta 	(AXTemp0)
+.1ceb	a0 01		ldy #$01			ldy 	#AXID_Hash 					; fill the data in. +1 is the hash
+.1ced	ad e6 04	lda $04e6			lda 	AXIHash
+.1cf0	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1cf2	a0 03		ldy #$03			ldy 	#AXID_Flags 				; set the undefined flag.
+.1cf4	a9 80		lda #$80			lda 	#$80
+.1cf6	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1cf8	38		sec				sec 								; return CS, created
+.1cf9					_AXICFound:
+.1cf9	08		php				php 								; save carry
+.1cfa	20 02 1d	jsr $1d02			jsr 	AXISetCurrent
+.1cfd	20 41 1c	jsr $1c41			jsr 	AXIClose 					; close access
+.1d00	28		plp				plp 								; restore carry.
+.1d01	60		rts				rts
+.1d02					AXISetCurrent:
+.1d02	a5 30		lda $30				lda 	AXTemp0 					; save as current record
+.1d04	8d 69 04	sta $0469			sta 	AXCurrent
+.1d07	a5 31		lda $31				lda 	AXTemp0+1
+.1d09	8d 6a 04	sta $046a			sta 	AXCurrent+1
+.1d0c	60		rts				rts
+.1d0d					AXIGetDataAddress:
+.1d0d	20 39 1c	jsr $1c39			jsr 	AXIOpen 					; start.
+.1d10	ad 69 04	lda $0469			lda 	AXCurrent 					; copy address for access
+.1d13	85 30		sta $30				sta 	AXTemp0
+.1d15	ad 6a 04	lda $046a			lda 	AXCurrent+1
+.1d18	85 31		sta $31				sta 	AXTemp0+1
+.1d1a	a0 07		ldy #$07			ldy 	#AXID_Identifier 			; point to name
+.1d1c					_AXIFindEnd:
+.1d1c	b1 30		lda ($30),y			lda 	(AXTemp0),y 				; get next
+.1d1e	0a		asl a				asl 	a		 					; bit 7 to carry
+.1d1f	c8		iny				iny
+.1d20	90 fa		bcc $1d1c			bcc 	_AXIFindEnd
+.1d22	98		tya				tya 								; put address of data in YX.
+.1d23	18		clc				clc
+.1d24	65 30		adc $30				adc 	AXTemp0
+.1d26	aa		tax				tax
+.1d27	a5 31		lda $31				lda 	AXTemp0+1
+.1d29	69 00		adc #$00			adc 	#0
+.1d2b	a8		tay				tay
+.1d2c	20 41 1c	jsr $1c41			jsr 	AXIClose 					; close access
+.1d2f	60		rts				rts
+.1d30					AXIGetDataLine:
+.1d30	ad 80 04	lda $0480			lda 	AXMPointer 					; copy pointer to AXTemp0
+.1d33	85 30		sta $30				sta 	AXTemp0
+.1d35	ad 81 04	lda $0481			lda 	AXMPointer+1
+.1d38	85 31		sta $31				sta 	AXTemp0+1
+.1d3a	b2 30		lda ($30)			lda 	(AXTemp0) 					; reached the end ?
+.1d3c	c9 ff		cmp #$ff			cmp 	#$FF
+.1d3e	38		sec				sec 								; if so exit with CS.
+.1d3f	f0 1a		beq $1d5b			beq 	_AXIExit
+.1d41	a0 00		ldy #$00			ldy 	#0 							; copy data line to buffer.
+.1d43					_AXIGDLCopy:
+.1d43	b1 30		lda ($30),y			lda 	(AXTemp0),y
+.1d45	99 82 04	sta $0482,y			sta 	AXBuffer,y
+.1d48	c8		iny				iny
+.1d49	c9 00		cmp #$00			cmp 	#0
+.1d4b	d0 f6		bne $1d43			bne 	_AXIGDLCopy
+.1d4d	98		tya				tya 								; Y is step to next line.
+.1d4e	18		clc				clc
+.1d4f	6d 80 04	adc $0480			adc 	AXMPointer
+.1d52	8d 80 04	sta $0480			sta 	AXMPointer
+.1d55	90 03		bcc $1d5a			bcc 	_AXIExitOkay
+.1d57	ee 81 04	inc $0481			inc 	AXMPointer+1
+.1d5a					_AXIExitOkay:
+.1d5a	18		clc				clc 								; is okay.
+.1d5b					_AXIExit:
+.1d5b	60		rts				rts
+.1d5c					AXIGet:
+.1d5c	20 39 1c	jsr $1c39			jsr 	AXIOpen 					; start.
+.1d5f	ad 69 04	lda $0469			lda 	AXCurrent 					; copy address for access
+.1d62	85 30		sta $30				sta 	AXTemp0
+.1d64	ad 6a 04	lda $046a			lda 	AXCurrent+1
+.1d67	85 31		sta $31				sta 	AXTemp0+1
+.1d69	b1 30		lda ($30),y			lda 	(AXTemp0),y 				; read
+.1d6b	20 41 1c	jsr $1c41			jsr 	AXIClose 					; close access
+.1d6e	60		rts				rts
+.1d6f					AXIPut:
+.1d6f	20 39 1c	jsr $1c39			jsr 	AXIOpen 					; start.
+.1d72	48		pha				pha
+.1d73	ad 69 04	lda $0469			lda 	AXCurrent 					; copy address for access
+.1d76	85 30		sta $30				sta 	AXTemp0
+.1d78	ad 6a 04	lda $046a			lda 	AXCurrent+1
+.1d7b	85 31		sta $31				sta 	AXTemp0+1
+.1d7d	68		pla				pla
+.1d7e	91 30		sta ($30),y			sta 	(AXTemp0),y 				; write
+.1d80	20 41 1c	jsr $1c41			jsr 	AXIClose 					; close access
+.1d83	60		rts				rts
+.1d84					AXIPutData:
+.1d84	20 39 1c	jsr $1c39			jsr 	AXIOpen 					; start.
+.1d87	ad 69 04	lda $0469			lda 	AXCurrent 					; copy address for access
+.1d8a	85 30		sta $30				sta 	AXTemp0
+.1d8c	ad 6a 04	lda $046a			lda 	AXCurrent+1
+.1d8f	85 31		sta $31				sta 	AXTemp0+1
+.1d91	5a		phy				phy 								; save Y on stack.
+.1d92	a0 03		ldy #$03			ldy 	#AXID_Flags
+.1d94	b1 30		lda ($30),y			lda 	(AXTemp0),y 				; check if defined.
+.1d96	30 0f		bmi $1da7			bmi 	_AXIPutOkay 				; no, it is always okay to put.
+.1d98	68		pla				pla  								; get MSB back
+.1d99	48		pha				pha
+.1d9a	a0 05		ldy #$05			ldy 	#AXID_DataHigh
+.1d9c	d1 30		cmp ($30),y			cmp 	(AXTemp0),y
+.1d9e	d0 1e		bne $1dbe			bne 	_AXIPutError 				; if value has changed, that's an error
+.1da0	8a		txa				txa 								; check LSB
+.1da1	a0 04		ldy #$04			ldy 	#AXID_DataLow
+.1da3	d1 30		cmp ($30),y			cmp 	(AXTemp0),y
+.1da5	d0 17		bne $1dbe			bne 	_AXIPutError 				; if value has changed, that's an error
+.1da7					_AXIPutOkay:
+.1da7	68		pla				pla
+.1da8	a0 05		ldy #$05			ldy 	#AXID_DataHigh 				; write high byte
+.1daa	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1dac	8a		txa				txa
+.1dad	a0 04		ldy #$04			ldy 	#AXID_DataLow 				; write low byte
+.1daf	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1db1	a0 03		ldy #$03			ldy 	#AXID_Flags 				; clear the 'defined' flag.
+.1db3	b1 30		lda ($30),y			lda 	(AXTemp0),y
+.1db5	29 7f		and #$7f			and 	#$7F
+.1db7	91 30		sta ($30),y			sta 	(AXTemp0),y
+.1db9	20 41 1c	jsr $1c41			jsr 	AXIClose 					; close access
+.1dbc	18		clc				clc
+.1dbd	60		rts				rts
+.1dbe					_AXIPutError:
+.1dbe	68		pla				pla 								; throw saved Y
+.1dbf	20 41 1c	jsr $1c41			jsr 	AXIClose 					; return with error redefine.
+.1dc2	a9 04		lda #$04			lda 	#AXERRRedefine
+.1dc4	38		sec				sec
+.1dc5	60		rts				rts
+.1dc6					AXICompareCurrent:
+.1dc6	a0 01		ldy #$01			ldy 	#1 							; check the hashes match.
+.1dc8	b1 30		lda ($30),y			lda 	(AXTemp0),y
+.1dca	cd e6 04	cmp $04e6			cmp 	AXIHash
+.1dcd	d0 0f		bne $1dde			bne 	_AXICCFail 					; they don't, fail.
+.1dcf	a0 07		ldy #$07			ldy 	#AXID_Identifier 			; compare identifier
+.1dd1					_AXICCLoop:
+.1dd1	b9 03 04	lda $0403,y			lda 	AXLabelBuffer-AXID_Identifier,y 	; get buffer entry
+.1dd4	d1 30		cmp ($30),y			cmp 	(AXTemp0),y 				; compare against record entry.
+.1dd6	d0 06		bne $1dde			bne 	_AXICCFail
+.1dd8	c8		iny				iny 								; consume it
+.1dd9	0a		asl a				asl 	a 							; if it's bit 7 was clear, go back.
+.1dda	90 f5		bcc $1dd1			bcc 	_AXICCLoop
+.1ddc	18		clc				clc 								; matched !
+.1ddd	60		rts				rts
+.1dde					_AXICCFail:
+.1dde	38		sec				sec
+.1ddf	60		rts				rts
+.1de0					AXICalculateHash:
+.1de0	9c e6 04	stz $04e6			stz 	AXIHash 					; clear hash
+.1de3	a0 00		ldy #$00			ldy 	#0
+.1de5					_AXICHLoop:
+.1de5	18		clc				clc 								; add character, saving it
+.1de6	b9 0a 04	lda $040a,y			lda 	AXLabelBuffer,y
+.1de9	c8		iny				iny
+.1dea	48		pha				pha
+.1deb	6d e6 04	adc $04e6			adc 	AXIHash
+.1dee	8d e6 04	sta $04e6			sta 	AXIHash
+.1df1	68		pla				pla 								; loop back if +ve
+.1df2	10 f1		bpl $1de5			bpl 	_AXICHLoop
+.1df4	ad e6 04	lda $04e6			lda 	AXIHash 					; return value.
+.1df7	60		rts				rts
 .04e6					AXIHash:
 >04e6							.fill 	1
-.1dba					AXIReset:
-.1dba	a9 00		lda #$00			lda 	#AXAPISetup 				; get the start & end
-.1dbc	20 34 12	jsr $1234			jsr 	AXCallAPI
-.1dbf	8d e7 04	sta $04e7			sta 	AXIBase
-.1dc2	8c e8 04	sty $04e8			sty 	AXIEnd
-.1dc5	8c ea 04	sty $04ea			sty 	AXIStack+1 					; reset stack
-.1dc8	9c e9 04	stz $04e9			stz 	AXIStack
-.1dcb	20 fb 1b	jsr $1bfb			jsr 	AXIOpen 					; access id store
-.1dce	ad e7 04	lda $04e7			lda 	AXIBase 					; erase the user definitions.
-.1dd1	85 31		sta $31				sta 	AXTemp0+1
-.1dd3	64 30		stz $30				stz 	AXTemp0
-.1dd5	a9 00		lda #$00			lda 	#0
-.1dd7	92 30		sta ($30)			sta 	(AXTemp0)
-.1dd9	20 03 1c	jsr $1c03			jsr 	AXIClose 					; release ID store.
-.1ddc	60		rts				rts
+.1df8					AXIReset:
+.1df8	a9 00		lda #$00			lda 	#AXAPISetup 				; get the start & end
+.1dfa	20 34 12	jsr $1234			jsr 	AXCallAPI
+.1dfd	8d e7 04	sta $04e7			sta 	AXIBase
+.1e00	8c e8 04	sty $04e8			sty 	AXIEnd
+.1e03	8c ea 04	sty $04ea			sty 	AXIStack+1 					; reset stack
+.1e06	9c e9 04	stz $04e9			stz 	AXIStack
+.1e09	20 39 1c	jsr $1c39			jsr 	AXIOpen 					; access id store
+.1e0c	ad e7 04	lda $04e7			lda 	AXIBase 					; erase the user definitions.
+.1e0f	85 31		sta $31				sta 	AXTemp0+1
+.1e11	64 30		stz $30				stz 	AXTemp0
+.1e13	a9 00		lda #$00			lda 	#0
+.1e15	92 30		sta ($30)			sta 	(AXTemp0)
+.1e17	20 41 1c	jsr $1c41			jsr 	AXIClose 					; release ID store.
+.1e1a	60		rts				rts
 .04e7					AXIBase:
 >04e7							.fill 	1
 .04e8					AXIEnd:
 >04e8							.fill 	1
 .04e9					AXIStack:
 >04e9							.fill 	2
-.1ddd					AXReadCharacter:
-.1ddd	da		phx				phx
-.1dde	5a		phy				phy
-.1ddf	ad 71 04	lda $0471			lda 	AXLastCharacter 			; is last character $FF, this means EOF
-.1de2	c9 ff		cmp #$ff			cmp 	#$FF
-.1de4	f0 29		beq $1e0f			beq 	_AXREOF
-.1de6					_AXNext:
-.1de6	a9 03		lda #$03			lda 	#3 							; read char using API
-.1de8	ae 70 04	ldx $0470			ldx 	AXFileHandle
-.1deb	20 34 12	jsr $1234			jsr 	AXCallAPI
-.1dee	b0 1f		bcs $1e0f			bcs 	_AXREOF
-.1df0	c9 09		cmp #$09			cmp 	#9 							; convert TAB to space
-.1df2	d0 02		bne $1df6			bne 	_AXRNotSpace
-.1df4	a9 20		lda #$20			lda 	#' '
-.1df6					_AXRNotSpace:
-.1df6	c9 0a		cmp #$0a			cmp 	#10 						; if not LF, exit successfully.
-.1df8	d0 0e		bne $1e08			bne 	_AXRExit
-.1dfa	ae 71 04	ldx $0471			ldx 	AXLastCharacter 			; check last char was CR
-.1dfd	e0 0d		cpx #$0d			cpx 	#13
-.1dff	f0 e5		beq $1de6			beq 	_AXNext 					; if so its CR/LF so we ignore the LF.
-.1e01	8d 71 04	sta $0471			sta 	AXLastCharacter
-.1e04	a9 0d		lda #$0d			lda 	#13 						; return CR, last char still LF.
-.1e06	80 03		bra $1e0b			bra 	_AXRExit2
-.1e08					_AXRExit:
-.1e08	8d 71 04	sta $0471			sta 	AXLastCharacter
-.1e0b					_AXRExit2:
-.1e0b	18		clc				clc
-.1e0c	7a		ply				ply
-.1e0d	fa		plx				plx
-.1e0e	60		rts				rts
-.1e0f					_AXREOF:
-.1e0f	a9 ff		lda #$ff			lda 	#$FF
-.1e11	8d 71 04	sta $0471			sta 	AXLastCharacter
-.1e14	38		sec				sec
-.1e15	7a		ply				ply
-.1e16	fa		plx				plx
-.1e17	60		rts				rts
-.1e18					AXListLine:
-.1e18	ad 6d 04	lda $046d			lda 	AXPass 						; only on pass 2
-.1e1b	c9 02		cmp #$02			cmp 	#2
-.1e1d	d0 63		bne $1e82			bne 	_AXLLExit
-.1e1f	ad 82 04	lda $0482			lda 	AXBuffer 					; blank line ?
-.1e22	f0 5e		beq $1e82			beq 	_AXLLExit
-.1e24	ad 76 04	lda $0476			lda 	AXLineNumberDecimal+1
-.1e27	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.1e2a	ad 75 04	lda $0475			lda 	AXLineNumberDecimal
-.1e2d	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.1e30	20 a7 1e	jsr $1ea7			jsr	 	AXLSpace
-.1e33	ad 79 04	lda $0479			lda 	AXProgramCounterStart+2 	; Page
-.1e36	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.1e39	a9 3a		lda #$3a			lda 	#58
-.1e3b	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.1e3e	ad 78 04	lda $0478			lda 	AXProgramCounterStart+1 	; Address
-.1e41	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.1e44	ad 77 04	lda $0477			lda 	AXProgramCounterStart+0
-.1e47	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.1e4a	20 a7 1e	jsr $1ea7			jsr 	AXLSpace
-.1e4d	a2 00		ldx #$00			ldx 	#0 							; output listing bytes
-.1e4f					_AXLHex:
-.1e4f	20 a7 1e	jsr $1ea7			jsr 	AXLSpace 					; space
-.1e52	ec d3 04	cpx $04d3			cpx 	AXListCount 				; compare against done.
-.1e55	b0 08		bcs $1e5f			bcs 	_AXLSpace 					; if <= done then output spaces.
-.1e57	bd d4 04	lda $04d4,x			lda 	AXListBytes,x
-.1e5a	20 91 1e	jsr $1e91			jsr 	AXLOutHex 					; output hex
-.1e5d	80 06		bra $1e65			bra 	_AXLLLoop
-.1e5f					_AXLSpace:
-.1e5f	20 a7 1e	jsr $1ea7			jsr 	AXLSpace
-.1e62	20 a7 1e	jsr $1ea7			jsr 	AXLSpace
-.1e65					_AXLLLoop:
-.1e65	e8		inx				inx
-.1e66	e0 04		cpx #$04			cpx	 	#AXListByteCount 			; done all of them
-.1e68	d0 e5		bne $1e4f			bne 	_AXLHex
-.1e6a	20 a7 1e	jsr $1ea7			jsr 	AXLSpace 					; another space.
-.1e6d	a2 00		ldx #$00			ldx 	#0 							; output the line.
-.1e6f					_AXOutLine:
-.1e6f	bd 82 04	lda $0482,x			lda 	AXBuffer,x
-.1e72	f0 09		beq $1e7d			beq 	_AXEnd
-.1e74	20 8a 20	jsr $208a			jsr 	AXConvertUpper
-.1e77	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.1e7a	e8		inx				inx
-.1e7b	80 f2		bra $1e6f			bra 	_AXOutLine
-.1e7d					_AXEnd:
-.1e7d	a9 0d		lda #$0d			lda 	#13 						; CR/LF
-.1e7f	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.1e82					_AXLLExit:
-.1e82	60		rts				rts
-.1e83					AXAddListingByte:
-.1e83	ae d3 04	ldx $04d3			ldx 	AXListCount 				; already max listable
-.1e86	e0 04		cpx #$04			cpx 	#AXListByteCount
-.1e88	f0 06		beq $1e90			beq 	_AXAExit
-.1e8a	9d d4 04	sta $04d4,x			sta 	AXListBytes,x 				; store the byte
-.1e8d	ee d3 04	inc $04d3			inc 	AXListCount 				; bump count
-.1e90					_AXAExit:
-.1e90	60		rts				rts
-.1e91					AXLOutHex:
-.1e91	48		pha				pha 								; do upper nibble
-.1e92	4a		lsr a				lsr 	a
-.1e93	4a		lsr a				lsr 	a
-.1e94	4a		lsr a				lsr 	a
-.1e95	4a		lsr a				lsr 	a
-.1e96	20 9a 1e	jsr $1e9a			jsr 	_AXLOutNibble
-.1e99	68		pla				pla 								; do lower nibble
-.1e9a					_AXLOutNibble:
-.1e9a	29 0f		and #$0f			and 	#15
-.1e9c	c9 0a		cmp #$0a			cmp 	#10
-.1e9e	90 02		bcc $1ea2			bcc 	_AXLNotHex
-.1ea0	69 06		adc #$06			adc 	#6
-.1ea2					_AXLNotHex:
-.1ea2	69 30		adc #$30			adc 	#48
-.1ea4	4c a9 1e	jmp $1ea9			jmp 	AXListOut
-.1ea7					AXLSpace:
-.1ea7	a9 20		lda #$20			lda 	#32
-.1ea9					AXListOut:
-.1ea9	da		phx				phx 								; preserve XY and call API List function.
-.1eaa	5a		phy				phy
-.1eab	aa		tax				tax
-.1eac	a9 06		lda #$06			lda 	#AXAPIListChar
-.1eae	20 34 12	jsr $1234			jsr 	AXCallAPI
-.1eb1	7a		ply				ply
-.1eb2	fa		plx				plx
-.1eb3	60		rts				rts
-.1eb4					AXWriteByte:
-.1eb4	48		pha				pha 								; save registers
-.1eb5	da		phx				phx
-.1eb6	5a		phy				phy
-.1eb7	48		pha				pha 								; add to listing
-.1eb8	20 83 1e	jsr $1e83			jsr 	AXAddListingByte
-.1ebb	68		pla				pla
-.1ebc	ae 6d 04	ldx $046d			ldx 	AXPass 						; output pass#2 only.
-.1ebf	e0 02		cpx #$02			cpx 	#2
-.1ec1	d0 17		bne $1eda			bne 	_AXWBBumpPC
-.1ec3	ae 06 04	ldx $0406			ldx 	AXProgramCounter 			; copy location
-.1ec6	86 30		stx $30				stx 	AXTemp0
-.1ec8	ae 07 04	ldx $0407			ldx 	AXProgramCounter+1
-.1ecb	86 31		stx $31				stx 	AXTemp0+1
-.1ecd	ae 08 04	ldx $0408			ldx 	AXProgramCounter+2
-.1ed0	86 32		stx $32				stx 	AXTemp0+2
-.1ed2	a8		tay				tay									; char to Y.
-.1ed3	a2 30		ldx #$30			ldx 	#AXTemp0 					; ($00,X) is the address
-.1ed5	a9 04		lda #$04			lda 	#AXAPIWriteByte				; API function 4
-.1ed7	20 34 12	jsr $1234			jsr 	AXCallAPI
-.1eda					_AXWBBumpPC:
-.1eda	ee 06 04	inc $0406			inc 	AXProgramCounter 			; bump PC
-.1edd	d0 03		bne $1ee2			bne 	_AXWBSkip
-.1edf	ee 07 04	inc $0407			inc 	AXProgramCounter+1
-.1ee2					_AXWBSkip:
-.1ee2	7a		ply				ply
-.1ee3	fa		plx				plx
-.1ee4	68		pla				pla
-.1ee5	60		rts				rts
-.1ee6					AXBankCmd:
-.1ee6	ae d9 04	ldx $04d9			ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
-.1ee9	20 25 18	jsr $1825			jsr 	AXGet 						; what follows
-.1eec	c9 00		cmp #$00			cmp 	#0
-.1eee	f0 0d		beq $1efd			beq 	_AXBCIncrement 				; if eol then just increment the bank.
-.1ef0	20 d6 16	jsr $16d6			jsr 	AXPass2Expression 			; get value
-.1ef3	b0 07		bcs $1efc			bcs 	_AXBExit
-.1ef5	ad 00 04	lda $0400			lda 	AXLeft 						; update the bank
-.1ef8	8d 08 04	sta $0408			sta 	AXProgramCounter+2
-.1efb	18		clc				clc
-.1efc					_AXBExit:
-.1efc	60		rts				rts
-.1efd					_AXBCIncrement:
-.1efd	ee 08 04	inc $0408			inc 	AXProgramCounter+2 			; next bank
-.1f00	18		clc				clc
-.1f01	60		rts				rts
-.1f02					AXBInclude:
-.1f02					AXBInclude2:
-.1f02	ae d9 04	ldx $04d9			ldx 	AXOperandPos
-.1f05	20 3f 20	jsr $203f			jsr		AXTGetTextString 			; file name to buffeer
-.1f08	b0 35		bcs $1f3f			bcs 	_AXISyntax 					; failed.
-.1f0a	20 18 1e	jsr $1e18			jsr 	AXListLine 					; list line before expansion
-.1f0d	20 3a 21	jsr $213a			jsr 	AXPushFrame 				; save current frame
-.1f10	a9 01		lda #$01			lda 	#AXAPIOpen 					; open the source file.
-.1f12	a0 04		ldy #$04			ldy 	#AXTextParameter >> 8
-.1f14	a2 1b		ldx #$1b			ldx 	#AXTextParameter & $FF
-.1f16	20 34 12	jsr $1234			jsr 	AXCallAPI
-.1f19	8d 70 04	sta $0470			sta 	AXFileHandle 				; save handle
-.1f1c	a9 85		lda #$85			lda 	#AXERRNotFound 				; return not found if failed.
-.1f1e	b0 1e		bcs $1f3e			bcs 	_AXBExit
-.1f20					_AXBOut:
-.1f20	a9 03		lda #$03			lda 	#AXAPIReadByte 				; read char using API
-.1f22	ae 70 04	ldx $0470			ldx 	AXFileHandle
-.1f25	20 34 12	jsr $1234			jsr 	AXCallAPI
-.1f28	b0 05		bcs $1f2f			bcs 	_AXBEndFile 				; exit on EOF
-.1f2a	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte 				; otherwise copy out.
-.1f2d	80 f1		bra $1f20			bra 	_AXBOut
-.1f2f					_AXBEndFile
-.1f2f	a9 02		lda #$02			lda 	#AXAPIClose 				; close the file.
-.1f31	ae 70 04	ldx $0470			ldx 	AXFileHandle
-.1f34	20 34 12	jsr $1234			jsr 	AXCallAPI
-.1f37	20 5c 21	jsr $215c			jsr 	AXPullFrame 				; restore frame saving the results
-.1f3a	9c 82 04	stz $0482			stz 	AXBuffer 					; stop 2nd listing.
-.1f3d	18		clc				clc
-.1f3e					_AXBExit:
-.1f3e	60		rts				rts
-.1f3f					_AXISyntax:
-.1f3f	a9 01		lda #$01			lda 	#AXERRSyntax
-.1f41	38		sec				sec
-.1f42	60		rts				rts
-.1f43					AXByteCmd:
-.1f43					AXByteCmd2:
-.1f43	ae d9 04	ldx $04d9			ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
-.1f46					_AXBLoop:
-.1f46	20 d6 16	jsr $16d6			jsr 	AXPass2Expression 			; get value
-.1f49	b0 27		bcs $1f72			bcs 	_AXBExit
-.1f4b	ad 6d 04	lda $046d			lda 	AXPass 						; only check size on pass 2
-.1f4e	c9 02		cmp #$02			cmp 	#2
-.1f50	d0 09		bne $1f5b			bne 	_AXBNoCheck
-.1f52	ad 01 04	lda $0401			lda 	AXLeft+1
-.1f55	f0 04		beq $1f5b			beq 	_AXBNoCheck
-.1f57	a9 09		lda #$09			lda 	#AXERRSize 					; not a byte.
-.1f59	38		sec				sec
-.1f5a	60		rts				rts
-.1f5b					_AXBNoCheck:
-.1f5b	ad 00 04	lda $0400			lda 	AXLeft 						; output the byte.
-.1f5e	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte
-.1f61	20 25 18	jsr $1825			jsr 	AXGet 						; get next
-.1f64	e8		inx				inx
-.1f65	c9 2c		cmp #$2c			cmp 	#","
-.1f67	f0 dd		beq $1f46			beq 	_AXBLoop
-.1f69	c9 00		cmp #$00			cmp 	#0
-.1f6b	d0 02		bne $1f6f			bne 	_AXBSyntax
-.1f6d	18		clc				clc
-.1f6e	60		rts				rts
-.1f6f					_AXBSyntax:
-.1f6f	a9 01		lda #$01			lda 	#AXERRSyntax
-.1f71	38		sec				sec
-.1f72					_AXBExit:
-.1f72	60		rts				rts
-.1f73					AXFillCmd:
-.1f73					AXFillCmd2:
-.1f73	ae d9 04	ldx $04d9			ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
-.1f76	20 c8 16	jsr $16c8			jsr 	AXExpressionDefined
-.1f79	b0 14		bcs $1f8f			bcs 	_AXFExit 					; didn't work.
+.1e1b					AXReadCharacter:
+.1e1b	da		phx				phx
+.1e1c	5a		phy				phy
+.1e1d	ad 71 04	lda $0471			lda 	AXLastCharacter 			; is last character $FF, this means EOF
+.1e20	c9 ff		cmp #$ff			cmp 	#$FF
+.1e22	f0 29		beq $1e4d			beq 	_AXREOF
+.1e24					_AXNext:
+.1e24	a9 03		lda #$03			lda 	#3 							; read char using API
+.1e26	ae 70 04	ldx $0470			ldx 	AXFileHandle
+.1e29	20 34 12	jsr $1234			jsr 	AXCallAPI
+.1e2c	b0 1f		bcs $1e4d			bcs 	_AXREOF
+.1e2e	c9 09		cmp #$09			cmp 	#9 							; convert TAB to space
+.1e30	d0 02		bne $1e34			bne 	_AXRNotSpace
+.1e32	a9 20		lda #$20			lda 	#' '
+.1e34					_AXRNotSpace:
+.1e34	c9 0a		cmp #$0a			cmp 	#10 						; if not LF, exit successfully.
+.1e36	d0 0e		bne $1e46			bne 	_AXRExit
+.1e38	ae 71 04	ldx $0471			ldx 	AXLastCharacter 			; check last char was CR
+.1e3b	e0 0d		cpx #$0d			cpx 	#13
+.1e3d	f0 e5		beq $1e24			beq 	_AXNext 					; if so its CR/LF so we ignore the LF.
+.1e3f	8d 71 04	sta $0471			sta 	AXLastCharacter
+.1e42	a9 0d		lda #$0d			lda 	#13 						; return CR, last char still LF.
+.1e44	80 03		bra $1e49			bra 	_AXRExit2
+.1e46					_AXRExit:
+.1e46	8d 71 04	sta $0471			sta 	AXLastCharacter
+.1e49					_AXRExit2:
+.1e49	18		clc				clc
+.1e4a	7a		ply				ply
+.1e4b	fa		plx				plx
+.1e4c	60		rts				rts
+.1e4d					_AXREOF:
+.1e4d	a9 ff		lda #$ff			lda 	#$FF
+.1e4f	8d 71 04	sta $0471			sta 	AXLastCharacter
+.1e52	38		sec				sec
+.1e53	7a		ply				ply
+.1e54	fa		plx				plx
+.1e55	60		rts				rts
+.1e56					AXListLine:
+.1e56	ad 6d 04	lda $046d			lda 	AXPass 						; only on pass 2
+.1e59	c9 02		cmp #$02			cmp 	#2
+.1e5b	d0 63		bne $1ec0			bne 	_AXLLExit
+.1e5d	ad 82 04	lda $0482			lda 	AXBuffer 					; blank line ?
+.1e60	f0 5e		beq $1ec0			beq 	_AXLLExit
+.1e62	ad 76 04	lda $0476			lda 	AXLineNumberDecimal+1
+.1e65	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.1e68	ad 75 04	lda $0475			lda 	AXLineNumberDecimal
+.1e6b	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.1e6e	20 e5 1e	jsr $1ee5			jsr	 	AXLSpace
+.1e71	ad 79 04	lda $0479			lda 	AXProgramCounterStart+2 	; Page
+.1e74	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.1e77	a9 3a		lda #$3a			lda 	#58
+.1e79	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.1e7c	ad 78 04	lda $0478			lda 	AXProgramCounterStart+1 	; Address
+.1e7f	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.1e82	ad 77 04	lda $0477			lda 	AXProgramCounterStart+0
+.1e85	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.1e88	20 e5 1e	jsr $1ee5			jsr 	AXLSpace
+.1e8b	a2 00		ldx #$00			ldx 	#0 							; output listing bytes
+.1e8d					_AXLHex:
+.1e8d	20 e5 1e	jsr $1ee5			jsr 	AXLSpace 					; space
+.1e90	ec d3 04	cpx $04d3			cpx 	AXListCount 				; compare against done.
+.1e93	b0 08		bcs $1e9d			bcs 	_AXLSpace 					; if <= done then output spaces.
+.1e95	bd d4 04	lda $04d4,x			lda 	AXListBytes,x
+.1e98	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex 					; output hex
+.1e9b	80 06		bra $1ea3			bra 	_AXLLLoop
+.1e9d					_AXLSpace:
+.1e9d	20 e5 1e	jsr $1ee5			jsr 	AXLSpace
+.1ea0	20 e5 1e	jsr $1ee5			jsr 	AXLSpace
+.1ea3					_AXLLLoop:
+.1ea3	e8		inx				inx
+.1ea4	e0 04		cpx #$04			cpx	 	#AXListByteCount 			; done all of them
+.1ea6	d0 e5		bne $1e8d			bne 	_AXLHex
+.1ea8	20 e5 1e	jsr $1ee5			jsr 	AXLSpace 					; another space.
+.1eab	a2 00		ldx #$00			ldx 	#0 							; output the line.
+.1ead					_AXOutLine:
+.1ead	bd 82 04	lda $0482,x			lda 	AXBuffer,x
+.1eb0	f0 09		beq $1ebb			beq 	_AXEnd
+.1eb2	20 c8 20	jsr $20c8			jsr 	AXConvertUpper
+.1eb5	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.1eb8	e8		inx				inx
+.1eb9	80 f2		bra $1ead			bra 	_AXOutLine
+.1ebb					_AXEnd:
+.1ebb	a9 0d		lda #$0d			lda 	#13 						; CR/LF
+.1ebd	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.1ec0					_AXLLExit:
+.1ec0	60		rts				rts
+.1ec1					AXAddListingByte:
+.1ec1	ae d3 04	ldx $04d3			ldx 	AXListCount 				; already max listable
+.1ec4	e0 04		cpx #$04			cpx 	#AXListByteCount
+.1ec6	f0 06		beq $1ece			beq 	_AXAExit
+.1ec8	9d d4 04	sta $04d4,x			sta 	AXListBytes,x 				; store the byte
+.1ecb	ee d3 04	inc $04d3			inc 	AXListCount 				; bump count
+.1ece					_AXAExit:
+.1ece	60		rts				rts
+.1ecf					AXLOutHex:
+.1ecf	48		pha				pha 								; do upper nibble
+.1ed0	4a		lsr a				lsr 	a
+.1ed1	4a		lsr a				lsr 	a
+.1ed2	4a		lsr a				lsr 	a
+.1ed3	4a		lsr a				lsr 	a
+.1ed4	20 d8 1e	jsr $1ed8			jsr 	_AXLOutNibble
+.1ed7	68		pla				pla 								; do lower nibble
+.1ed8					_AXLOutNibble:
+.1ed8	29 0f		and #$0f			and 	#15
+.1eda	c9 0a		cmp #$0a			cmp 	#10
+.1edc	90 02		bcc $1ee0			bcc 	_AXLNotHex
+.1ede	69 06		adc #$06			adc 	#6
+.1ee0					_AXLNotHex:
+.1ee0	69 30		adc #$30			adc 	#48
+.1ee2	4c e7 1e	jmp $1ee7			jmp 	AXListOut
+.1ee5					AXLSpace:
+.1ee5	a9 20		lda #$20			lda 	#32
+.1ee7					AXListOut:
+.1ee7	da		phx				phx 								; preserve XY and call API List function.
+.1ee8	5a		phy				phy
+.1ee9	aa		tax				tax
+.1eea	a9 06		lda #$06			lda 	#AXAPIListChar
+.1eec	20 34 12	jsr $1234			jsr 	AXCallAPI
+.1eef	7a		ply				ply
+.1ef0	fa		plx				plx
+.1ef1	60		rts				rts
+.1ef2					AXWriteByte:
+.1ef2	48		pha				pha 								; save registers
+.1ef3	da		phx				phx
+.1ef4	5a		phy				phy
+.1ef5	48		pha				pha 								; add to listing
+.1ef6	20 c1 1e	jsr $1ec1			jsr 	AXAddListingByte
+.1ef9	68		pla				pla
+.1efa	ae 6d 04	ldx $046d			ldx 	AXPass 						; output pass#2 only.
+.1efd	e0 02		cpx #$02			cpx 	#2
+.1eff	d0 17		bne $1f18			bne 	_AXWBBumpPC
+.1f01	ae 06 04	ldx $0406			ldx 	AXProgramCounter 			; copy location
+.1f04	86 30		stx $30				stx 	AXTemp0
+.1f06	ae 07 04	ldx $0407			ldx 	AXProgramCounter+1
+.1f09	86 31		stx $31				stx 	AXTemp0+1
+.1f0b	ae 08 04	ldx $0408			ldx 	AXProgramCounter+2
+.1f0e	86 32		stx $32				stx 	AXTemp0+2
+.1f10	a8		tay				tay									; char to Y.
+.1f11	a2 30		ldx #$30			ldx 	#AXTemp0 					; ($00,X) is the address
+.1f13	a9 04		lda #$04			lda 	#AXAPIWriteByte				; API function 4
+.1f15	20 34 12	jsr $1234			jsr 	AXCallAPI
+.1f18					_AXWBBumpPC:
+.1f18	ee 06 04	inc $0406			inc 	AXProgramCounter 			; bump PC
+.1f1b	d0 03		bne $1f20			bne 	_AXWBSkip
+.1f1d	ee 07 04	inc $0407			inc 	AXProgramCounter+1
+.1f20					_AXWBSkip:
+.1f20	7a		ply				ply
+.1f21	fa		plx				plx
+.1f22	68		pla				pla
+.1f23	60		rts				rts
+.1f24					AXBankCmd:
+.1f24	ae d9 04	ldx $04d9			ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
+.1f27	20 63 18	jsr $1863			jsr 	AXGet 						; what follows
+.1f2a	c9 00		cmp #$00			cmp 	#0
+.1f2c	f0 0d		beq $1f3b			beq 	_AXBCIncrement 				; if eol then just increment the bank.
+.1f2e	20 14 17	jsr $1714			jsr 	AXPass2Expression 			; get value
+.1f31	b0 07		bcs $1f3a			bcs 	_AXBExit
+.1f33	ad 00 04	lda $0400			lda 	AXLeft 						; update the bank
+.1f36	8d 08 04	sta $0408			sta 	AXProgramCounter+2
+.1f39	18		clc				clc
+.1f3a					_AXBExit:
+.1f3a	60		rts				rts
+.1f3b					_AXBCIncrement:
+.1f3b	ee 08 04	inc $0408			inc 	AXProgramCounter+2 			; next bank
+.1f3e	18		clc				clc
+.1f3f	60		rts				rts
+.1f40					AXBInclude:
+.1f40					AXBInclude2:
+.1f40	ae d9 04	ldx $04d9			ldx 	AXOperandPos
+.1f43	20 7d 20	jsr $207d			jsr		AXTGetTextString 			; file name to buffeer
+.1f46	b0 35		bcs $1f7d			bcs 	_AXISyntax 					; failed.
+.1f48	20 56 1e	jsr $1e56			jsr 	AXListLine 					; list line before expansion
+.1f4b	20 78 21	jsr $2178			jsr 	AXPushFrame 				; save current frame
+.1f4e	a9 01		lda #$01			lda 	#AXAPIOpen 					; open the source file.
+.1f50	a0 04		ldy #$04			ldy 	#AXTextParameter >> 8
+.1f52	a2 1b		ldx #$1b			ldx 	#AXTextParameter & $FF
+.1f54	20 34 12	jsr $1234			jsr 	AXCallAPI
+.1f57	8d 70 04	sta $0470			sta 	AXFileHandle 				; save handle
+.1f5a	a9 85		lda #$85			lda 	#AXERRNotFound 				; return not found if failed.
+.1f5c	b0 1e		bcs $1f7c			bcs 	_AXBExit
+.1f5e					_AXBOut:
+.1f5e	a9 03		lda #$03			lda 	#AXAPIReadByte 				; read char using API
+.1f60	ae 70 04	ldx $0470			ldx 	AXFileHandle
+.1f63	20 34 12	jsr $1234			jsr 	AXCallAPI
+.1f66	b0 05		bcs $1f6d			bcs 	_AXBEndFile 				; exit on EOF
+.1f68	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte 				; otherwise copy out.
+.1f6b	80 f1		bra $1f5e			bra 	_AXBOut
+.1f6d					_AXBEndFile
+.1f6d	a9 02		lda #$02			lda 	#AXAPIClose 				; close the file.
+.1f6f	ae 70 04	ldx $0470			ldx 	AXFileHandle
+.1f72	20 34 12	jsr $1234			jsr 	AXCallAPI
+.1f75	20 9a 21	jsr $219a			jsr 	AXPullFrame 				; restore frame saving the results
+.1f78	9c 82 04	stz $0482			stz 	AXBuffer 					; stop 2nd listing.
 .1f7b	18		clc				clc
-.1f7c	ad 06 04	lda $0406			lda 	AXProgramCounter
-.1f7f	6d 00 04	adc $0400			adc 	AXLeft
-.1f82	8d 06 04	sta $0406			sta 	AXProgramCounter
-.1f85	ad 07 04	lda $0407			lda 	AXProgramCounter+1
-.1f88	6d 01 04	adc $0401			adc 	AXLeft+1
-.1f8b	8d 07 04	sta $0407			sta 	AXProgramCounter+1
-.1f8e	18		clc				clc
-.1f8f					_AXFExit:
-.1f8f	60		rts				rts
-.1f90					AXInclude:
-.1f90	ae d9 04	ldx $04d9			ldx 	AXOperandPos
-.1f93	20 3f 20	jsr $203f			jsr		AXTGetTextString 			; file name to buffeer
-.1f96	b0 18		bcs $1fb0			bcs 	_AXISyntax 					; failed.
-.1f98	20 18 1e	jsr $1e18			jsr 	AXListLine 					; list line before expansion
-.1f9b	20 3a 21	jsr $213a			jsr 	AXPushFrame 				; save current frame
-.1f9e	a0 04		ldy #$04			ldy 	#AXTextParameter >> 8 		; assemble named file
-.1fa0	a2 1b		ldx #$1b			ldx 	#AXTextParameter & $FF
-.1fa2	20 e0 11	jsr $11e0			jsr 	AXAssembleFile
-.1fa5	08		php				php 								; restore frame saving the results
-.1fa6	48		pha				pha
-.1fa7	20 5c 21	jsr $215c			jsr 	AXPullFrame
-.1faa	9c 82 04	stz $0482			stz 	AXBuffer 					; stop 2nd listing.
-.1fad	68		pla				pla
-.1fae	28		plp				plp
-.1faf	60		rts				rts
-.1fb0					_AXISyntax:
-.1fb0	a9 01		lda #$01			lda 	#AXERRSyntax
-.1fb2	38		sec				sec
-.1fb3	60		rts				rts
-.1fb4					AXXMacro:
-.1fb4	20 34 14	jsr $1434			jsr 	AXReadLine 					; read the next line
-.1fb7	b0 1e		bcs $1fd7			bcs 	_AXMExit 					; error ?
-.1fb9	20 d8 1f	jsr $1fd8			jsr 	AXMCheckEnd 				; is this .endm
-.1fbc	b0 0d		bcs $1fcb			bcs 	_AXMComplete
-.1fbe	ad 6d 04	lda $046d			lda 	AXPass 						; only do the define on pass 1.
-.1fc1	c9 02		cmp #$02			cmp 	#2
-.1fc3	f0 ef		beq $1fb4			beq 	AXXMacro
-.1fc5	18		clc				clc 								; append the buffer to the macro.
-.1fc6	20 0b 1c	jsr $1c0b			jsr 	AXIAppendMacro
-.1fc9	80 e9		bra $1fb4			bra 	AXXMacro
-.1fcb					_AXMComplete:
-.1fcb	ad 6d 04	lda $046d			lda 	AXPass
-.1fce	c9 02		cmp #$02			cmp 	#2
-.1fd0	f0 04		beq $1fd6			beq		_AXMExitOkay
-.1fd2	38		sec				sec 		 						; this appends the NULL to the macro.
-.1fd3	20 0b 1c	jsr $1c0b			jsr 	AXIAppendMacro
-.1fd6					_AXMExitOkay:
-.1fd6	18		clc				clc
-.1fd7					_AXMExit:
-.1fd7	60		rts				rts
-.1fd8					AXMCheckEnd:
-.1fd8	a2 00		ldx #$00			ldx 	#0 							; first non space.
-.1fda	20 25 18	jsr $1825			jsr 	AXGet
-.1fdd	a0 00		ldy #$00			ldy 	#0
-.1fdf					_AXMCheck:
-.1fdf	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; match ?
-.1fe2	d9 f0 1f	cmp $1ff0,y			cmp 	_AXMMarker,y
-.1fe5	18		clc				clc 								; no, return CC
-.1fe6	d0 07		bne $1fef			bne 	_AXMExit
-.1fe8	e8		inx				inx 								; next chars
-.1fe9	c8		iny				iny
-.1fea	c9 00		cmp #$00			cmp 	#0 							; two NULLs matched ?
-.1fec	d0 f1		bne $1fdf			bne 	_AXMCheck 					; yes, then found .endm
-.1fee	38		sec				sec
-.1fef					_AXMExit:
-.1fef	60		rts				rts
-.1ff0					_AXMMarker:
->1ff0	2e 45 4e 44 4d 00				.text 	".ENDM",0
-.1ff6					AXTextCmd:
-.1ff6	ae d9 04	ldx $04d9			ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
-.1ff9					_AXTLoop:
-.1ff9	20 25 18	jsr $1825			jsr 	AXGet 						; is it a quoted string
-.1ffc	c9 22		cmp #$22			cmp 	#'"'
-.1ffe	f0 29		beq $2029			beq 	_AXTText
-.2000	20 d6 16	jsr $16d6			jsr 	AXPass2Expression 			; get value
-.2003	b0 39		bcs $203e			bcs 	_AXTExit
-.2005	ad 6d 04	lda $046d			lda 	AXPass 						; only check size on pass 2
-.2008	c9 02		cmp #$02			cmp 	#2
-.200a	d0 09		bne $2015			bne 	_AXTNoCheck
-.200c	ad 01 04	lda $0401			lda 	AXLeft+1
-.200f	f0 04		beq $2015			beq 	_AXTNoCheck
-.2011	a9 09		lda #$09			lda 	#AXERRSize 					; not a byte.
-.2013	38		sec				sec
-.2014	60		rts				rts
-.2015					_AXTNoCheck:
-.2015	ad 00 04	lda $0400			lda 	AXLeft 						; output the byte.
-.2018	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte
-.201b					_AXTNext:
-.201b	20 25 18	jsr $1825			jsr 	AXGet 						; get next
-.201e	e8		inx				inx
-.201f	c9 2c		cmp #$2c			cmp 	#","
-.2021	f0 d6		beq $1ff9			beq 	_AXTLoop
-.2023	c9 00		cmp #$00			cmp 	#0
-.2025	d0 14		bne $203b			bne 	_AXTSyntax
-.2027					_AXTOkay:
-.2027	18		clc				clc
-.2028	60		rts				rts
-.2029					_AXTText:
-.2029	20 3f 20	jsr $203f			jsr 	AXTGetTextString  			; get text string to buffer.
-.202c	b0 10		bcs $203e			bcs 	_AXTExit					; failed
-.202e	a0 00		ldy #$00			ldy 	#0
-.2030					_AXTOut:
-.2030	b9 1b 04	lda $041b,y			lda 	AXTextParameter,y 			; get character
-.2033	f0 e6		beq $201b			beq 	_AXTNext 					; end of string, do next parameter
-.2035	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte
-.2038	c8		iny				iny		 							; keep going.
-.2039	80 f5		bra $2030			bra 	_AXTOut
-.203b					_AXTSyntax:
-.203b	a9 01		lda #$01			lda 	#AXERRSyntax
-.203d	38		sec				sec
-.203e					_AXTExit:
-.203e	60		rts				rts
-.203f					AXTGetTextString:
-.203f	20 25 18	jsr $1825			jsr 	AXGet 						; get first
-.2042	c9 22		cmp #$22			cmp 	#'"' 						; error if not double quotes
-.2044	d0 1a		bne $2060			bne		_AXTGError
-.2046	a0 00		ldy #$00			ldy 	#0
-.2048					_AXGTSLoop:
-.2048	e8		inx				inx 								; get the next
-.2049	bd 82 04	lda $0482,x			lda 	AXBuffer,x
-.204c	f0 12		beq $2060			beq 	_AXTGError 					; EOL
-.204e	c9 22		cmp #$22			cmp 	#'"'						; found end
-.2050	f0 06		beq $2058			beq 	_AXTGExit
-.2052	99 1b 04	sta $041b,y			sta 	AXTextParameter,y 			; write into buffer
-.2055	c8		iny				iny
-.2056	80 f0		bra $2048			bra 	_AXGTSLoop
-.2058					_AXTGExit:
-.2058	e8		inx				inx 								; consume closing "
-.2059	a9 00		lda #$00			lda 	#0 							; make ASCIIZ
-.205b	99 1b 04	sta $041b,y			sta 	AXTextParameter,y
-.205e	18		clc				clc
-.205f	60		rts				rts
-.2060					_AXTGError:
-.2060	38		sec				sec
-.2061	a9 01		lda #$01			lda 	#AXERRSyntax
-.2063	60		rts				rts
-.2064					AXWordCmd:
-.2064					AXWordCmd2:
-.2064	ae d9 04	ldx $04d9			ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
-.2067					_AXWLoop:
-.2067	20 d6 16	jsr $16d6			jsr 	AXPass2Expression 			; get value
-.206a	b0 19		bcs $2085			bcs 	_AXWExit
-.206c	ad 00 04	lda $0400			lda 	AXLeft 						; output the word.
-.206f	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte
-.2072	ad 01 04	lda $0401			lda 	AXLeft+1
-.2075	20 b4 1e	jsr $1eb4			jsr 	AXWriteByte
-.2078	20 25 18	jsr $1825			jsr 	AXGet 						; get next
-.207b	e8		inx				inx
-.207c	c9 2c		cmp #$2c			cmp 	#","
-.207e	f0 e7		beq $2067			beq 	_AXWLoop
-.2080	c9 00		cmp #$00			cmp 	#0
-.2082	d0 02		bne $2086			bne 	_AXWSyntax
-.2084	18		clc				clc
-.2085					_AXWExit:
-.2085	60		rts				rts
-.2086					_AXWSyntax:
-.2086	a9 01		lda #$01			lda 	#AXERRSyntax
-.2088	38		sec				sec
-.2089	60		rts				rts
-.208a					AXConvertUpper:
-.208a	c9 61		cmp #$61			cmp 	#"a"
-.208c	90 06		bcc $2094			bcc 	_AXCNotUpper
-.208e	c9 7b		cmp #$7b			cmp 	#"z"+1
-.2090	b0 02		bcs $2094			bcs 	_AXCNotUpper
-.2092	49 20		eor #$20			eor 	#$20
-.2094					_AXCNotUpper:
-.2094	60		rts				rts
-.2095					AXIsAlpha:
-.2095	c9 41		cmp #$41			cmp 	#"A"
-.2097	90 05		bcc $209e			bcc 	_AXNotAlpha
-.2099	c9 5b		cmp #$5b			cmp 	#"Z"+1
-.209b	b0 01		bcs $209e			bcs 	_AXNotAlpha
+.1f7c					_AXBExit:
+.1f7c	60		rts				rts
+.1f7d					_AXISyntax:
+.1f7d	a9 01		lda #$01			lda 	#AXERRSyntax
+.1f7f	38		sec				sec
+.1f80	60		rts				rts
+.1f81					AXByteCmd:
+.1f81					AXByteCmd2:
+.1f81	ae d9 04	ldx $04d9			ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
+.1f84					_AXBLoop:
+.1f84	20 14 17	jsr $1714			jsr 	AXPass2Expression 			; get value
+.1f87	b0 27		bcs $1fb0			bcs 	_AXBExit
+.1f89	ad 6d 04	lda $046d			lda 	AXPass 						; only check size on pass 2
+.1f8c	c9 02		cmp #$02			cmp 	#2
+.1f8e	d0 09		bne $1f99			bne 	_AXBNoCheck
+.1f90	ad 01 04	lda $0401			lda 	AXLeft+1
+.1f93	f0 04		beq $1f99			beq 	_AXBNoCheck
+.1f95	a9 09		lda #$09			lda 	#AXERRSize 					; not a byte.
+.1f97	38		sec				sec
+.1f98	60		rts				rts
+.1f99					_AXBNoCheck:
+.1f99	ad 00 04	lda $0400			lda 	AXLeft 						; output the byte.
+.1f9c	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte
+.1f9f	20 63 18	jsr $1863			jsr 	AXGet 						; get next
+.1fa2	e8		inx				inx
+.1fa3	c9 2c		cmp #$2c			cmp 	#","
+.1fa5	f0 dd		beq $1f84			beq 	_AXBLoop
+.1fa7	c9 00		cmp #$00			cmp 	#0
+.1fa9	d0 02		bne $1fad			bne 	_AXBSyntax
+.1fab	18		clc				clc
+.1fac	60		rts				rts
+.1fad					_AXBSyntax:
+.1fad	a9 01		lda #$01			lda 	#AXERRSyntax
+.1faf	38		sec				sec
+.1fb0					_AXBExit:
+.1fb0	60		rts				rts
+.1fb1					AXFillCmd:
+.1fb1					AXFillCmd2:
+.1fb1	ae d9 04	ldx $04d9			ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
+.1fb4	20 06 17	jsr $1706			jsr 	AXExpressionDefined
+.1fb7	b0 14		bcs $1fcd			bcs 	_AXFExit 					; didn't work.
+.1fb9	18		clc				clc
+.1fba	ad 06 04	lda $0406			lda 	AXProgramCounter
+.1fbd	6d 00 04	adc $0400			adc 	AXLeft
+.1fc0	8d 06 04	sta $0406			sta 	AXProgramCounter
+.1fc3	ad 07 04	lda $0407			lda 	AXProgramCounter+1
+.1fc6	6d 01 04	adc $0401			adc 	AXLeft+1
+.1fc9	8d 07 04	sta $0407			sta 	AXProgramCounter+1
+.1fcc	18		clc				clc
+.1fcd					_AXFExit:
+.1fcd	60		rts				rts
+.1fce					AXInclude:
+.1fce	ae d9 04	ldx $04d9			ldx 	AXOperandPos
+.1fd1	20 7d 20	jsr $207d			jsr		AXTGetTextString 			; file name to buffeer
+.1fd4	b0 18		bcs $1fee			bcs 	_AXISyntax 					; failed.
+.1fd6	20 56 1e	jsr $1e56			jsr 	AXListLine 					; list line before expansion
+.1fd9	20 78 21	jsr $2178			jsr 	AXPushFrame 				; save current frame
+.1fdc	a0 04		ldy #$04			ldy 	#AXTextParameter >> 8 		; assemble named file
+.1fde	a2 1b		ldx #$1b			ldx 	#AXTextParameter & $FF
+.1fe0	20 e0 11	jsr $11e0			jsr 	AXAssembleFile
+.1fe3	08		php				php 								; restore frame saving the results
+.1fe4	48		pha				pha
+.1fe5	20 9a 21	jsr $219a			jsr 	AXPullFrame
+.1fe8	9c 82 04	stz $0482			stz 	AXBuffer 					; stop 2nd listing.
+.1feb	68		pla				pla
+.1fec	28		plp				plp
+.1fed	60		rts				rts
+.1fee					_AXISyntax:
+.1fee	a9 01		lda #$01			lda 	#AXERRSyntax
+.1ff0	38		sec				sec
+.1ff1	60		rts				rts
+.1ff2					AXXMacro:
+.1ff2	20 72 14	jsr $1472			jsr 	AXReadLine 					; read the next line
+.1ff5	b0 1e		bcs $2015			bcs 	_AXMExit 					; error ?
+.1ff7	20 16 20	jsr $2016			jsr 	AXMCheckEnd 				; is this .endm
+.1ffa	b0 0d		bcs $2009			bcs 	_AXMComplete
+.1ffc	ad 6d 04	lda $046d			lda 	AXPass 						; only do the define on pass 1.
+.1fff	c9 02		cmp #$02			cmp 	#2
+.2001	f0 ef		beq $1ff2			beq 	AXXMacro
+.2003	18		clc				clc 								; append the buffer to the macro.
+.2004	20 49 1c	jsr $1c49			jsr 	AXIAppendMacro
+.2007	80 e9		bra $1ff2			bra 	AXXMacro
+.2009					_AXMComplete:
+.2009	ad 6d 04	lda $046d			lda 	AXPass
+.200c	c9 02		cmp #$02			cmp 	#2
+.200e	f0 04		beq $2014			beq		_AXMExitOkay
+.2010	38		sec				sec 		 						; this appends the NULL to the macro.
+.2011	20 49 1c	jsr $1c49			jsr 	AXIAppendMacro
+.2014					_AXMExitOkay:
+.2014	18		clc				clc
+.2015					_AXMExit:
+.2015	60		rts				rts
+.2016					AXMCheckEnd:
+.2016	a2 00		ldx #$00			ldx 	#0 							; first non space.
+.2018	20 63 18	jsr $1863			jsr 	AXGet
+.201b	a0 00		ldy #$00			ldy 	#0
+.201d					_AXMCheck:
+.201d	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; match ?
+.2020	d9 2e 20	cmp $202e,y			cmp 	_AXMMarker,y
+.2023	18		clc				clc 								; no, return CC
+.2024	d0 07		bne $202d			bne 	_AXMExit
+.2026	e8		inx				inx 								; next chars
+.2027	c8		iny				iny
+.2028	c9 00		cmp #$00			cmp 	#0 							; two NULLs matched ?
+.202a	d0 f1		bne $201d			bne 	_AXMCheck 					; yes, then found .endm
+.202c	38		sec				sec
+.202d					_AXMExit:
+.202d	60		rts				rts
+.202e					_AXMMarker:
+>202e	2e 45 4e 44 4d 00				.text 	".ENDM",0
+.2034					AXTextCmd:
+.2034	ae d9 04	ldx $04d9			ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
+.2037					_AXTLoop:
+.2037	20 63 18	jsr $1863			jsr 	AXGet 						; is it a quoted string
+.203a	c9 22		cmp #$22			cmp 	#'"'
+.203c	f0 29		beq $2067			beq 	_AXTText
+.203e	20 14 17	jsr $1714			jsr 	AXPass2Expression 			; get value
+.2041	b0 39		bcs $207c			bcs 	_AXTExit
+.2043	ad 6d 04	lda $046d			lda 	AXPass 						; only check size on pass 2
+.2046	c9 02		cmp #$02			cmp 	#2
+.2048	d0 09		bne $2053			bne 	_AXTNoCheck
+.204a	ad 01 04	lda $0401			lda 	AXLeft+1
+.204d	f0 04		beq $2053			beq 	_AXTNoCheck
+.204f	a9 09		lda #$09			lda 	#AXERRSize 					; not a byte.
+.2051	38		sec				sec
+.2052	60		rts				rts
+.2053					_AXTNoCheck:
+.2053	ad 00 04	lda $0400			lda 	AXLeft 						; output the byte.
+.2056	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte
+.2059					_AXTNext:
+.2059	20 63 18	jsr $1863			jsr 	AXGet 						; get next
+.205c	e8		inx				inx
+.205d	c9 2c		cmp #$2c			cmp 	#","
+.205f	f0 d6		beq $2037			beq 	_AXTLoop
+.2061	c9 00		cmp #$00			cmp 	#0
+.2063	d0 14		bne $2079			bne 	_AXTSyntax
+.2065					_AXTOkay:
+.2065	18		clc				clc
+.2066	60		rts				rts
+.2067					_AXTText:
+.2067	20 7d 20	jsr $207d			jsr 	AXTGetTextString  			; get text string to buffer.
+.206a	b0 10		bcs $207c			bcs 	_AXTExit					; failed
+.206c	a0 00		ldy #$00			ldy 	#0
+.206e					_AXTOut:
+.206e	b9 1b 04	lda $041b,y			lda 	AXTextParameter,y 			; get character
+.2071	f0 e6		beq $2059			beq 	_AXTNext 					; end of string, do next parameter
+.2073	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte
+.2076	c8		iny				iny		 							; keep going.
+.2077	80 f5		bra $206e			bra 	_AXTOut
+.2079					_AXTSyntax:
+.2079	a9 01		lda #$01			lda 	#AXERRSyntax
+.207b	38		sec				sec
+.207c					_AXTExit:
+.207c	60		rts				rts
+.207d					AXTGetTextString:
+.207d	20 63 18	jsr $1863			jsr 	AXGet 						; get first
+.2080	c9 22		cmp #$22			cmp 	#'"' 						; error if not double quotes
+.2082	d0 1a		bne $209e			bne		_AXTGError
+.2084	a0 00		ldy #$00			ldy 	#0
+.2086					_AXGTSLoop:
+.2086	e8		inx				inx 								; get the next
+.2087	bd 82 04	lda $0482,x			lda 	AXBuffer,x
+.208a	f0 12		beq $209e			beq 	_AXTGError 					; EOL
+.208c	c9 22		cmp #$22			cmp 	#'"'						; found end
+.208e	f0 06		beq $2096			beq 	_AXTGExit
+.2090	99 1b 04	sta $041b,y			sta 	AXTextParameter,y 			; write into buffer
+.2093	c8		iny				iny
+.2094	80 f0		bra $2086			bra 	_AXGTSLoop
+.2096					_AXTGExit:
+.2096	e8		inx				inx 								; consume closing "
+.2097	a9 00		lda #$00			lda 	#0 							; make ASCIIZ
+.2099	99 1b 04	sta $041b,y			sta 	AXTextParameter,y
+.209c	18		clc				clc
 .209d	60		rts				rts
-.209e					_AXNotAlpha:
+.209e					_AXTGError:
 .209e	38		sec				sec
-.209f	60		rts				rts
-.20a0					AXIsNumeric:
-.20a0	c9 30		cmp #$30			cmp 	#"0"
-.20a2	90 05		bcc $20a9			bcc 	_AXNotDigit
-.20a4	c9 3a		cmp #$3a			cmp 	#"9"+1
-.20a6	b0 01		bcs $20a9			bcs 	_AXNotDigit
-.20a8	60		rts				rts
-.20a9					_AXNotDigit:
-.20a9	38		sec				sec
-.20aa	60		rts				rts
-.20ab					AXIsAlphaNumeric:
-.20ab	20 95 20	jsr $2095			jsr 	AXIsAlpha 					; if alpha then exit with yes
-.20ae	b0 f0		bcs $20a0			bcs 	AXIsNumeric 				; no, depends on is numeric
-.20b0	60		rts				rts
-.20b1					AXIsIdentifierHead:
-.20b1	20 95 20	jsr $2095			jsr 	AXIsAlpha
-.20b4	b0 01		bcs $20b7			bcs 	AXCheckIdentifierMisc
-.20b6	60		rts				rts
-.20b7					AXCheckIdentifierMisc:
-.20b7	c9 5f		cmp #$5f			cmp 	#"_"
-.20b9	f0 06		beq $20c1			beq 	_AXIsIdentB
-.20bb	c9 2e		cmp #$2e			cmp 	#"."
-.20bd	f0 02		beq $20c1			beq 	_AXIsIdentB
-.20bf	38		sec				sec
-.20c0	60		rts				rts
-.20c1					_AXIsIdentB:
-.20c1	18		clc				clc
-.20c2	60		rts				rts
-.20c3					AXIsIdentifierBody:
-.20c3	20 ab 20	jsr $20ab			jsr 	AXIsAlphaNumeric
-.20c6	b0 ef		bcs $20b7			bcs 	AXCheckIdentifierMisc
-.20c8	60		rts				rts
-.20c9					AXExtractIdentifier:
-.20c9	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; check the first character.
-.20cc	20 b1 20	jsr $20b1			jsr 	AXIsIdentifierHead
-.20cf	b0 30		bcs $2101			bcs 	_AXELFail
-.20d1	a0 00		ldy #$00			ldy 	#0 							; save position.
-.20d3	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; is the first character a _
-.20d6	c9 5f		cmp #$5f			cmp 	#"_"						; if so, we need to make it a local
-.20d8	d0 07		bne $20e1			bne 	_AXELLoop
-.20da	48		pha				pha
-.20db	da		phx				phx 								; local header into labelbuffer
-.20dc	20 19 21	jsr $2119			jsr 	AXILocalHeader
-.20df	fa		plx				plx
-.20e0	68		pla				pla
-.20e1					_AXELLoop:
-.20e1	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y 			; save in buffer, bump position
-.20e4	c8		iny				iny
-.20e5	c0 11		cpy #$11			cpy 	#AXMaxIdentSize+1 			; too long
-.20e7	f0 18		beq $2101			beq 	_AXELFail
-.20e9	e8		inx				inx 								; consume character
-.20ea	a9 00		lda #$00			lda 	#0 							; make ASCIIZ.
-.20ec	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
-.20ef	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; get the next caracter.
-.20f2	20 c3 20	jsr $20c3			jsr 	AXIsIdentifierBody 			; is it a body character
-.20f5	90 ea		bcc $20e1			bcc 	_AXELLoop 					; if so add it to the label.
-.20f7	b9 09 04	lda $0409,y			lda 	AXLabelBuffer-1,y 			; set bit 7 of last character.
-.20fa	09 80		ora #$80			ora 	#$80
-.20fc	99 09 04	sta $0409,y			sta 	AXLabelBuffer-1,y
-.20ff	18		clc				clc 								; successfully acquired a label.
+.209f	a9 01		lda #$01			lda 	#AXERRSyntax
+.20a1	60		rts				rts
+.20a2					AXWordCmd:
+.20a2					AXWordCmd2:
+.20a2	ae d9 04	ldx $04d9			ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
+.20a5					_AXWLoop:
+.20a5	20 14 17	jsr $1714			jsr 	AXPass2Expression 			; get value
+.20a8	b0 19		bcs $20c3			bcs 	_AXWExit
+.20aa	ad 00 04	lda $0400			lda 	AXLeft 						; output the word.
+.20ad	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte
+.20b0	ad 01 04	lda $0401			lda 	AXLeft+1
+.20b3	20 f2 1e	jsr $1ef2			jsr 	AXWriteByte
+.20b6	20 63 18	jsr $1863			jsr 	AXGet 						; get next
+.20b9	e8		inx				inx
+.20ba	c9 2c		cmp #$2c			cmp 	#","
+.20bc	f0 e7		beq $20a5			beq 	_AXWLoop
+.20be	c9 00		cmp #$00			cmp 	#0
+.20c0	d0 02		bne $20c4			bne 	_AXWSyntax
+.20c2	18		clc				clc
+.20c3					_AXWExit:
+.20c3	60		rts				rts
+.20c4					_AXWSyntax:
+.20c4	a9 01		lda #$01			lda 	#AXERRSyntax
+.20c6	38		sec				sec
+.20c7	60		rts				rts
+.20c8					AXConvertUpper:
+.20c8	c9 61		cmp #$61			cmp 	#"a"
+.20ca	90 06		bcc $20d2			bcc 	_AXCNotUpper
+.20cc	c9 7b		cmp #$7b			cmp 	#"z"+1
+.20ce	b0 02		bcs $20d2			bcs 	_AXCNotUpper
+.20d0	49 20		eor #$20			eor 	#$20
+.20d2					_AXCNotUpper:
+.20d2	60		rts				rts
+.20d3					AXIsAlpha:
+.20d3	c9 41		cmp #$41			cmp 	#"A"
+.20d5	90 05		bcc $20dc			bcc 	_AXNotAlpha
+.20d7	c9 5b		cmp #$5b			cmp 	#"Z"+1
+.20d9	b0 01		bcs $20dc			bcs 	_AXNotAlpha
+.20db	60		rts				rts
+.20dc					_AXNotAlpha:
+.20dc	38		sec				sec
+.20dd	60		rts				rts
+.20de					AXIsNumeric:
+.20de	c9 30		cmp #$30			cmp 	#"0"
+.20e0	90 05		bcc $20e7			bcc 	_AXNotDigit
+.20e2	c9 3a		cmp #$3a			cmp 	#"9"+1
+.20e4	b0 01		bcs $20e7			bcs 	_AXNotDigit
+.20e6	60		rts				rts
+.20e7					_AXNotDigit:
+.20e7	38		sec				sec
+.20e8	60		rts				rts
+.20e9					AXIsAlphaNumeric:
+.20e9	20 d3 20	jsr $20d3			jsr 	AXIsAlpha 					; if alpha then exit with yes
+.20ec	b0 f0		bcs $20de			bcs 	AXIsNumeric 				; no, depends on is numeric
+.20ee	60		rts				rts
+.20ef					AXIsIdentifierHead:
+.20ef	20 d3 20	jsr $20d3			jsr 	AXIsAlpha
+.20f2	b0 01		bcs $20f5			bcs 	AXCheckIdentifierMisc
+.20f4	60		rts				rts
+.20f5					AXCheckIdentifierMisc:
+.20f5	c9 5f		cmp #$5f			cmp 	#"_"
+.20f7	f0 06		beq $20ff			beq 	_AXIsIdentB
+.20f9	c9 2e		cmp #$2e			cmp 	#"."
+.20fb	f0 02		beq $20ff			beq 	_AXIsIdentB
+.20fd	38		sec				sec
+.20fe	60		rts				rts
+.20ff					_AXIsIdentB:
+.20ff	18		clc				clc
 .2100	60		rts				rts
-.2101					_AXELFail:
-.2101	a9 02		lda #$02			lda 	#AXERRIdentifier			; bad label.
-.2103	38		sec				sec
-.2104	60		rts				rts
-.2105					AXIBumpLocal:
-.2105	f8		sed				sed
-.2106	18		clc				clc
-.2107	ad 6e 04	lda $046e			lda 	AXLocalLabelID
-.210a	69 01		adc #$01			adc 	#1
-.210c	8d 6e 04	sta $046e			sta 	AXLocalLabelID
-.210f	ad 6f 04	lda $046f			lda 	AXLocalLabelID+1
-.2112	69 00		adc #$00			adc 	#0
-.2114	8d 6f 04	sta $046f			sta 	AXLocalLabelID+1
-.2117	d8		cld				cld
-.2118	60		rts				rts
-.2119					AXILocalHeader:
-.2119	a9 5f		lda #$5f			lda 	#"_"
-.211b	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
-.211e	c8		iny				iny
-.211f	ad 6f 04	lda $046f			lda 	AXLocalLabelID+1
-.2122	20 28 21	jsr $2128			jsr 	_AXILHOut
-.2125	ad 6e 04	lda $046e			lda 	AXLocalLabelID
-.2128					_AXILHOut:
-.2128	48		pha				pha
-.2129	4a		lsr a				lsr 	a
-.212a	4a		lsr a				lsr 	a
-.212b	4a		lsr a				lsr 	a
-.212c	4a		lsr a				lsr 	a
-.212d	20 31 21	jsr $2131			jsr 	_AXILNOut
-.2130	68		pla				pla
-.2131					_AXILNOut:
-.2131	29 0f		and #$0f			and 	#15
-.2133	09 30		ora #$30			ora 	#48
-.2135	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
-.2138	c8		iny				iny
-.2139	60		rts				rts
-.213a					AXPushFrame:
-.213a	38		sec				sec 								; subtract frame size from stack, copy to AXTemp0
-.213b	ad e9 04	lda $04e9			lda 	AXIStack
-.213e	e9 68		sbc #$68			sbc 	#AXFrameSize
-.2140	8d e9 04	sta $04e9			sta 	AXIStack
-.2143	85 30		sta $30				sta 	AXTemp0
-.2145	ad ea 04	lda $04ea			lda 	AXIStack+1
-.2148	e9 00		sbc #$00			sbc 	#0
-.214a	8d ea 04	sta $04ea			sta 	AXIStack+1
-.214d	85 31		sta $31				sta 	AXTemp0+1
-.214f	a0 68		ldy #$68			ldy 	#AXFrameSize 				; copy frame to stack space.
-.2151					_AXPFCopy:
-.2151	88		dey				dey
-.2152	b9 70 04	lda $0470,y			lda 	AXStartFrame,y
-.2155	91 30		sta ($30),y			sta 	(AXTemp0),y
-.2157	c0 00		cpy #$00			cpy 	#0
-.2159	d0 f6		bne $2151			bne 	_AXPFCopy
-.215b	60		rts				rts
-.215c					AXPullFrame:
-.215c	18		clc				clc 								; add frame size to stack, copy to AXTemp0
-.215d	ad e9 04	lda $04e9			lda 	AXIStack
-.2160	85 30		sta $30				sta 	AXTemp0
-.2162	69 68		adc #$68			adc 	#AXFrameSize
-.2164	8d e9 04	sta $04e9			sta 	AXIStack
-.2167	ad ea 04	lda $04ea			lda 	AXIStack+1
-.216a	85 31		sta $31				sta 	AXTemp0+1
-.216c	69 00		adc #$00			adc 	#0
-.216e	8d ea 04	sta $04ea			sta 	AXIStack+1
-.2171	a0 68		ldy #$68			ldy 	#AXFrameSize 				; copy frame from stack space.
-.2173					_AXPFCopy:
-.2173	88		dey				dey
-.2174	b1 30		lda ($30),y			lda 	(AXTemp0),y
-.2176	99 70 04	sta $0470,y			sta 	AXStartFrame,y
-.2179	c0 00		cpy #$00			cpy 	#0
-.217b	d0 f6		bne $2173			bne 	_AXPFCopy
-.217d	60		rts				rts
+.2101					AXIsIdentifierBody:
+.2101	20 e9 20	jsr $20e9			jsr 	AXIsAlphaNumeric
+.2104	b0 ef		bcs $20f5			bcs 	AXCheckIdentifierMisc
+.2106	60		rts				rts
+.2107					AXExtractIdentifier:
+.2107	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; check the first character.
+.210a	20 ef 20	jsr $20ef			jsr 	AXIsIdentifierHead
+.210d	b0 30		bcs $213f			bcs 	_AXELFail
+.210f	a0 00		ldy #$00			ldy 	#0 							; save position.
+.2111	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; is the first character a _
+.2114	c9 5f		cmp #$5f			cmp 	#"_"						; if so, we need to make it a local
+.2116	d0 07		bne $211f			bne 	_AXELLoop
+.2118	48		pha				pha
+.2119	da		phx				phx 								; local header into labelbuffer
+.211a	20 57 21	jsr $2157			jsr 	AXILocalHeader
+.211d	fa		plx				plx
+.211e	68		pla				pla
+.211f					_AXELLoop:
+.211f	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y 			; save in buffer, bump position
+.2122	c8		iny				iny
+.2123	c0 11		cpy #$11			cpy 	#AXMaxIdentSize+1 			; too long
+.2125	f0 18		beq $213f			beq 	_AXELFail
+.2127	e8		inx				inx 								; consume character
+.2128	a9 00		lda #$00			lda 	#0 							; make ASCIIZ.
+.212a	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
+.212d	bd 82 04	lda $0482,x			lda 	AXBuffer,x 					; get the next caracter.
+.2130	20 01 21	jsr $2101			jsr 	AXIsIdentifierBody 			; is it a body character
+.2133	90 ea		bcc $211f			bcc 	_AXELLoop 					; if so add it to the label.
+.2135	b9 09 04	lda $0409,y			lda 	AXLabelBuffer-1,y 			; set bit 7 of last character.
+.2138	09 80		ora #$80			ora 	#$80
+.213a	99 09 04	sta $0409,y			sta 	AXLabelBuffer-1,y
+.213d	18		clc				clc 								; successfully acquired a label.
+.213e	60		rts				rts
+.213f					_AXELFail:
+.213f	a9 02		lda #$02			lda 	#AXERRIdentifier			; bad label.
+.2141	38		sec				sec
+.2142	60		rts				rts
+.2143					AXIBumpLocal:
+.2143	f8		sed				sed
+.2144	18		clc				clc
+.2145	ad 6e 04	lda $046e			lda 	AXLocalLabelID
+.2148	69 01		adc #$01			adc 	#1
+.214a	8d 6e 04	sta $046e			sta 	AXLocalLabelID
+.214d	ad 6f 04	lda $046f			lda 	AXLocalLabelID+1
+.2150	69 00		adc #$00			adc 	#0
+.2152	8d 6f 04	sta $046f			sta 	AXLocalLabelID+1
+.2155	d8		cld				cld
+.2156	60		rts				rts
+.2157					AXILocalHeader:
+.2157	a9 5f		lda #$5f			lda 	#"_"
+.2159	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
+.215c	c8		iny				iny
+.215d	ad 6f 04	lda $046f			lda 	AXLocalLabelID+1
+.2160	20 66 21	jsr $2166			jsr 	_AXILHOut
+.2163	ad 6e 04	lda $046e			lda 	AXLocalLabelID
+.2166					_AXILHOut:
+.2166	48		pha				pha
+.2167	4a		lsr a				lsr 	a
+.2168	4a		lsr a				lsr 	a
+.2169	4a		lsr a				lsr 	a
+.216a	4a		lsr a				lsr 	a
+.216b	20 6f 21	jsr $216f			jsr 	_AXILNOut
+.216e	68		pla				pla
+.216f					_AXILNOut:
+.216f	29 0f		and #$0f			and 	#15
+.2171	09 30		ora #$30			ora 	#48
+.2173	99 0a 04	sta $040a,y			sta 	AXLabelBuffer,y
+.2176	c8		iny				iny
+.2177	60		rts				rts
+.2178					AXPushFrame:
+.2178	38		sec				sec 								; subtract frame size from stack, copy to AXTemp0
+.2179	ad e9 04	lda $04e9			lda 	AXIStack
+.217c	e9 68		sbc #$68			sbc 	#AXFrameSize
+.217e	8d e9 04	sta $04e9			sta 	AXIStack
+.2181	85 30		sta $30				sta 	AXTemp0
+.2183	ad ea 04	lda $04ea			lda 	AXIStack+1
+.2186	e9 00		sbc #$00			sbc 	#0
+.2188	8d ea 04	sta $04ea			sta 	AXIStack+1
+.218b	85 31		sta $31				sta 	AXTemp0+1
+.218d	a0 68		ldy #$68			ldy 	#AXFrameSize 				; copy frame to stack space.
+.218f					_AXPFCopy:
+.218f	88		dey				dey
+.2190	b9 70 04	lda $0470,y			lda 	AXStartFrame,y
+.2193	91 30		sta ($30),y			sta 	(AXTemp0),y
+.2195	c0 00		cpy #$00			cpy 	#0
+.2197	d0 f6		bne $218f			bne 	_AXPFCopy
+.2199	60		rts				rts
+.219a					AXPullFrame:
+.219a	18		clc				clc 								; add frame size to stack, copy to AXTemp0
+.219b	ad e9 04	lda $04e9			lda 	AXIStack
+.219e	85 30		sta $30				sta 	AXTemp0
+.21a0	69 68		adc #$68			adc 	#AXFrameSize
+.21a2	8d e9 04	sta $04e9			sta 	AXIStack
+.21a5	ad ea 04	lda $04ea			lda 	AXIStack+1
+.21a8	85 31		sta $31				sta 	AXTemp0+1
+.21aa	69 00		adc #$00			adc 	#0
+.21ac	8d ea 04	sta $04ea			sta 	AXIStack+1
+.21af	a0 68		ldy #$68			ldy 	#AXFrameSize 				; copy frame from stack space.
+.21b1					_AXPFCopy:
+.21b1	88		dey				dey
+.21b2	b1 30		lda ($30),y			lda 	(AXTemp0),y
+.21b4	99 70 04	sta $0470,y			sta 	AXStartFrame,y
+.21b7	c0 00		cpy #$00			cpy 	#0
+.21b9	d0 f6		bne $21b1			bne 	_AXPFCopy
+.21bb	60		rts				rts
 
 ;******  Return to file: main.asm
 
-.217e					Start:
-.217e	20 8c 21	jsr $218c			jsr 	ClearMemory
-.2181	a2 9f		ldx #$9f			ldx 	#SampleAPIHandler & $FF
-.2183	a0 21		ldy #$21			ldy 	#SampleAPIHandler >> 8
-.2185	20 03 10	jsr $1003			jsr 	AXAssemble
-.2188	4c ff ff	jmp $ffff			jmp		$FFFF
-.218b	60		rts				rts
-.218c					ClearMemory:
-.218c	a9 8f		lda #$8f			lda 	#$8F
-.218e	85 31		sta $31				sta 	AXTemp0+1
-.2190	64 30		stz $30				stz 	AXTemp0
-.2192	a9 ff		lda #$ff	_CMLoop:lda 	#$FF
-.2194	92 30		sta ($30)			sta 	(AXTemp0)
-.2196	e6 30		inc $30				inc 	AXTemp0
-.2198	d0 f8		bne $2192			bne 	_CMLoop
-.219a	c6 31		dec $31				dec 	AXTemp0+1
-.219c	30 f4		bmi $2192			bmi 	_CMLoop
-.219e	60		rts				rts
+.21bc					Start:
+.21bc	20 c7 21	jsr $21c7			jsr 	ClearMemory
+.21bf	a2 da		ldx #$da			ldx 	#SampleAPIHandler & $FF
+.21c1	a0 21		ldy #$21			ldy 	#SampleAPIHandler >> 8
+.21c3	20 03 10	jsr $1003			jsr 	AXAssemble
+.21c6	60		rts				rts
+.21c7					ClearMemory:
+.21c7	a9 8f		lda #$8f			lda 	#$8F
+.21c9	85 31		sta $31				sta 	AXTemp0+1
+.21cb	64 30		stz $30				stz 	AXTemp0
+.21cd	a9 ff		lda #$ff	_CMLoop:lda 	#$FF
+.21cf	92 30		sta ($30)			sta 	(AXTemp0)
+.21d1	e6 30		inc $30				inc 	AXTemp0
+.21d3	d0 f8		bne $21cd			bne 	_CMLoop
+.21d5	c6 31		dec $31				dec 	AXTemp0+1
+.21d7	30 f4		bmi $21cd			bmi 	_CMLoop
+.21d9	60		rts				rts
 
 ;******  Processing file: x16_api/api.asm
 
-.219f					SampleAPIHandler:
-.219f	c9 00		cmp #$00			cmp 	#AXAPISetup
-.21a1	f0 1a		beq $21bd			beq 	_TAMemInfo
-.21a3	c9 01		cmp #$01			cmp 	#AXAPIOpen
-.21a5	f0 1c		beq $21c3			beq 	_TAOpen
-.21a7	c9 02		cmp #$02			cmp 	#AXAPIClose
-.21a9	f0 1b		beq $21c6			beq 	_TAClose
-.21ab	c9 03		cmp #$03			cmp 	#AXAPIReadByte
-.21ad	f0 1a		beq $21c9			beq	 	_TAReadChar
-.21af	c9 04		cmp #$04			cmp 	#AXAPIWriteByte
-.21b1	f0 19		beq $21cc			beq 	_TAWriteByte
-.21b3	c9 05		cmp #$05			cmp 	#AXAPIError
-.21b5	f0 1b		beq $21d2			beq 	_TAError
-.21b7	c9 06		cmp #$06			cmp 	#AXAPIListChar
-.21b9	f0 14		beq $21cf			beq 	_TAListChar
-.21bb	18		clc				clc
-.21bc	60		rts				rts
-.21bd					_TAMemInfo:
-.21bd	a9 90		lda #$90			lda 	#$90 						; memory from $9000 - $9EFF
-.21bf	a0 9f		ldy #$9f			ldy 	#$9F
-.21c1	18		clc				clc
-.21c2	60		rts				rts
-.21c3					_TAOpen:
-.21c3	4c 04 22	jmp $2204			jmp 	TAOpen
-.21c6					_TAClose:
-.21c6	4c 49 22	jmp $2249			jmp 	TAClose
-.21c9					_TAReadChar:
-.21c9	4c 55 22	jmp $2255			jmp  	TAReadChar
-.21cc					_TAWriteByte
-.21cc	4c d7 21	jmp $21d7			jmp 	TAWriteByte
-.21cf					_TAListChar:
-.21cf	4c d5 21	jmp $21d5			jmp 	TAListChar
-.21d2					_TAError:
-.21d2	4c 71 22	jmp $2271			jmp 	TAError
+.21da					SampleAPIHandler:
+.21da	c9 00		cmp #$00			cmp 	#AXAPISetup
+.21dc	f0 1a		beq $21f8			beq 	_TAMemInfo
+.21de	c9 01		cmp #$01			cmp 	#AXAPIOpen
+.21e0	f0 1c		beq $21fe			beq 	_TAOpen
+.21e2	c9 02		cmp #$02			cmp 	#AXAPIClose
+.21e4	f0 1b		beq $2201			beq 	_TAClose
+.21e6	c9 03		cmp #$03			cmp 	#AXAPIReadByte
+.21e8	f0 1a		beq $2204			beq	 	_TAReadChar
+.21ea	c9 04		cmp #$04			cmp 	#AXAPIWriteByte
+.21ec	f0 19		beq $2207			beq 	_TAWriteByte
+.21ee	c9 05		cmp #$05			cmp 	#AXAPIError
+.21f0	f0 1b		beq $220d			beq 	_TAError
+.21f2	c9 06		cmp #$06			cmp 	#AXAPIListChar
+.21f4	f0 14		beq $220a			beq 	_TAListChar
+.21f6	18		clc				clc
+.21f7	60		rts				rts
+.21f8					_TAMemInfo:
+.21f8	a9 90		lda #$90			lda 	#$90 						; memory from $9000 - $9EFF
+.21fa	a0 9f		ldy #$9f			ldy 	#$9F
+.21fc	18		clc				clc
+.21fd	60		rts				rts
+.21fe					_TAOpen:
+.21fe	4c 42 22	jmp $2242			jmp 	TAOpen
+.2201					_TAClose:
+.2201	4c 87 22	jmp $2287			jmp 	TAClose
+.2204					_TAReadChar:
+.2204	4c 93 22	jmp $2293			jmp  	TAReadChar
+.2207					_TAWriteByte
+.2207	4c 15 22	jmp $2215			jmp 	TAWriteByte
+.220a					_TAListChar:
+.220a	4c 10 22	jmp $2210			jmp 	TAListChar
+.220d					_TAError:
+.220d	4c af 22	jmp $22af			jmp 	TAError
 
 ;******  Processing file: x16_api/apilist.asm
 
-.21d5					TAListChar:
-.21d5	8a		txa				txa
-.21d6	60		rts				rts
+.2210					TAListChar:
+.2210	8a		txa				txa
+.2211	20 d2 ff	jsr $ffd2			jsr 	$FFD2 						; this is only displayed for TESTING=2
+.2214	60		rts				rts
 
 ;******  Return to file: x16_api/api.asm
 
 
 ;******  Processing file: x16_api/apiwrite.asm
 
-.21d7					TAWriteByte:
-.21d7	98		tya				tya 								; simple save
-.21d8	81 00		sta ($00,x)			sta 	($00,x)
-.21da	60		rts				rts
-.21db	5a		phy				phy 								; dump code to screen, not used really but an option.
-.21dc	a9 40		lda #$40			lda 	#'@' 						; or you could write it to a file.
-.21de	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.21e1	b5 02		lda $02,x			lda 	$02,x
-.21e3	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.21e6	a9 2e		lda #$2e			lda 	#'.'
-.21e8	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.21eb	b5 01		lda $01,x			lda 	$01,x
-.21ed	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.21f0	b5 00		lda $00,x			lda 	$00,x
-.21f2	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.21f5	a9 3d		lda #$3d			lda 	#"="
-.21f7	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.21fa	68		pla				pla
-.21fb	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.21fe	a9 0d		lda #$0d			lda 	#13
-.2200	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.2203	60		rts				rts
+.2215					TAWriteByte:
+.2215	98		tya				tya 								; simple save
+.2216	81 00		sta ($00,x)			sta 	($00,x)
+.2218	60		rts				rts
+.2219	5a		phy				phy 								; dump code to screen, not used really but an option.
+.221a	a9 40		lda #$40			lda 	#'@' 						; or you could write it to a file.
+.221c	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.221f	b5 02		lda $02,x			lda 	$02,x
+.2221	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.2224	a9 2e		lda #$2e			lda 	#'.'
+.2226	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.2229	b5 01		lda $01,x			lda 	$01,x
+.222b	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.222e	b5 00		lda $00,x			lda 	$00,x
+.2230	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.2233	a9 3d		lda #$3d			lda 	#"="
+.2235	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.2238	68		pla				pla
+.2239	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.223c	a9 0d		lda #$0d			lda 	#13
+.223e	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.2241	60		rts				rts
 
 ;******  Return to file: x16_api/api.asm
 
 
 ;******  Processing file: x16_api/apifile.asm
 
-.2204					TAOpen:
-.2204	e0 00		cpx #$00			cpx 	#0 							; check default name ?
-.2206	d0 0f		bne $2217			bne 	_TAHaveName
-.2208	c0 00		cpy #$00			cpy 	#0
-.220a	d0 0b		bne $2217			bne 	_TAHaveName
-.220c	a2 3f		ldx #$3f			ldx 	#<_FileName 				; use default.
-.220e	a0 22		ldy #$22			ldy 	#>_FileName
-.2210	a9 07		lda #$07			lda 	#7 							; reset handle tracker
-.2212	8d eb 04	sta $04eb			sta 	TAHandleTracker
-.2215	64 35		stz $35				stz 	TAIsEOF 					; reset EOF flag.
-.2217					_TAHaveName:
-.2217	86 33		stx $33				stx 	TATemp0 					; get length
-.2219	84 34		sty $34				sty 	TATemp0+1
-.221b	a0 ff		ldy #$ff			ldy 	#255
-.221d					_TAGetLen:
-.221d	c8		iny				iny
-.221e	b1 33		lda ($33),y			lda 	(TATemp0),y
-.2220	d0 fb		bne $221d			bne 	_TAGetLen
-.2222	98		tya				tya 								; A = size, XY = filename
-.2223	a4 34		ldy $34				ldy 	TATemp0+1
-.2225	20 bd ff	jsr $ffbd			jsr 	$FFBD 						; SETNAM
-.2228	ee eb 04	inc $04eb			inc 	TAHandleTracker
-.222b	ad eb 04	lda $04eb			lda 	TAHandleTracker
-.222e	48		pha				pha
-.222f	a2 08		ldx #$08			ldx 	#8
-.2231	a8		tay				tay
-.2232	20 ba ff	jsr $ffba			jsr 	$FFBA 						; set LFS
-.2235	20 c0 ff	jsr $ffc0			jsr 	$FFC0 						; OPEN,
-.2238	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
-.223b	69 ff		adc #$ff			adc 	#$FF 						; set CS on error (A != 0)
-.223d	68		pla				pla
-.223e					_TAOExit:
-.223e	60		rts				rts
-.223f					_FileName:
->223f	5f 43 4f 44 45 2e 41 53				.text 	'_CODE.ASM',0
->2247	4d 00
-.2249					TAClose:
-.2249	8a		txa				txa
-.224a	20 c3 ff	jsr $ffc3			jsr 	$FFC3						; CLOSE
-.224d	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
-.2250	ce eb 04	dec $04eb			dec 	TAHandleTracker
-.2253	18		clc				clc
-.2254	60		rts				rts
-.2255					TAReadChar:
-.2255	24 35		bit $35				bit 	TAIsEOF 					; last read reached EOF ?
-.2257	70 11		bvs $226a			bvs 	_TAFail 					; surely there has to be a better way to read a bloody sequential file ?
-.2259	20 c6 ff	jsr $ffc6			jsr 	$FFC6  						; CHKIN
-.225c	20 cf ff	jsr $ffcf			jsr 	$FFCF 						; CHRIN
-.225f	48		pha				pha
-.2260	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
-.2263	29 40		and #$40			and 	#64 						; EOF next read.
-.2265	85 35		sta $35				sta 	TAIsEOF
-.2267	68		pla				pla
-.2268	18		clc				clc
-.2269	60		rts				rts
-.226a					_TAFail:
-.226a	64 35		stz $35				stz 	TAIsEOF 					; clear EOF Flag
-.226c	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
-.226f	38		sec				sec
-.2270	60		rts				rts
+.2242					TAOpen:
+.2242	e0 00		cpx #$00			cpx 	#0 							; check default name ?
+.2244	d0 0f		bne $2255			bne 	_TAHaveName
+.2246	c0 00		cpy #$00			cpy 	#0
+.2248	d0 0b		bne $2255			bne 	_TAHaveName
+.224a	a2 7d		ldx #$7d			ldx 	#<_FileName 				; use default.
+.224c	a0 22		ldy #$22			ldy 	#>_FileName
+.224e	a9 07		lda #$07			lda 	#7 							; reset handle tracker
+.2250	8d eb 04	sta $04eb			sta 	TAHandleTracker
+.2253	64 35		stz $35				stz 	TAIsEOF 					; reset EOF flag.
+.2255					_TAHaveName:
+.2255	86 33		stx $33				stx 	TATemp0 					; get length
+.2257	84 34		sty $34				sty 	TATemp0+1
+.2259	a0 ff		ldy #$ff			ldy 	#255
+.225b					_TAGetLen:
+.225b	c8		iny				iny
+.225c	b1 33		lda ($33),y			lda 	(TATemp0),y
+.225e	d0 fb		bne $225b			bne 	_TAGetLen
+.2260	98		tya				tya 								; A = size, XY = filename
+.2261	a4 34		ldy $34				ldy 	TATemp0+1
+.2263	20 bd ff	jsr $ffbd			jsr 	$FFBD 						; SETNAM
+.2266	ee eb 04	inc $04eb			inc 	TAHandleTracker
+.2269	ad eb 04	lda $04eb			lda 	TAHandleTracker
+.226c	48		pha				pha
+.226d	a2 08		ldx #$08			ldx 	#8
+.226f	a8		tay				tay
+.2270	20 ba ff	jsr $ffba			jsr 	$FFBA 						; set LFS
+.2273	20 c0 ff	jsr $ffc0			jsr 	$FFC0 						; OPEN,
+.2276	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
+.2279	69 ff		adc #$ff			adc 	#$FF 						; set CS on error (A != 0)
+.227b	68		pla				pla
+.227c					_TAOExit:
+.227c	60		rts				rts
+.227d					_FileName:
+>227d	5f 43 4f 44 45 2e 41 53				.text 	'_CODE.ASM',0
+>2285	4d 00
+.2287					TAClose:
+.2287	8a		txa				txa
+.2288	20 c3 ff	jsr $ffc3			jsr 	$FFC3						; CLOSE
+.228b	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
+.228e	ce eb 04	dec $04eb			dec 	TAHandleTracker
+.2291	18		clc				clc
+.2292	60		rts				rts
+.2293					TAReadChar:
+.2293	24 35		bit $35				bit 	TAIsEOF 					; last read reached EOF ?
+.2295	70 11		bvs $22a8			bvs 	_TAFail 					; surely there has to be a better way to read a bloody sequential file ?
+.2297	20 c6 ff	jsr $ffc6			jsr 	$FFC6  						; CHKIN
+.229a	20 cf ff	jsr $ffcf			jsr 	$FFCF 						; CHRIN
+.229d	48		pha				pha
+.229e	20 b7 ff	jsr $ffb7			jsr 	$FFB7 						; READST
+.22a1	29 40		and #$40			and 	#64 						; EOF next read.
+.22a3	85 35		sta $35				sta 	TAIsEOF
+.22a5	68		pla				pla
+.22a6	18		clc				clc
+.22a7	60		rts				rts
+.22a8					_TAFail:
+.22a8	64 35		stz $35				stz 	TAIsEOF 					; clear EOF Flag
+.22aa	20 cc ff	jsr $ffcc			jsr  	$FFCC 						; CLRCHN
+.22ad	38		sec				sec
+.22ae	60		rts				rts
 .0033					TATemp0:
 >0033							.fill 	2
 .0035					TAIsEOF:
@@ -2934,27 +2976,27 @@
 
 ;******  Processing file: x16_api/apierror.asm
 
-.2271					TAError:
-.2271	86 33		stx $33				stx 	TATemp0 					; save info area address
-.2273	84 34		sty $34				sty 	TATemp0+1
-.2275	a9 2a		lda #$2a			lda 	#'*'						; print 3 stars
-.2277	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.227a	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.227d	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.2280	b2 33		lda ($33)			lda 	(TATemp0) 					; output error code
-.2282	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.2285	a9 40		lda #$40			lda 	#'@' 						; output @
-.2287	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.228a	a0 04		ldy #$04			ldy 	#4 						 	; output the page number (4+5 are BCD)
-.228c	b1 33		lda ($33),y			lda 	(TATemp0),y
-.228e	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.2291	88		dey				dey
-.2292	b1 33		lda ($33),y			lda 	(TATemp0),y
-.2294	20 91 1e	jsr $1e91			jsr 	AXLOutHex
-.2297	a9 0d		lda #$0d			lda 	#13 						; new line.
-.2299	20 a9 1e	jsr $1ea9			jsr 	AXListOut
-.229c	38		sec				sec
-.229d	60		rts				rts
+.22af					TAError:
+.22af	86 33		stx $33				stx 	TATemp0 					; save info area address
+.22b1	84 34		sty $34				sty 	TATemp0+1
+.22b3	a9 2a		lda #$2a			lda 	#'*'						; print 3 stars
+.22b5	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.22b8	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.22bb	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.22be	b2 33		lda ($33)			lda 	(TATemp0) 					; output error code
+.22c0	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.22c3	a9 40		lda #$40			lda 	#'@' 						; output @
+.22c5	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.22c8	a0 04		ldy #$04			ldy 	#4 						 	; output the page number (4+5 are BCD)
+.22ca	b1 33		lda ($33),y			lda 	(TATemp0),y
+.22cc	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.22cf	88		dey				dey
+.22d0	b1 33		lda ($33),y			lda 	(TATemp0),y
+.22d2	20 cf 1e	jsr $1ecf			jsr 	AXLOutHex
+.22d5	a9 0d		lda #$0d			lda 	#13 						; new line.
+.22d7	20 e7 1e	jsr $1ee7			jsr 	AXListOut
+.22da	38		sec				sec
+.22db	60		rts				rts
 
 ;******  Return to file: x16_api/api.asm
 
