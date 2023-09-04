@@ -2,7 +2,7 @@
 # *******************************************************************************************
 #
 #		Name : 		Makefile
-#		Purpose :	Build Basic
+#		Purpose :	.... it's the make file.
 #		Date :		9th August 2023
 #		Author : 	Paul Robson (paul@robsons.org.uk)
 #
@@ -16,7 +16,9 @@ include ../documents/common.make
 endif
 
 # *******************************************************************************************
+#
 #								Zero Page and Storage base (general)
+#
 # *******************************************************************************************
 
 ZEROPAGE = \$$30
@@ -35,7 +37,7 @@ assemble: prelim
 	$(ASSEMBLER) -D TESTING=0
 
 #
-#		Pre build scripts which create various tables automatically and the main library file
+#		Pre build scripts which create various tables automatically and the main library file.
 #
 prelim:
 	$(CDEL) *.bin
@@ -47,43 +49,59 @@ prelim:
 #		Update rom/emulator from repos
 #	
 tools:
+	cd $(ROOTDIR)..$(S)x16-emulator ; git pull
 	$(CCOPY) $(ROOTDIR)..$(S)x16-emulator$(S)x16emu$(APPSTEM) $(BINDIR)
+	cd $(ROOTDIR)..$(S)x16-rom ; git pull
 	$(CCOPY) $(ROOTDIR)..$(S)x16-rom$(S)build$(S)x16$(S)rom.bin $(BINDIR)
 #
-#		Evaluation tests.
+#		Evaluation unit tests.
 #
 evaltest: prelim
 	$(PYTHON) expr_testing$(S)expr.py >build$(S)testdata.inc
 	$(ASSEMBLER) -D TESTING=1
 	$(EMULATOR)
-
+#
+#		This just sets up on evaluation for bug fixing.
+#
 exprdebug: prelim
 	$(PYTHON) expr_testing$(S)setupexpr.py >build$(S)testdata.inc
 	$(ASSEMBLER) -D TESTING=1
 	$(CDEL) *.bin
 	$(EMULATOR)
 #
-#		Dump identifier table.
+#		Dump identifier table (only for TESTING=3 which exits via jmp $FFFF)
 #
 ident:
 	$(PYTHON) scripts$(S)showident.py 9000
+
+# *******************************************************************************************
 #
-#		Assemble with displayed output
+#		Assemble with displayed output. These take the file testing/dev.asm
+#		copies it to _code.asm and runs it on the emulator.
 #
+#		This allows you to see the assembled code.
+#
+# *******************************************************************************************
+
 run: prelim	
 	$(CCOPY) testing$(S)dev.asm _code.asm
 	$(ASSEMBLER) -D TESTING=2
 	$(EMULATOR)
 #
-#		Assemble and exit
+#		Assemble and exit. As above, but exits with jmp $FFFF
 #
 asm: prelim
 	$(CCOPY) testing$(S)dev.asm _code.asm
 	$(ASSEMBLER) -D TESTING=3
 	$(EMULATOR)
+
+# *******************************************************************************************
 #
-#		Assemble, exit and compare against 64tass equivalent.
+#		Assemble, exit and compare against 64tass equivalent. These are all
+#		files in the testing subdirectory.
 #
+# *******************************************************************************************
+
 tests: 
 	make opcodes
 	make data
