@@ -1,7 +1,7 @@
 
-; 64tass Turbo Assembler Macro V1.58.2974? listing file
+; 64tass Turbo Assembler Macro V1.59.3120 listing file
 ; 64tass --mw65c02 -b -o build/compare.bin -L build/compare.lst _code.asm
-; Mon Sep  4 13:40:22 2023
+; Tue Sep 12 17:19:37 2023
 
 ;Offset	;Hex		;Monitor	;Source
 
