@@ -67,7 +67,7 @@ _ErrorOccurred:                             ; error in evaluation.
         jmp     _ErrorOccurred
 
 TestData:   
-        .include "../build/testdata.inc"
+        .include "../../build/testdata.inc"
         .byte   0
 
         .send as16code
@@ -75,5 +75,4 @@ TestData:
         .section as16zeropage
 zTemp:  .fill   2
         .send as16zeropage
-
 

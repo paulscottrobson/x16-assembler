@@ -30,7 +30,6 @@
 ;
 ; ************************************************************************************************
 
-
         .section as16code
         jmp     Start
 
@@ -84,7 +83,7 @@ _CMLoop:lda     #$FF
         .send as16code
 
         .if     TESTING==1
-        .include "expr_testing/testexpr.asm"
+        .include "testexpr.asm"
         .endif
         .if     (TESTING==2)||(TESTING==3)  
         .include "api/x16/api.asm"
