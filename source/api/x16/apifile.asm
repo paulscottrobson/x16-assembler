@@ -38,17 +38,17 @@ _TAGetLen:
         bne     _TAGetLen
         tya                                 ; A = size, XY = filename
         ldy     TATemp0+1
-        jsr     $FFBD                       ; SETNAM
+        farjsr  FFBD                        ; SETNAM
 
         inc     TAHandleTracker
         lda     TAHandleTracker
         pha
         ldx     #8
         tay
-        jsr     $FFBA                       ; set LFS
+        farjsr  FFBA                        ; set LFS
 
-        jsr     $FFC0                       ; OPEN, 
-        jsr     $FFB7                       ; READST
+        farjsr  FFC0                        ; OPEN, 
+        farjsr  FFB7                        ; READST
         adc     #$FF                        ; set CS on error (A != 0)
         pla
 _TAOExit:           
@@ -65,8 +65,8 @@ _FileName:
 
 TAClose:
         txa
-        jsr     $FFC3                       ; CLOSE
-        jsr     $FFCC                       ; CLRCHN
+        farjsr  FFC3                        ; CLOSE
+        farjsr  FFCC                        ; CLRCHN
         dec     TAHandleTracker
         clc
         rts     
@@ -80,10 +80,10 @@ TAClose:
 TAReadChar:
         bit     TAIsEOF                     ; last read reached EOF ?
         bvs     _TAFail                     ; surely there has to be a better way to read a bloody sequential file ?
-        jsr     $FFC6                       ; CHKIN
-        jsr     $FFCF                       ; CHRIN
+        farjsr  FFC6                        ; CHKIN
+        farjsr  FFCF                        ; CHRIN
         pha
-        jsr     $FFB7                       ; READST
+        farjsr  FFB7                        ; READST
         and     #64                         ; EOF next read.
         sta     TAIsEOF
         pla
@@ -91,7 +91,7 @@ TAReadChar:
         rts
 _TAFail:
         stz     TAIsEOF                     ; clear EOF Flag
-        jsr     $FFCC                       ; CLRCHN
+        farjsr  FFCC                        ; CLRCHN
         sec
         rts     
 
