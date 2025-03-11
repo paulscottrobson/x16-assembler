@@ -87,7 +87,7 @@ _CMLoop:lda     #$FF
         .include "expr_testing/testexpr.asm"
         .endif
         .if     (TESTING==2)||(TESTING==3)  
-        .include "x16_api/api.asm"
+        .include "api/x16/api.asm"
 
 
         .endif

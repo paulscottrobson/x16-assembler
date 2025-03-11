@@ -22,7 +22,7 @@ A label consists of an alphabetic character followed by a sequence of alphanumer
 
 ## Pseudo Operations
 
-Standard 65C02 pseudo-operations are : *need to check these were actually implemented*
+Standard 65C02 pseudo-operations are:
 
 | Operation            | Function                                                     |
 | -------------------- | ------------------------------------------------------------ |
