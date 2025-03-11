@@ -64,11 +64,15 @@ SCRIPTDIR = $(SOURCEDIR)scripts/
 #
 #		Use zero page from here (uses 3 bytes)
 #
-ZEROPAGE = \$$30
+ZEROPAGE = 30
 #
 #		Use non zero page from here. (uses 240 bytes)
 #
-STORAGE = \$$400
+STORAGE = 400
+#
+#		Code built for this address
+#
+CODEADDR = 1000
 
 # *******************************************************************************************
 #
@@ -76,12 +80,12 @@ STORAGE = \$$400
 #
 # *******************************************************************************************
 
-MEMORYMAP = -D ZEROPAGE=$(ZEROPAGE) -D STORAGE=$(STORAGE)
+MEMORYMAP = -D ZEROPAGE=\$$$(ZEROPAGE) -D STORAGE=\$$$(STORAGE) -D CODEADDR=\$$$(CODEADDR)
 BINFILE = $(BUILDDIR)asm.prg
 #
 #		Run the x16 emulator
 #
-EMULATOR = $(X16EMUDIR)$(EMULATOREXEC) -prg $(BINFILE),1000 -run -debug -scale 2 -dump R
+EMULATOR = $(X16EMUDIR)$(EMULATOREXEC) -prg $(BINFILE),$(CODEADDR) -run -debug -scale 2 -dump R
 #
 #		Run the assembler
 #
