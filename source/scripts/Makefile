@@ -20,4 +20,6 @@ build:	.any
 	$(PYTHON) exprtable.py
 	$(PYTHON) makeasmtable.py
 	$(PYTHON) makelib.py >$(BUILDDIR)/libassembler.asm
+	$(PYTHON) makefarcall.py  "../api/x16/" >../api/x16/generated/__farcalls.inc
+
 	echo "Scripts run successfully."
