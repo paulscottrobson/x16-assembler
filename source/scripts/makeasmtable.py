@@ -3,7 +3,7 @@
 #
 #       Name :      makeasmtable.py
 #       Purpose :   Build the assembler information structure.
-#       Date :      11th August 2023
+#       Date :      11th March 2025
 #       Author :    Paul Robson (paul@robsons.org.uk)
 #
 # *******************************************************************************************

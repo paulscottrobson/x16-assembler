@@ -1,72 +1,72 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		byte.asm
-;		Purpose:	.byte command
-;		Created:	21st August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
+;       Name:       byte.asm
+;       Purpose:    .byte command
+;       Created:    11th March 2025
+;       Reviewed:   No
+;       Author:     Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
 ; ************************************************************************************************
 
-		.section as16code
+        .section as16code
 
 ; ************************************************************************************************
 ;
-;								Assemble .byte command
+;                               Assemble .byte command
 ;
 ; ************************************************************************************************
 
-AXByteCmd:	;; {.byte}
-AXByteCmd2:	;; {.db}
+AXByteCmd:  ;; {.byte}
+AXByteCmd2: ;; {.db}
 
-		ldx 	AXOperandPos 				; get operand, must be defined even on pass 1.
+        ldx     AXOperandPos                ; get operand, must be defined even on pass 1.
 
 _AXBLoop:
-		jsr 	AXPass2Expression 			; get value
-		bcs 	_AXBExit
+        jsr     AXPass2Expression           ; get value
+        bcs     _AXBExit
 
-		lda 	AXPass 						; only check size on pass 2
-		cmp 	#2
-		bne 	_AXBNoCheck
+        lda     AXPass                      ; only check size on pass 2
+        cmp     #2
+        bne     _AXBNoCheck
 
-		lda 	AXLeft+1
-		beq 	_AXBNoCheck
+        lda     AXLeft+1
+        beq     _AXBNoCheck
 
-		lda 	#AXERRSize 					; not a byte.
-		sec
-		rts
+        lda     #AXERRSize                  ; not a byte.
+        sec
+        rts
 
 _AXBNoCheck:
-		lda 	AXLeft 						; output the byte.
-		jsr 	AXWriteByte
+        lda     AXLeft                      ; output the byte.
+        jsr     AXWriteByte
 
-		jsr 	AXGet 						; get next
-		inx
-		cmp 	#","
-		beq 	_AXBLoop
-		cmp 	#0
-		bne 	_AXBSyntax
-		clc
-		rts
+        jsr     AXGet                       ; get next
+        inx
+        cmp     #","
+        beq     _AXBLoop
+        cmp     #0
+        bne     _AXBSyntax
+        clc
+        rts
 _AXBSyntax:
-		lda 	#AXERRSyntax
-		sec
-_AXBExit:		
-		rts
+        lda     #AXERRSyntax
+        sec
+_AXBExit:       
+        rts
 
 
-		.send as16code
-		
+        .send as16code
+        
 ; ************************************************************************************************
 ;
-;									Changes and Updates
+;                                   Changes and Updates
 ;
 ; ************************************************************************************************
 ;
-;		Date			Notes
-;		==== 			=====
+;       Date            Notes
+;       ====            =====
 ;
 ; ************************************************************************************************
 

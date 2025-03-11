@@ -1,40 +1,40 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name : 		apilist.asm
-;		Purpose :	API List Handler
-;		Date :		29th August 2023
-; 		Reviewed :	No
-;		Author : 	Paul Robson (paul@robsons.org.uk)
+;       Name :      apilist.asm
+;       Purpose :   API List Handler
+;       Date :      11th March 2025
+;       Reviewed :  No
+;       Author :    Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
 ; ************************************************************************************************
 
-		.section as16code
+        .section as16code
 
 ; ************************************************************************************************
 ;
-;								Handle listing, character in X
+;                               Handle listing, character in X
 ;
 ; ************************************************************************************************
 
 TAListChar:
-		txa
-		.if TESTING==2
-		jsr 	$FFD2 						; this is only displayed for TESTING=2
-		.endif
-		rts
+        txa
+        .if TESTING==2
+        jsr     $FFD2                       ; this is only displayed for TESTING=2
+        .endif
+        rts
 
-		.send as16code
+        .send as16code
 
 ; ************************************************************************************************
 ;
-;									Changes and Updates
+;                                   Changes and Updates
 ;
 ; ************************************************************************************************
 ;
-;		Date			Notes
-;		==== 			=====
+;       Date            Notes
+;       ====            =====
 ;
 ; ************************************************************************************************
 

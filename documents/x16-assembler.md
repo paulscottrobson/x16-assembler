@@ -47,8 +47,6 @@ Text substitution macros are permitted to a depth of probably 4 to 5.
 | .endm         | Ends a macro                            |
 | \1 \2 \3      | Text substitutions of up to 3 arguments |
 
-An issue here is are these arguments allowed to be quoted strings *did I do this ?*. While this is tempting it does create some storage issues. Perhaps initially not, but consider the possibility of adding such later .
-
 ### Example
 
 ```

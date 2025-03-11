@@ -1,66 +1,66 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		00main.asm
-;		Purpose:	Entry point.
-;		Created:	12th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
+;       Name:       00main.asm
+;       Purpose:    Entry point.
+;       Created:    11th March 2025
+;       Reviewed:   No
+;       Author:     Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
 ; ************************************************************************************************
 
-		.section as16code
+        .section as16code
 
 ; ************************************************************************************************
 ;
-;									Assemble code : API at YX
+;                                   Assemble code : API at YX
 ;
 ; ************************************************************************************************
 
 AXAssemble:
-		stx 	AXAPI 						; save the API.
-		sty 	AXAPI+1
-		jsr 	AXIReset 					; reset the identifier system.
+        stx     AXAPI                       ; save the API.
+        sty     AXAPI+1
+        jsr     AXIReset                    ; reset the identifier system.
 
-		lda 	#1
-		jsr 	AXAssemblerPass
-		bcs 	_AXAExit
-		lda 	#2
-		jsr 	AXAssemblerPass
-_AXAExit:		
-		rts
-		
+        lda     #1
+        jsr     AXAssemblerPass
+        bcs     _AXAExit
+        lda     #2
+        jsr     AXAssemblerPass
+_AXAExit:       
+        rts
+        
 ; ************************************************************************************************
 ;
-;											Do Pass A
+;                                           Do Pass A
 ;
 ; ************************************************************************************************
 
 
 AXAssemblerPass:
-		sta 	AXPass 						; set the pass
+        sta     AXPass                      ; set the pass
 
-		stz 	AXProgramCounter 			; zero the program counter + bank
-		stz 	AXProgramCounter+1
-		stz 	AXProgramCounter+2
+        stz     AXProgramCounter            ; zero the program counter + bank
+        stz     AXProgramCounter+1
+        stz     AXProgramCounter+2
 
-		ldx 	#0 							; assemble the default file.
-		ldy 	#0
-		jsr 	AXAssembleFile
-		rts
+        ldx     #0                          ; assemble the default file.
+        ldy     #0
+        jsr     AXAssembleFile
+        rts
 
-		.send as16code
+        .send as16code
 
 
 ; ************************************************************************************************
 ;
-;									Changes and Updates
+;                                   Changes and Updates
 ;
 ; ************************************************************************************************
 ;
-;		Date			Notes
-;		==== 			=====
+;       Date            Notes
+;       ====            =====
 ;
 ; ************************************************************************************************
 

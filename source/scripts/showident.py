@@ -3,7 +3,7 @@
 #
 #       Name :      showident.py
 #       Purpose :   Show the identifier table
-#       Date :      11th August 2023
+#       Date :      11th March 2025
 #       Author :    Paul Robson (paul@robsons.org.uk)
 #
 # *******************************************************************************************

@@ -1,6 +1,6 @@
 # Todo List
 
-- Check the psuedo ops actually are there !
-- Did I allow strings in macros.
+- Check the pseudo ops actually are there !
 - JSRFAR changes.
 - API inclusion conditional in Makefile.
+- Moveable Origin.

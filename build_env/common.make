@@ -62,8 +62,6 @@ SCRIPTDIR = $(SOURCEDIR)scripts/
 #
 # *******************************************************************************************
 
-EMULATOR = $(X16EMUDIR)$(EMULATOREXEC) -prg $(BINFILE),$(CODEADDRESS) -run -debug -scale 2 -dump R
-ASSEMBLER = 64tass -q -c -C $(DEFINES) -Wall $(MAINPROGRAM) -L $(BUILDDIR)asm.lst -o $(BINFILE) 
 
 # *******************************************************************************************
 #

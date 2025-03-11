@@ -1,124 +1,124 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		ctypes.asm
-;		Purpose:	Simple character functions
-;		Created:	9th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
+;       Name:       ctypes.asm
+;       Purpose:    Simple character functions
+;       Created:    11th March 2025
+;       Reviewed:   No
+;       Author:     Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
 ; ************************************************************************************************
 
-		.section as16code
+        .section as16code
 
 ; ************************************************************************************************
 ;
-;									Convert lower to upper case
+;                                   Convert lower to upper case
 ;
 ; ************************************************************************************************
 
 AXConvertUpper:
-		cmp 	#"a"
-		bcc 	_AXCNotUpper
-		cmp 	#"z"+1
-		bcs 	_AXCNotUpper
-		eor 	#$20
+        cmp     #"a"
+        bcc     _AXCNotUpper
+        cmp     #"z"+1
+        bcs     _AXCNotUpper
+        eor     #$20
 _AXCNotUpper:
-		rts		
+        rts     
 
 ; ************************************************************************************************
 ;
-;						Check U/C alphabetic (return CC = True, CS = False)
+;                       Check U/C alphabetic (return CC = True, CS = False)
 ;
 ; ************************************************************************************************
 
 AXIsAlpha:
-		cmp 	#"A"
-		bcc 	_AXNotAlpha
-		cmp 	#"Z"+1
-		bcs 	_AXNotAlpha
-		rts
+        cmp     #"A"
+        bcc     _AXNotAlpha
+        cmp     #"Z"+1
+        bcs     _AXNotAlpha
+        rts
 _AXNotAlpha:
-		sec
-		rts		
+        sec
+        rts     
 
 ; ************************************************************************************************
 ;
-;						Check Decimal Digit (return CC = True, CS = False)
+;                       Check Decimal Digit (return CC = True, CS = False)
 ;
 ; ************************************************************************************************
 
 AXIsNumeric:
-		cmp 	#"0"
-		bcc 	_AXNotDigit
-		cmp 	#"9"+1
-		bcs 	_AXNotDigit
-		rts
+        cmp     #"0"
+        bcc     _AXNotDigit
+        cmp     #"9"+1
+        bcs     _AXNotDigit
+        rts
 _AXNotDigit:
-		sec
-		rts		
+        sec
+        rts     
 
 ; ************************************************************************************************
 ;
-;					   Check U/C alphanumeric (return CC = True, CS = False)
+;                      Check U/C alphanumeric (return CC = True, CS = False)
 ;
 ; ************************************************************************************************
 
 AXIsAlphaNumeric:
-		jsr 	AXIsAlpha 					; if alpha then exit with yes
-		bcs 	AXIsNumeric 				; no, depends on is numeric
-		rts
+        jsr     AXIsAlpha                   ; if alpha then exit with yes
+        bcs     AXIsNumeric                 ; no, depends on is numeric
+        rts
 
 ; ************************************************************************************************
 ;
-;					   			Is an identifier HEAD character A-Z _ .
+;                               Is an identifier HEAD character A-Z _ .
 ;
 ; ************************************************************************************************
 
 AXIsIdentifierHead:
-		jsr 	AXIsAlpha
-		bcs 	AXCheckIdentifierMisc
-		rts
+        jsr     AXIsAlpha
+        bcs     AXCheckIdentifierMisc
+        rts
 
 ; ************************************************************************************************
 ;
-;		  Check for non alphanumeric character allowed in identifier, currently _ and .
+;         Check for non alphanumeric character allowed in identifier, currently _ and .
 ;
 ; ************************************************************************************************
 
-AXCheckIdentifierMisc:		 
-		cmp 	#"_"
-		beq 	_AXIsIdentB
-		cmp 	#"."
-		beq 	_AXIsIdentB
-		sec
-		rts
+AXCheckIdentifierMisc:       
+        cmp     #"_"
+        beq     _AXIsIdentB
+        cmp     #"."
+        beq     _AXIsIdentB
+        sec
+        rts
 _AXIsIdentB:
-		clc
-		rts
+        clc
+        rts
 
 ; ************************************************************************************************
 ;
-;					   			Is an identifier body character A-Z 0-9 _ .
+;                               Is an identifier body character A-Z 0-9 _ .
 ;
 ; ************************************************************************************************
-		
+        
 AXIsIdentifierBody:
-		jsr 	AXIsAlphaNumeric
-		bcs 	AXCheckIdentifierMisc
-		rts
+        jsr     AXIsAlphaNumeric
+        bcs     AXCheckIdentifierMisc
+        rts
 
-		.send as16code
+        .send as16code
 
 ; ************************************************************************************************
 ;
-;									Changes and Updates
+;                                   Changes and Updates
 ;
 ; ************************************************************************************************
 ;
-;		Date			Notes
-;		==== 			=====
+;       Date            Notes
+;       ====            =====
 ;
 ; ************************************************************************************************
 

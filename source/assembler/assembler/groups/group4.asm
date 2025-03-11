@@ -1,39 +1,39 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		group4.asm
-;		Purpose:	Assemble group 4 instruction (without operands)
-;		Created:	14th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
+;       Name:       group4.asm
+;       Purpose:    Assemble group 4 instruction (without operands)
+;       Created:    11th March 2025
+;       Reviewed:   No
+;       Author:     Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
 ; ************************************************************************************************
 
-		.section as16code
+        .section as16code
 
 ; ************************************************************************************************
 ;
-;								Assemble group 4 instruction
+;                               Assemble group 4 instruction
 ;
 ; ************************************************************************************************
 
 AXGroup4:
-		lda 	AXBaseOpcode 				; just assemble the base opcode.
-		jsr 	AXWriteByte
-		clc
-		rts
+        lda     AXBaseOpcode                ; just assemble the base opcode.
+        jsr     AXWriteByte
+        clc
+        rts
 
-		.send as16code
-		
+        .send as16code
+        
 ; ************************************************************************************************
 ;
-;									Changes and Updates
+;                                   Changes and Updates
 ;
 ; ************************************************************************************************
 ;
-;		Date			Notes
-;		==== 			=====
+;       Date            Notes
+;       ====            =====
 ;
 ; ************************************************************************************************
 

@@ -1,47 +1,47 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		access.asm
-;		Purpose:	Access the identifier store (if, say, it's in paged memory.)
-;		Created:	11th August 2023
-;		Reviewed:	No
-;		Author:		Paul Robson (paul@robsons.org.uk)
+;       Name:       access.asm
+;       Purpose:    Access the identifier store (if, say, it's in paged memory.)
+;       Created:    11th March 2025
+;       Reviewed:   No
+;       Author:     Paul Robson (paul@robsons.org.uk)
 ;
 ; ************************************************************************************************
 ; ************************************************************************************************
 
-		.section as16code
+        .section as16code
 
 ; ************************************************************************************************
 ;
-;									Access identifier memory
+;                                   Access identifier memory
 ;
 ; ************************************************************************************************
 
 AXIOpen:
-		pha 	
-		lda 	#AXAPILock
-		jsr 	AXCallAPI
-		pla
-		rts
+        pha     
+        lda     #AXAPILock
+        jsr     AXCallAPI
+        pla
+        rts
 
 AXIClose:
-		pha 	
-		lda 	#AXAPIUnlock
-		jsr 	AXCallAPI
-		pla
-		rts
+        pha     
+        lda     #AXAPIUnlock
+        jsr     AXCallAPI
+        pla
+        rts
 
-		.send as16code
+        .send as16code
 
 ; ************************************************************************************************
 ;
-;									Changes and Updates
+;                                   Changes and Updates
 ;
 ; ************************************************************************************************
 ;
-;		Date			Notes
-;		==== 			=====
+;       Date            Notes
+;       ====            =====
 ;
 ; ************************************************************************************************
 
