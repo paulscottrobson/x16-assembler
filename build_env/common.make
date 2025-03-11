@@ -85,7 +85,7 @@ EMULATOR = $(X16EMUDIR)$(EMULATOREXEC) -prg $(BINFILE),1000 -run -debug -scale 2
 #
 #		Run the assembler
 #
-ASSEMBLER = 64tass -q -c -C $(MEMORYMAP) -Wall $(SOURCEDIR)main.asm -L $(BUILDDIR)asm.lst -o $(BINFILE) 
+ASSEMBLER = 64tass -q -c -C $(MEMORYMAP) -Wall main.asm -L $(BUILDDIR)asm.lst -o $(BINFILE) 
 
 asm: prelim
 	$(ASSEMBLER) -D TESTING=0

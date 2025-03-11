@@ -11,7 +11,7 @@
 
 import sys
 
-tass = [x for x in open("build/compare.bin","rb").read(-1)]
+tass = [x for x in open(sys.argv[1],"rb").read(-1)]
 dump = [x for x in open("dump.bin","rb").read(-1)]
 count = 0
 

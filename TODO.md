@@ -1,7 +1,5 @@
 # Todo List
 
+- Move section definition out of main.asm and fix the start address, config file basically.
 - Fix up the expression testing
-- Fix up the actual testing.
 - JSRFAR changes.
-- API inclusion conditional in Makefile.
-- Moveable Origin.
