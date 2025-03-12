@@ -11,18 +11,25 @@
 
 include build_env/common.make
 
+.always:
+
 #
 #		Does a test build of the library module
 #
-build:
-	$(MAKE) -B -C source
+build: .always
+	$(MAKE) -B -C source build
+#
+#		Does a test run of the library module
+#
+run: .always
+	$(MAKE) -B -C source run
 #
 #		Runs the scripts which generate files. If you get file not found errors might be this
 #
-scripts:
+scripts: .always
 	$(MAKE) -B -C $(SCRIPTDIR) build
 #
 #		Run the tests
 #
-test:
+test: .always
 	$(MAKE) -B -C testing test
