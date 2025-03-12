@@ -47,6 +47,7 @@ SampleAPIHandler:
 ; ************************************************************************************************
 
 _TAMemInfo:
+        jsr     TA_CopyCallToRAM            ; set up the RAM copy of JSRFAR table.
         lda     #$90                        ; memory from $9000 - $9EFF
         ldy     #$9F
         clc
